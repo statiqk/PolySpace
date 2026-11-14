@@ -271,7 +271,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#eef2ff;font-family:
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v3.6.1</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v3.7</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -1244,7 +1244,7 @@ const memorial=new THREE.Group();{const st=new THREE.MeshStandardMaterial({color
   const pl=mesh(new THREE.BoxGeometry(.7,.45,.04),M.gold,0,.75,.32,memorial);mesh(new THREE.SphereGeometry(.08,8,6),M.amber,0,3.05,0,memorial).castShadow=false;
   memorial.position.set(-23,gy(-23,13),13);memorial.rotation.y=2.2;memorial.visible=false;scene.add(memorial)}
 function updateDecor(dt){memorial.visible=(S.deaths||0)>0;const a=tAll*.18;drone.position.set(Math.cos(a)*21,11+Math.sin(tAll*.7)*.8,Math.sin(a)*21);drone.rotation.y=-a;drone.rotation.z=.12;
-  decor.traverse(o=>{if(o.userData.blink)o.visible=Math.sin(tAll*3+o.id)>.3});drone.children.forEach(o=>{if(o.userData.blink)o.visible=Math.sin(tAll*6)>0})}
+  decor.traverse(o=>{if(o.userData.blink)o.visible=Math.sin(tAll*3+o.id)>.3});drone.traverse(o=>{if(o.userData.blink)o.visible=Math.sin(tAll*6)>0});(drone.userData.rot||[]).forEach(r=>r.rotation.y+=dt*40)}
 
 /* lampadaires du périmètre */
 const lampPoolMat=new THREE.MeshBasicMaterial({map:radial('rgba(255,214,160,1)','rgba(255,200,140,0)'),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3});
@@ -1499,6 +1499,110 @@ const LEDM={ok:0x3dff9a,warn:0xffa62a,dmg:0xff3a3a,quar:0xffd23a,off:0x5b6380};f
 const ledGeo={};function ledGeom(s){if(ledGeo[s])return ledGeo[s];const th=.045,G=[];for(const [x,z,w,d] of [[0,s/2,s,th],[0,-s/2,s,th],[s/2,0,th,s],[-s/2,0,th,s]])G.push(new THREE.BoxGeometry(w,.06,d).translate(x,.31,z));G.push(new THREE.SphereGeometry(.12,12,8).translate(s/2-.1,.48,s/2-.1));
   return ledGeo[s]=mergeGeometries(G.map(g=>g.toNonIndexed()))}
 function ledState(b){return b.dmg?'dmg':b.pwr===false||b.off>0?'off':b.quar>0?'quar':wearOf(b)<35?'warn':'ok'}
+
+/* ===== véhicules remodélisés (v3.7) ===== */
+{
+const box=(w,h,d,mat,x,y,z,p)=>mesh(new THREE.BoxGeometry(w,h,d),mat,x,y,z,p);
+const cyl=(rt,rb,h,mat,x,y,z,p,seg=20)=>mesh(new THREE.CylinderGeometry(rt,rb,h,seg),mat,x,y,z,p);
+const sph=(r,mat,x,y,z,p,ws=16,hs=10,half=false)=>mesh(new THREE.SphereGeometry(r,ws,hs,0,Math.PI*2,0,half?Math.PI/2:Math.PI),mat,x,y,z,p);
+const glow=m=>{m.castShadow=false;return m};
+const strut=(a,b,mat,p,t=.05)=>{const A=new THREE.Vector3(...a),B=new THREE.Vector3(...b);const m=mesh(new THREE.BoxGeometry(t,A.distanceTo(B),t),mat,(A.x+B.x)/2,(A.y+B.y)/2,(A.z+B.z)/2,p);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),B.clone().sub(A).normalize());return m};
+const TIRE=new THREE.MeshStandardMaterial({color:0x2a2c31,roughness:.9,metalness:.2});const MESHW=new THREE.MeshStandardMaterial({color:0xb8bcc6,roughness:.5,metalness:.8,wireframe:false});
+// roue à bande de roulement en treillis (style rover lunaire)
+const wheel=(p,x,y,z,r=.3,w=.2)=>{const g=new THREE.Group();g.position.set(x,y,z);p.add(g);const t=cyl(r,r,w,TIRE,0,0,0,g,20);t.rotation.x=Math.PI/2;for(let i=0;i<10;i++){const a=i/10*Math.PI*2;const c=box(.05,.05,w+.02,M.grey,Math.cos(a)*r,Math.sin(a)*r,0,g);c.rotation.z=a}
+  cyl(r*.45,r*.45,w+.04,M.grey,0,0,0,g,12).rotation.x=Math.PI/2;cyl(r*.18,r*.18,w+.08,M.gold,0,0,0,g,10).rotation.x=Math.PI/2;return g};
+const headlight=(p,x,y,z)=>{box(.06,.12,.22,M.dark,x,y,z,p);glow(box(.02,.08,.16,new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xfff2d6,emissiveIntensity:3}),x+.04,y,z,p))};
+const V={};
+/* ROVER D'EXPÉDITION : châssis pressurisé, 6 roues, mât et parabole */
+V.rover=()=>{const g=new THREE.Group();
+  box(1.9,.16,1,M.dark,0,.48,0,g);for(const x of [-.7,0,.7])for(const z of [-.58,.58]){wheel(g,x,.3,z,.3,.22);box(.08,.08,.22,M.grey,x,.48,z*.82,g)}
+  for(const z of [-.56,.56])box(1.95,.06,.14,M.orange,0,.62,z,g);
+  // cabine pressurisée arrondie
+  const cab=cyl(.42,.42,1.25,M.white,.1,.95,0,g,24);cab.rotation.z=Math.PI/2;sph(.42,M.white,.72,.95,0,g,20,10).scale.x=.6;
+  glow(box(.05,.26,.5,M.winB,.96,1.0,0,g));for(const z of [-.43,.43])for(const x of [-.15,.25])glow(box(.2,.14,.02,M.win,x,1.05,z,g));
+  box(1.3,.04,.5,M.solar,-.05,1.4,0,g);for(const x of [-.6,.5])box(.04,.08,.5,M.grey,x,1.36,0,g);
+  // sas arrière + porte-équipement
+  cyl(.3,.3,.18,M.panelW,-.6,.95,0,g,20).rotation.z=Math.PI/2;glow(mesh(new THREE.TorusGeometry(.22,.025,6,20),M.amber,-.7,.95,0,g)).rotation.y=Math.PI/2;
+  box(.35,.3,.7,M.panelW,-.88,.72,0,g);for(const z of [-.2,.2])cyl(.08,.08,.32,M.orange,-.88,.95,z,g,10);
+  // mât + parabole + antenne
+  cyl(.025,.025,.55,M.grey,-.35,1.7,.3,g,6);const d=new THREE.Group();d.position.set(-.35,1.98,.3);g.add(d);mesh(new THREE.SphereGeometry(.24,16,6,0,Math.PI*2,0,Math.PI/3.2),M.panelW,0,0,0,d).rotation.x=Math.PI*.72;cyl(.012,.012,.2,M.grey,0,.03,.08,d,4).rotation.x=-.8;
+  cyl(.012,.012,.6,M.grey,.4,1.7,-.3,g,4);glow(sph(.045,M.amber,.4,2.01,-.3,g,8,6)).userData.blink=1;
+  for(const z of [-.32,.32])headlight(g,1.0,.62,z);
+  // bras de prélèvement
+  const arm=strut([.95,.55,.35],[1.25,.85,.45],M.orange,g,.06);strut([1.25,.85,.45],[1.45,.45,.45],M.orange,g,.05);box(.12,.08,.12,M.grey,1.45,.4,.45,g);
+  g.scale.setScalar(1.05);return g};
+/* BENNE À RÉGOLITHE : dumper articulé */
+V.hauler=()=>{const g=new THREE.Group();
+  box(2.7,.18,1,M.dark,0,.52,0,g);for(const x of [-.95,-.25,.95])for(const z of [-.62,.62])wheel(g,x,.36,z,.36,.24);
+  for(const x of [-.6,.95])for(const z of [-.62,.62]){const f=mesh(new THREE.CylinderGeometry(.42,.42,.26,16,1,true,0,Math.PI),M.orange,x===.95?.95:-.6,.4,z,g);f.rotation.z=Math.PI/2;f.rotation.y=Math.PI/2;f.scale.set(1,1,1)}
+  // cabine
+  box(.8,.62,1,M.white,1,1,0,g);box(.82,.06,1.02,M.orange,1,1.33,0,g);glow(box(.04,.34,.82,M.winB,1.41,1.06,0,g));for(const z of [-.51,.51])glow(box(.4,.24,.02,M.winB,1.05,1.1,z,g));
+  cyl(.03,.03,.5,M.grey,.75,1.6,-.38,g,6);glow(sph(.07,M.amber,.75,1.87,-.38,g,8,6)).userData.blink=1;for(const z of [-.36,.36])headlight(g,1.43,.75,z);
+  // benne basculante à nervures
+  const bin=new THREE.Group();bin.position.set(-.35,.72,0);bin.rotation.z=-.1;g.add(bin);box(1.65,.1,1.12,M.orange,0,0,0,bin);
+  for(const z of [-.55,.55]){box(1.65,.62,.06,M.orange,0,.32,z,bin);for(let k=0;k<4;k++)box(.05,.6,.08,M.dark,-.6+k*.4,.32,z*1.04,bin)}box(.06,.62,1.12,M.orange,.8,.32,0,bin);box(.22,.06,1.12,M.orange,.9,.66,0,bin);
+  const load=new THREE.Group();bin.add(load);const RM=new THREE.MeshStandardMaterial({color:0x7d7a73,roughness:1,flatShading:true});for(let k=0;k<9;k++)mesh(new THREE.DodecahedronGeometry(.17+(k%3)*.05,0),RM,-.6+(k%3)*.55,.42+((k*5)%3)*.06,-.3+Math.floor(k/3)*.3,load);
+  // vérin
+  strut([.35,.6,0],[.15,.88,0],M.grey,g,.08);
+  g.userData.load=load;g.scale.setScalar(.9);return g};
+/* ROBOT DE MAINTENANCE : chenilles, bras articulé, antenne */
+V.bot=()=>{const g=new THREE.Group();
+  for(const z of [-.32,.32]){const tr=box(.9,.22,.16,TIRE,0,.13,z,g);for(const x of [-.38,.38])cyl(.11,.11,.17,M.grey,x,.13,z,g,12).rotation.x=Math.PI/2;for(let k=0;k<8;k++)box(.04,.03,.17,M.grey,-.38+k*.11,.255,z,g)}
+  box(.72,.28,.5,M.white,0,.4,0,g);box(.74,.05,.52,M.orange,0,.56,0,g);glow(box(.02,.12,.3,M.winB,.37,.42,0,g));
+  // tête capteur
+  const head=new THREE.Group();head.position.set(.2,.66,0);g.add(head);box(.22,.14,.26,M.panelW,0,.05,0,head);for(const z of [-.06,.06])glow(sph(.035,M.cyan,.115,.06,z,head,8,6));
+  // bras articulé
+  const arm=new THREE.Group();arm.position.set(-.1,.62,0);g.add(arm);cyl(.08,.1,.1,M.dark,0,0,0,arm,12);const a1=box(.08,.5,.08,M.orange,.05,.24,0,arm);a1.rotation.z=-.45;
+  const a2=box(.4,.07,.07,M.orange,.28,.44,0,arm);a2.rotation.z=.3;box(.08,.08,.1,M.dark,.47,.5,0,arm);for(const z of [-.04,.04])box(.12,.02,.02,M.grey,.56,.48,z,arm);
+  cyl(.012,.012,.4,M.grey,-.28,.78,-.18,g,4);glow(sph(.04,M.cyan,-.28,.99,-.18,g,8,6)).userData.blink=1;
+  for(const z of [-.18,.18])box(.18,.16,.08,M.panelW,-.32,.38,z*1.8,g);
+  g.userData.arm=arm;return g};
+/* GRUE DE CHANTIER : tour en treillis, flèche en treillis, contrepoids */
+V.crane=()=>{const g=new THREE.Group();
+  box(2.1,.32,1.4,M.dark,0,.45,0,g);for(const x of [-.7,.7])for(const z of [-.75,.75])wheel(g,x,.32,z,.32,.22);for(const [x,z] of [[1.1,.9],[-1.1,.9],[1.1,-.9],[-1.1,-.9]]){box(.5,.06,.06,M.grey,x*.8,.45,z,g);cyl(.12,.12,.04,M.grey,x,.05,z,g,10);cyl(.03,.03,.4,M.grey,x,.25,z,g,6)}
+  box(.95,.62,1.05,M.orange,-.45,.92,0,g);glow(box(.02,.3,.6,M.winB,.03,.98,0,g));
+  const mast=new THREE.Group();mast.position.set(.4,.6,0);g.add(mast);const H=3.6;
+  for(const [x,z] of [[-.16,-.16],[.16,-.16],[-.16,.16],[.16,.16]])box(.055,H,.055,M.orange,x,H/2,z,mast);
+  for(let y=.1;y<H;y+=.4){for(const s of [-1,1]){strut([-.16,y,s*.16],[.16,y+.4,s*.16],M.orange,mast,.03);strut([s*.16,y,-.16],[s*.16,y+.4,.16],M.orange,mast,.03)}}
+  const boom=new THREE.Group();boom.position.set(.4,4.25,0);g.add(boom);
+  for(const [y,z] of [[.12,-.1],[.12,.1],[-.1,0]])box(3.6,.04,.04,M.orange,1.1,y,z,boom);for(let x=-.6;x<2.9;x+=.3)strut([x,-.1,0],[x+.3,.12,(Math.round(x*3.3)%2?.1:-.1)],M.orange,boom,.025);
+  box(.7,.4,.5,M.grey,-.85,-.05,0,boom);box(.35,.3,.3,M.panelW,0,.1,.3,boom);glow(box(.02,.16,.22,M.winB,.18,.12,.3,boom));glow(sph(.07,M.red,2.9,.18,0,boom,8,6)).userData.blink=1;glow(sph(.07,M.red,0,.3,0,boom,8,6)).userData.blink=1;
+  const hook=new THREE.Group();hook.position.set(2.6,0,0);boom.add(hook);box(.18,.1,.16,M.grey,0,-.05,0,hook);const cab=cyl(.012,.012,1,M.dark,0,-.5,0,hook,4);box(.3,.22,.3,M.amber,0,-1,0,hook);
+  g.userData.boom=boom;g.userData.hook=hook;g.userData.cable=cab;return g};
+/* NAVETTE : fuselage à panneaux, cockpit, ailerons, réservoirs latéraux */
+V.shuttle=()=>{const g=new THREE.Group();
+  cyl(.72,.88,3.3,M.white,0,2.55,0,g,32);for(let k=0;k<4;k++)mesh(new THREE.TorusGeometry(.8-k*.025,.025,6,32),M.panelW,0,1.3+k*.85,0,g).rotation.x=Math.PI/2;
+  mesh(new THREE.ConeGeometry(.72,1.5,32),M.white,0,4.95,0,g);cyl(.74,.74,.28,M.dark,0,4.12,0,g,32);
+  for(let i=0;i<5;i++){const a=i/5*Math.PI*2+.2;glow(box(.22,.16,.04,M.winB,Math.cos(a)*.76,4.45,Math.sin(a)*.76,g)).rotation.y=-a+Math.PI/2}
+  for(let i=0;i<4;i++){const a=i/4*Math.PI*2+.4;glow(box(.2,.2,.04,M.win,Math.cos(a)*.8,3.3,Math.sin(a)*.8,g)).rotation.y=-a+Math.PI/2}
+  // bande et logo
+  cyl(.89,.89,.14,M.gold,0,.98,0,g,32);cyl(.86,.86,.2,M.orange,0,1.6,0,g,32);
+  // boosters latéraux
+  for(let i=0;i<2;i++){const a=i*Math.PI;const x=Math.cos(a)*1.05,z=Math.sin(a)*1.05;cyl(.25,.28,2.2,M.white,x,1.9,z,g,16);mesh(new THREE.ConeGeometry(.25,.5,16),M.white,x,3.25,z,g);mesh(new THREE.ConeGeometry(.22,.35,12,1,true),M.dark,x,.65,z,g);strut([x*.7,2.4,z*.7],[x,2.4,z],M.grey,g,.06)}
+  // ailerons + pieds
+  for(let i=0;i<4;i++){const a=i*Math.PI/2+Math.PI/4;const f=box(.07,1.3,.85,M.panelW,Math.cos(a)*.95,1.35,Math.sin(a)*.95,g);f.rotation.y=-a;
+    const fx=Math.cos(a)*1.4,fz=Math.sin(a)*1.4;strut([Math.cos(a)*.8,1.1,Math.sin(a)*.8],[fx,.05,fz],M.grey,g,.07);cyl(.2,.22,.06,M.grey,fx,.03,fz,g,12)}
+  mesh(new THREE.ConeGeometry(.5,.6,20,1,true),M.dark,0,.65,0,g);
+  glow(sph(.07,M.red,0,5.75,0,g,8,6)).userData.blink=1;
+  const flame=new THREE.Mesh(new THREE.ConeGeometry(.42,2.6,20,1,true),new THREE.MeshBasicMaterial({color:0xffb860,transparent:true,opacity:.85,blending:THREE.AdditiveBlending,depthWrite:false}));flame.rotation.x=Math.PI;flame.position.y=-.9;g.add(flame);
+  const fcore=new THREE.Mesh(new THREE.ConeGeometry(.22,1.6,16,1,true),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.95,blending:THREE.AdditiveBlending,depthWrite:false}));fcore.rotation.x=Math.PI;fcore.position.y=-.45;g.add(fcore);
+  const light=new THREE.PointLight(0xff9a50,0,40,1.4);light.position.y=-1;g.add(light);
+  g.userData={flame,fcore,light};g.scale.setScalar(.85);return g};
+/* DRONE */
+V.drone=()=>{const g=new THREE.Group();
+  const body=sph(.32,M.white,0,0,0,g,20,12);body.scale.set(1,.45,1.25);box(.5,.06,.36,M.orange,0,.1,0,g);sph(.13,M.dark,0,-.1,.32,g,12,8);glow(sph(.06,M.winB,0,-.1,.43,g,8,6));
+  const rotors=[];for(const [x,z] of [[.55,.55],[.55,-.55],[-.55,.55],[-.55,-.55]]){strut([0,0,0],[x,.04,z],M.grey,g,.05);cyl(.07,.07,.08,M.dark,x,.06,z,g,10);mesh(new THREE.TorusGeometry(.3,.02,6,24),M.grey,x,.08,z,g).rotation.x=Math.PI/2;
+    const r=new THREE.Group();r.position.set(x,.11,z);g.add(r);for(let k=0;k<2;k++)box(.52,.01,.06,M.dark,0,0,0,r).rotation.y=k*Math.PI/2;rotors.push(r)}
+  for(const s of [-1,1])box(.04,.2,.04,M.grey,s*.18,-.2,0,g);box(.5,.03,.04,M.grey,0,-.3,.12,g);box(.5,.03,.04,M.grey,0,-.3,-.12,g);
+  glow(sph(.05,M.red,0,.14,-.32,g,8,6)).userData.blink=1;glow(sph(.05,M.cyan,0,.14,.32,g,8,6));
+  g.userData.rot=rotors;return g};
+
+ haulerModel=()=>{const g=V.hauler();const s=g.scale.x;g.scale.setScalar(1);mergeStatic(g);g.scale.setScalar(s);return g};
+ botModel=()=>mergeStatic(V.bot());craneModel=()=>mergeStatic(V.crane());
+ {const n=V.rover();n.traverse(o=>{if(o.isMesh)o.castShadow=true});mergeStatic(n);rover.clear();rover.add(n)}
+ {const n=V.shuttle();n.scale.setScalar(1);mergeStatic(n);shuttle.clear();shuttle.add(n);shuttle.userData=n.userData}
+ {const n=V.drone();mergeStatic(n);drone.clear();drone.add(n);drone.userData.rot=n.userData.rot}
+}
 function placeModLights(){const L=S.b.slice().sort((a,b)=>(PRESS.includes(b.t)?1:0)-(PRESS.includes(a.t)?1:0)||(a.i*a.i+a.j*a.j)-(b.i*b.i+b.j*b.j));
   modLights.forEach((l,k)=>{const b=L[k];if(!b){l.position.set(0,-50,0);l.userData.on=0;return}const dome=b.t==='serre'||b.t==='parc';if(dome)l.position.set(b.i*TILE,1.6,b.j*TILE);else l.position.set(b.i*TILE+1.6,2.2,b.j*TILE+2.2);l.userData.on=1;l.userData.warm=PRESS.includes(b.t)||b.t==='pad';l.userData.dome=dome?b.t:0})}
 function rebuildCorridors(){placeModLights();disposeMerged(corridors);corridors.clear();for(const b of S.b){if(!PRESS.includes(b.t))continue;for(const [di,dj] of [[1,0],[0,1]]){const n=S.b.find(c=>c.i===b.i+di&&c.j===b.j+dj&&PRESS.includes(c.t));if(!n)continue;
@@ -2475,8 +2579,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='3.6.1';
+const APP_VER='3.7';
 const CHANGELOG=[
+ {v:'3.7',d:'Véhicules remodélisés',n:[['🚙','Rover','Cabine pressurisée, roues en treillis, parabole, phares et bras de prélèvement.'],['🚚','Benne, robot, grue','Camion-benne à cabine vitrée, robot sur chenilles avec pince, grue en treillis.'],['🚀','Navette et drone','Navette avec boosters et cockpit, drone à rotors carénés qui tournent.']]},
  {v:'3.6.1',d:'Nuit plus nette',n:[['🔋','Batteries sobres','Bandes de charge fines et douces.'],['🪟','Fenêtres','Moins éblouissantes la nuit, lumières des modules adoucies.'],['✨','Halo maîtrisé','Fini la brume blanche sur les grandes bases.']]},
  {v:'3.6',d:'Nouveau ciel',n:[['🌍','Terre détaillée','Forêts, déserts, montagnes, hauts-fonds, nuages plus fins et villes en milliers de points la nuit.'],['🌌','Voie lactée','Bande réaliste avec cœur plus chaud et bandes de poussière ; 11 000 étoiles fixes.'],['☀️','Soleil lunaire','Petit disque blanc avec une fine couronne, comme vu depuis la Lune.']]},
  {v:'3.5',d:'Bâtiments détaillés',n:[['🏗️','9 bâtiments refaits','Habitat, serre, recycleur, parc, foreuse, usine 3D, bouclier, observatoire et laboratoire entièrement remodélisés, avec beaucoup plus de détails.']]},
