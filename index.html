@@ -270,7 +270,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#eef2ff;font-family:
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v2.5.1</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v2.6</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -1437,10 +1437,10 @@ function renderCrew(){const H=$('#crew');
    const fb=(k,l,n,c)=>`<button class="cf${F===k?' on':''}" data-f="${k}" ${c&&F!==k?`style="color:${c}"`:''}>${l}${n!==undefined?` <i>${n}</i>`:''}</button>`;
    H.innerHTML=tabs+`<div class="cfil">${fb('all','Tous',S.people.length)}${fb('idle','Sans poste',C.idle,C.idle?'#ffcf9a':null)}${fb('sick','Malades',C.sick,C.sick?'#b6ff9a':null)}${fb('tired','Épuisés',C.tired,C.tired?'#ffcf9a':null)}<button class="cf auto" id="autoA">✨ Auto</button></div>
     <div class="cgrid">${list.map(p=>{const m=moodOf(p);const b=p.a&&S.b.find(b=>bkey(b)===p.a);const fit=b&&JOBS[p.j].fit.includes(b.t);const Cc=2*Math.PI*29,col=m>55?'#6dffb5':m>35?'#ffd36b':'#ff8a7a';
-      const ic=onExp(p)?'🚙':p.child>0?'👶':p.sick>0?'🤒':p.hurt>0?'🤕':p.rest>0||(p.fat||0)>80?'😴':S.strike>0?'✊':fit?'<span style="color:#ffd36b">★</span>':!b?'<span style="color:#ffb36b">●</span>':'';
+      const ic=onExp(p)?'🚙':p.child>0?'👶':p.sick>0?'🤒':p.hurt>0?'🤕':p.rest>0||(p.fat||0)>80?'😴':p.relay?'🔁':S.strike>0?'✊':fit?'<span style="color:#ffd36b">★</span>':!b?'<span style="color:#ffb36b">●</span>':'';
       return `<div class="cp" data-p="${p.id}"><span class="cst">${ic}</span><div class="cav"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="3"/><circle cx="32" cy="32" r="29" fill="none" stroke="${col}" stroke-width="3" stroke-linecap="round" stroke-dasharray="${(Cc*m/100).toFixed(1)} ${Cc.toFixed(1)}" transform="rotate(-90 32 32)"/></svg><div class="cin">${avatar(p,50)}</div></div>
        <b>${p.n}</b><small>${JOBS[p.j].i} ${b?DEFS[b.t].icon+' '+DEFS[b.t].name.split(' ')[0]:onExp(p)?'Expédition':'Sans poste'}</small><div class="cfat"><span style="width:${Math.round(p.fat||0)}%;background:${(p.fat||0)>80?'#ff8a7a':(p.fat||0)>50?'#ffd36b':'#7fd3ff'}"></span></div></div>`}).join('')||'<p class="iempty">Personne ici.</p>'}</div>
-    <div class="chint"><span>🧑‍🔧</span><span><b>Glisse un portrait sur un module</b> de la base pour l'y affecter, ou touche-le pour choisir son poste. La barre sous le nom = fatigue.</span></div>`;
+    <div class="chint"><span>🧑‍🔧</span><span><b>Glisse un portrait sur un module</b> de la base pour l'y affecter, ou touche-le pour choisir son poste. La barre sous le nom = fatigue : à 80 %, le colon part se reposer seul et un colon libre prend le relais.</span></div>`;
    $('#autoA').onclick=()=>{autoAll();computeRates();save();toast('✨ Équipe réorganisée','#7fd3ff');renderCrew()};
    H.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{crewFilter=b.dataset.f;renderCrew()});
    H.querySelectorAll('[data-p]').forEach(c=>{c.addEventListener('pointerdown',e=>crewDragStart(e,+c.dataset.p));c.onclick=()=>{if(justDragged){justDragged=false;return}const p=S.people.find(x=>x.id===+c.dataset.p);if(onExp(p))return toast('🚙 En expédition');pickFor=p.id;renderCrew()}});
@@ -1480,6 +1480,10 @@ function renderCrew(){const H=$('#crew');
 
 /* ================== SANTÉ & SOCIÉTÉ ================== */
 const unavailable=p=>p.sick>0||p.rest>0||p.child>0||S.strike>0;
+// repos automatique + relais
+function startRest(p){p.rest=14;p.auto=1;const q=S.people.find(q=>!q.a&&!onExp(q)&&!unavailable(q)&&!(q.hurt>0)&&(q.fat||0)<50&&!q.relay);
+  if(q){q.a=p.a;q.relay=p.n;toast(`😴 ${p.n} part se reposer · ${q.n} prend le relais`,'#9fe0ff');logx(`${p.n} se repose, ${q.n} prend le relais.`)}else{toast(`😴 ${p.n} part se reposer quelques heures`,'#9fe0ff');logx(`${p.n} part se reposer.`)}}
+function endRest(p){p.auto=0;for(const q of S.people)if(q.relay===p.n){if(q.a===p.a)q.a=null;delete q.relay}toast(`😴 ${p.n} reprend son poste`,'#9fe0ff')}
 function killColon(p,why){S.people=S.people.filter(x=>x!==p);S.colons=Math.max(0,S.colons-1);S.grief=48;S.deaths=(S.deaths||0)+1;prest(-5,'décès');
   toast(`🕯️ ${p.n} est décédé·e (${why})`,'#c9b8ff');logx(`${p.n} (${JOBS[p.j].n}) est décédé·e : ${why}. La base est en deuil.`);vib([60,80,60]);
   if(!memorial.visible){memorial.visible=true}}
@@ -1495,9 +1499,11 @@ function tickHealth(){
   for(const p of S.people){
     if(p.sick>0){p.sick-=hosp?2:1;if(p.sick<=0){p.sick=0;p.imm=240;logx(`${p.n} est guéri·e.`)}
       else if(p.sev>.8&&!hosp&&Math.random()<.006){killColon(p,'maladie');continue}}
-    if(p.imm>0)p.imm--;if(p.rest>0)p.rest--;if(p.child>0){p.child--;if(p.child===0)toast(`🧒 ${p.n} est assez grand·e pour travailler`,'#9fe0ff')}
+    if(p.imm>0)p.imm--;if(p.rest>0){p.rest--;if(p.rest===0&&p.auto)endRest(p)}if(p.child>0){p.child--;if(p.child===0)toast(`🧒 ${p.n} est assez grand·e pour travailler`,'#9fe0ff')}
     // fatigue
-    const working=p.a&&!unavailable(p)&&!onExp(p)&&!(p.hurt>0);p.fat=clamp((p.fat||0)+(working?.55:-1.6),0,100);
+    const working=p.a&&!unavailable(p)&&!onExp(p)&&!(p.hurt>0);p.fat=clamp((p.fat||0)+(working?.55:p.rest>0&&p.auto?-5:-1.6),0,100);
+    if(p.rest>0&&p.auto&&p.fat<=15){p.rest=0;endRest(p)}
+    if(working&&p.fat>=80&&p.fat<98){const busy=S.people.some(q=>q!==p&&q.a===p.a&&q.rest>0&&q.auto);if(!busy||p.fat>=92)startRest(p)}
     if(p.fat>=98&&working){p.rest=12;toast(`😴 ${p.n} s'effondre de fatigue (12 h de repos)`,'#ffcf9a')}
     if(p.fat>80&&Math.random()<.004)infect(p,'épuisement');
     // perte osseuse et radiations
@@ -1669,7 +1675,7 @@ function getAlerts(){const r=rates,A=[];if(!r.store)return A;
   if(S.req){const R=REQS[S.req.k];const map={parc:'parc',hopital:'hopital',vivres:'serre',eau:'extracteur',place:'habitat'};const bk=map[S.req.k];A.push({sev:2,ic:'💬',t:`Demande : ${R.t}`,sub:`${S.req.by.split(' ')[0]} · ${S.req.left} h restantes`,btn:bk?'Construire':'Équipe',col:'#3d8bff',fn:()=>bk?tryBuild(bk):openCrew('team')})}
   if(r.cap<=S.colons&&count('pad'))A.push({sev:2,ic:'🏠',t:'Habitats pleins',sub:'Les navettes ne peuvent plus amener de colons',btn:'Habitat',col:'#3d8bff',fn:()=>tryBuild('habitat')});
   for(const b of S.b.filter(b=>!b.dmg&&wearOf(b)<30).slice(0,3)){const mc=Math.max(20,Math.round((b.inv||DEFS[b.t].cost)*.1*(active('imprimante')?.5:1)));A.push({sev:2,ic:'🧰',t:`${DEFS[b.t].name} usé (${Math.round(wearOf(b))} %)`,sub:`Entretien ⛏ ${mc}`,btn:'Entretenir',col:'#ff9a3d',fn:()=>{if(S.rego<mc)return toast('⛏ Pas assez','#ff8a7a');S.rego-=mc;b.wear=100;toast('🧰 '+DEFS[b.t].name+' entretenu','#6dffb5');computeRates();save()},go:()=>focusB(b)})}
-  const tired=S.people.filter(p=>(p.fat||0)>80).length;if(tired)A.push({sev:2,ic:'😴',t:`${tired} colon${tired>1?'s':''} épuisé${tired>1?'s':''}`,sub:'Laisse-les se reposer (sans poste)',btn:'Équipe',col:'#3d8bff',fn:()=>openCrew('team')});
+  const tired=S.people.filter(p=>(p.fat||0)>88&&!(p.rest>0)).length;if(tired)A.push({sev:2,ic:'😴',t:`${tired} colon${tired>1?'s':''} épuisé${tired>1?'s':''}`,sub:'Ils attendent qu\'un collègue revienne pour se reposer',btn:'Équipe',col:'#3d8bff',fn:()=>openCrew('team')});
   const idle=S.people.filter(p=>!p.a&&!onExp(p)&&!unavailable(p)).length;if(idle&&S.b.some(b=>slotsOf(b)&&freeSlots(b)>0&&!b.dmg))A.push({sev:2,ic:'👷',t:`${idle} colon${idle>1?'s':''} sans poste`,sub:'Des postes sont libres',btn:'Auto',col:'#3d8bff',fn:()=>{autoAll();computeRates();save();toast('✨ Équipe réorganisée','#7fd3ff')}});
   if(S.glitch)A.push({sev:1,ic:'💻',t:'Bug système',sub:'Capteurs illisibles'});if(S.st.down>0)A.push({sev:1,ic:'📡',t:`Liaison station coupée · ${S.st.down} h`,sub:'Bonus de la station suspendus'});
   if(S.conflict>0)A.push({sev:1,ic:'⚡',t:'Tensions entre colons',sub:'Production −10 %'});if(S.grief>0)A.push({sev:1,ic:'🕯️',t:'La base est en deuil',sub:'Moral en baisse'});
@@ -1844,7 +1850,7 @@ function showInfo(o,opt){if(!o)return;const b=o.userData.b,d=DEFS[b.t],lv=lvOf(b
       const cb=(ic,lab,need,have)=>`<div><span>${ic} ${lab}</span><b class="${have>=need?'ok':'ko'}">${fmt(need)} <small>/ ${fmt(Math.floor(have))} ${have>=need?'✓':'· manque '+fmt(Math.ceil(need-have))}</small></b><div class="ibar"><span style="width:${Math.min(100,have/need*100)}%;background:${have>=need?'#6dffb5':'#ff8a7a'}"></span></div></div>`;
       body+=`<div class="iup"><h4>AU NIVEAU ${lv+1}${lock?' <span>🔒 Ingénierie avancée requise</span>':''}</h4><div class="icmp">${rows.join('')}</div><div class="icost">${cb('⛏','Régolithe',c,S.rego)}${cr?cb('🔩','Rares',cr,S.rare):''}</div></div>`}
     else if(lv>=3)body+=`<div class="irow"><span>⭐ Niveau maximum atteint</span></div>`}
-  else if(infoTab==='team'){body=sl?`<div class="iteam">${S.people.filter(p=>p.a===bkey(b)).map(p=>`<div class="itm">${avatar(p,40)}<div><b>${p.n}</b><small>${JOBS[p.j].i} ${JOBS[p.j].n}${JOBS[p.j].fit.includes(b.t)?' · <span style="color:#6dffb5">★ spécialité</span>':''}${unavailable(p)||onExp(p)?' · <span style="color:#ffb36b">absent·e</span>':''}</small></div></div>`).join('')}
+  else if(infoTab==='team'){body=sl?`<div class="iteam">${S.people.filter(p=>p.a===bkey(b)).map(p=>`<div class="itm">${avatar(p,40)}<div><b>${p.n}</b><small>${JOBS[p.j].i} ${JOBS[p.j].n}${JOBS[p.j].fit.includes(b.t)?' · <span style="color:#6dffb5">★ spécialité</span>':''}${p.rest>0&&!p.sick?' · <span style="color:#9fe0ff">😴 au repos '+p.rest+' h</span>':unavailable(p)||onExp(p)?' · <span style="color:#ffb36b">absent·e</span>':''}${p.relay?' · <span style="color:#9fe0ff">🔁 relais de '+p.relay.split(' ')[0]+'</span>':''}</small></div></div>`).join('')}
       ${Array.from({length:Math.max(0,sl-nIn)},()=>`<div class="itm free"><span>＋</span><div><b>Poste libre</b><small>Spécialité : ${Object.values(JOBS).filter(j=>j.fit.includes(b.t)).map(j=>j.i+' '+j.n).join(', ')||'tous'}</small></div></div>`).join('')}</div><button class="btn ghost" id="iCrew" style="width:100%;margin-top:8px">👥 Gérer l'équipage</button>`:'<p class="iempty">Ce module fonctionne sans équipe.</p>'}
   else{const wc=wv>60?'#6dffb5':wv>30?'#ffd36b':'#ff8a7a',rate=(WEAR_RATE[b.t]||.3)*(LUNAR?1.3:1);
     const hrs=Math.max(0,Math.round((wv-35)/rate)),risk=b.dmg?'—':wv>40?'<span style="color:#6dffb5">faible</span>':wv>25?'<span style="color:#ffd36b">moyen</span>':'<span style="color:#ff8a7a">élevé</span>';
@@ -2043,8 +2049,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='2.5.1';
+const APP_VER='2.6';
 const CHANGELOG=[
+ {v:'2.6',d:'Repos automatique',n:[['😴','Repos automatique','À 80 % de fatigue, un colon part se reposer seul (~13 h) puis reprend son poste.'],['🔁','Relais','Un colon sans poste prend sa place pendant son repos. Deux colons d\'un même module ne se reposent pas en même temps.']]},
  {v:'2.5.1',d:'Retour des icônes',n:[['↩️','Icônes d\'origine','Retour aux icônes d\'avant la 2.5.']]},
  {v:'2.4.1',d:'Fiche module plus lisible',n:[['🎨','Fond de fiche','Fond plus sombre et opaque, comme sur la maquette : le texte ressort mieux sur le décor.']]},
  {v:'2.4',d:'Fiche module repensée',n:[['🧾','Fiche module claire','Tuiles titrées avec la part de la base, niveau suivant en tableau, ton stock face au coût, boutons avec libellés.'],['👆','Fiche glissable','Barre réduite qui laisse voir la base : glisse vers le haut pour tout voir, ‹ › ou swipe pour le module suivant.'],['💡','Conseils','La fiche te dit si améliorer vaut le coup, prévoit l\'usure, montre les dernières 24 h et prévient avant d\'éteindre ou démonter.']]},
