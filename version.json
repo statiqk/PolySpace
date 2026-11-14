@@ -1,9 +1,7 @@
 {
- "version": "2.4",
+ "version": "2.4.1",
  "date": "2026-11-14",
  "notes": [
-  "Fiche module repensée et plus claire",
-  "Fiche réduite glissable, module suivant avec ‹ ›",
-  "Conseils, prévision d'usure et historique 24 h"
+  "Fond de la fiche module plus sombre, comme la maquette"
  ]
 }
