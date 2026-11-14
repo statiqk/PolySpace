@@ -270,7 +270,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#eef2ff;font-family:
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v2.7.1</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v2.8</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -1211,7 +1211,10 @@ function tickHour(){
   const before=S.people.length;syncPeople('est reparti·e vers la Terre');for(const p of S.people)if(p.hurt>0)p.hurt=Math.max(0,p.hurt-(active('hopital')?3:1));
   tickExp();tickHealth();tickSociety();
   // navette
-  if(S.b.some(b=>b.t==='pad'&&!b.dmg)&&shipState==='idle'&&!S.embargo){S.ship=Math.max(0,S.ship-1);if(S.ship<=0&&shipState==='idle'){startShuttle()}}
+  {const pad=S.b.find(b=>b.t==='pad'),ok=padOK();
+   if(pad&&shipState==='idle'&&!S.embargo){
+    if(S.orbW>0){if(ok){S.orbW=0;startShuttle()}else if(--S.orbW<=0){S.orbW=0;S.ship=36;S.prestige=Math.max(0,(S.prestige||0)-3);toast('🛰️ La navette repart vers la Terre : livraison perdue','#ff8a7a',2);logx('Navette repartie sans se poser (pas de tir indisponible). Prestige −3.')}}
+    else if(ok||S.ship<=3){S.ship=Math.max(0,S.ship-1);if(S.ship<=0){if(ok)startShuttle();else{S.orbW=12;toast('🛰️ Navette en orbite : remets le pas de tir en service (12 h)','#ffb36b',2);logx('Navette en attente en orbite : pas de tir indisponible.')}}}}}
   // événements
   S.nextEv-=1;if(S.nextEv<=0&&!modalOpen&&!placing){fireEvent();S.nextEv=42+Math.random()*30}
   // horloge
@@ -1231,6 +1234,8 @@ let hourFrac=0;
 
 /* ================== NAVETTE ================== */
 let shipState='idle',shipT=0;
+function shipPill(){return S.orbW>0?`<span class="os" style="color:#ffb36b">🛰️ attend ${S.orbW} h</span>`:!padOK()&&S.ship>3?'<span class="os" style="color:#9aa6c8">🚀 en pause</span>':`<span class="os">🚀 ${S.ship} h</span>`}
+function padOK(){const p=S.b.find(b=>b.t==='pad');return!!p&&!p.dmg&&p.pwr!==false&&!(p.off>0)}
 function padPos(){const p=S.b.find(b=>b.t==='pad');return p?new THREE.Vector3(p.i*TILE,0,p.j*TILE):null}
 function startShuttle(){if(!padPos())return;shipState='down';shipT=0;shuttle.visible=true;toast('🚀 Navette de ravitaillement en approche','#7fd3ff')}
 function arrive(){const padB0=S.b.find(b=>b.t==='pad');const pilots=padB0?workersOf(padB0).filter(p=>p.j==='pil').length:0;
@@ -1675,6 +1680,7 @@ function getAlerts(){const r=rates,A=[];if(!r.store)return A;
   for(const b of S.b.filter(b=>b.dmg)){const c=repCost(b);A.push({sev:3,ic:'🔧',t:`${DEFS[b.t].name} en panne`,sub:`Réparation ⛏ ${c}`,btn:'Réparer',col:'#ff7a3d',fn:()=>{if(S.rego<c)return toast('⛏ Pas assez de régolithe','#ff8a7a');S.rego-=c;b.dmg=false;b.wear=100;removeBuilding(b);addBuilding(b,'up');toast('🔧 '+DEFS[b.t].name+' réparé','#6dffb5');logx(DEFS[b.t].name+' réparé.');computeRates();save()},go:()=>focusB(b)})}
   const sick=S.people.filter(p=>p.sick>0);if(sick.length){const byMod={};sick.forEach(p=>{if(p.a)byMod[p.a]=(byMod[p.a]||0)+1});const mk=Object.keys(byMod).sort((a,b)=>byMod[b]-byMod[a])[0];const mb=mk&&S.b.find(b=>bkey(b)===mk);
     A.push({sev:3,ic:'🦠',t:`${sick.length} malade${sick.length>1?'s':''}`,sub:mb?(mb.quar>0?`${DEFS[mb.t].name} en quarantaine`:`Foyer : ${DEFS[mb.t].name}`):'Contagion possible',btn:mb&&!(mb.quar>0)?'Isoler':null,col:'#56b84a',fn:()=>{mb.quar=48;toast('🚧 '+DEFS[mb.t].name+' en quarantaine 48 h','#ffd36b');computeRates();save()},go:()=>openCrew('team')})}
+  if(S.orbW>0){const pd=S.b.find(b=>b.t==='pad');A.push({sev:3,ic:'🛰️',t:`Navette en orbite · repart dans ${S.orbW} h`,sub:pd&&pd.dmg?'Répare le pas de tir pour qu\'elle se pose':'Rallume le pas de tir pour qu\'elle se pose',btn:pd&&pd.pwr===false&&!pd.dmg?'Rallumer':'Voir',col:'#ff9a3d',fn:()=>{if(pd&&pd.pwr===false&&!pd.dmg){pd.pwr=undefined;pd.off=0;removeBuilding(pd);addBuilding(pd,false);toast('⏻ Pas de tir rallumé','#6dffb5');computeRates();save()}else if(pd)focusB(pd)},go:()=>pd&&focusB(pd)})}
   if(LUNAR)A.push({sev:2,ic:'🌑',t:`Nuit lunaire · ${S.ln.left} h`,sub:`Chauffage −${(r.heat||0).toFixed(0)} ⚡/h`});else if(S.ln.next<=24)A.push({sev:S.ln.next<=10?3:2,ic:'🌑',t:`Nuit lunaire dans ${Math.max(1,S.ln.next)} h`,sub:'32 h sans soleil : stocke de l\'énergie',btn:'Batterie',col:'#7a5cff',fn:()=>tryBuild('batterie')});
   if(S.req){const R=REQS[S.req.k];const map={parc:'parc',hopital:'hopital',vivres:'serre',eau:'extracteur',place:'habitat'};const bk=map[S.req.k];A.push({sev:2,ic:'💬',t:`Demande : ${R.t}`,sub:`${S.req.by.split(' ')[0]} · ${S.req.left} h restantes`,btn:bk?'Construire':'Équipe',col:'#3d8bff',fn:()=>bk?tryBuild(bk):openCrew('team')})}
   if(r.cap<=S.colons&&count('pad'))A.push({sev:2,ic:'🏠',t:'Habitats pleins',sub:'Les navettes ne peuvent plus amener de colons',btn:'Habitat',col:'#3d8bff',fn:()=>tryBuild('habitat')});
@@ -1703,8 +1709,8 @@ function renderHUD(){const r=rates;if(!r.store)return;
   if(view==='alerts'){const k=curAlerts.map(a=>a.t+a.sub).join('|');if(k!==lastAlertsSheet){lastAlertsSheet=k;renderAlerts()}}
   // objectif en pastille
   let h='';if(shipState!=='idle'){h=`<span class="oi">🚀</span><span>${shipState==='down'?'Navette en approche':shipState==='sit'?'Déchargement…':'Décollage'}</span>`}
-  else if(S.obj<OBJ.length){const o=OBJ[S.obj];const p=o.p?clamp(o.p(S),0,1):null;h=`<span class="oi">${o.ic}</span><span><b style="color:#ffb36b">${S.obj+1}/${OBJ.length}</b> · ${o.t}${p!==null?` · ${Math.round(p*100)} %`:''}</span>`+(count('pad')?`<span class="os">🚀 ${S.ship} h</span>`:'')}
-  else h=`<span class="oi">🌕</span><span>Base accomplie !</span>`+(count('pad')?`<span class="os">🚀 ${S.ship} h</span>`:'');
+  else if(S.obj<OBJ.length){const o=OBJ[S.obj];const p=o.p?clamp(o.p(S),0,1):null;h=`<span class="oi">${o.ic}</span><span><b style="color:#ffb36b">${S.obj+1}/${OBJ.length}</b> · ${o.t}${p!==null?` · ${Math.round(p*100)} %`:''}</span>`+(count('pad')?shipPill():'')}
+  else h=`<span class="oi">🌕</span><span>Base accomplie !</span>`+(count('pad')?shipPill():'');
   if(mode==='orbit'){if(!S.st.built){const ok=S.b.some(b=>b.t==='pad'&&!b.dmg);h=`<span class="oi" style="background:linear-gradient(135deg,#3dc1ff,#5a6bff)">🛰️</span><span>${ok?'Mettre en orbite le noyau':'Nécessite un pas de tir'}</span><button class="btn ${ok&&S.rego>=STATION_COST?'blue':'ghost'}" data-act="station" style="padding:7px 10px;font-size:11.5px">⛏ ${STATION_COST} · 🔩 20</button>`}
     else{h=`<span class="oi" style="background:linear-gradient(135deg,#3dc1ff,#5a6bff)">🛰️</span><span><b>Hélios</b> · ${S.st.m.length}/${PORTS.length} ${S.st.m.map(m=>SDEFS[m.t].icon).join('')}</span><button class="btn blue" data-act="addmod" style="padding:7px 10px;font-size:11.5px">＋ Module</button>`}}
   if(h!==lastObj){$('#obj').innerHTML=h;lastObj=h}
@@ -1816,6 +1822,7 @@ function consequence(b,del){const e=nomOf(b),L=[];if(b.pwr===false&&!del)return 
   for(const [k,f] of [['o2','o2'],['food','food'],['water','water']])if(e[f]>0){const nv=rates[k]-e[f]*(rates.power??1);if(nv<0)L.push(`${RLAB[k][0]} ${RLAB[k][1].toLowerCase()} passe à <b>${nf(nv)}/h</b>`)}
   if(e.prod>0||e.solar>0){const nv=rates.net-e.prod-e.solar*(rates.day||0);if(nv<0)L.push(`⚡ énergie passe à <b>${nf(nv)}/h</b>`)}
   if(e.store&&del)L.push(`🔋 stockage −${e.store}`);
+  if(b.t==='pad'&&!del&&!S.embargo)L.push(S.orbW>0?'🛰️ la navette en orbite ne pourra pas se poser':S.ship<=3?`🚀 la navette arrive dans ${S.ship} h : elle attendra 12 h en orbite puis repartira`:'🚀 navettes <b>suspendues</b> tant qu\'il est éteint');
   if(!L.length&&e.use>0&&!del)return['g',`Économise <b>⚡ ${nf(e.use)}/h</b>, sans gros impact.`];
   return L.length?['w',L.join(' · ')]:null}
 function sameType(b){return S.b.filter(x=>x.t===b.t).sort((a,c)=>a.i-c.i||a.j-c.j)}
@@ -2055,8 +2062,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='2.7.1';
+const APP_VER='2.8';
 const CHANGELOG=[
+ {v:'2.8',d:'Pas de tir et navettes',n:[['⏸️','Navettes suspendues','Pas de tir éteint ou en panne : le compte à rebours se met en pause.'],['🛰️','Attente en orbite','Une navette déjà en approche attend 12 h en orbite ; sans pas de tir, elle repart (livraison perdue, prestige −3).'],['⚠️','Avertissement','Éteindre le pas de tir demande confirmation et annonce la conséquence.']]},
  {v:'2.7.1',d:'Énergie vérifiée',n:[['☀️','Panneaux solaires','Leur production baisse maintenant avec l\'usure (poussière), comme les autres modules.'],['🟣','Centrale hélium-3','Sa production d\'hélium-3 est affichée dans la fiche.'],['🔋','Batterie','La perte de charge la nuit est affichée ; la jauge indique « 99+ h » au lieu de « ∞ ».']]},
  {v:'2.7',d:'Hôpital contre les épidémies',n:[['🏥','Isolement','L\'hôpital isole les malades (3 lits par niveau) : ils ne contaminent plus personne.'],['🩺','Médecin','Un médecin à l\'hôpital soigne 3× plus vite et dépiste les nouveaux cas.']]},
  {v:'2.6',d:'Repos automatique',n:[['😴','Repos automatique','À 80 % de fatigue, un colon part se reposer seul (~13 h) puis reprend son poste.'],['🔁','Relais','Un colon sans poste prend sa place pendant son repos. Deux colons d\'un même module ne se reposent pas en même temps.']]},

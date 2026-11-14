@@ -1,8 +1,8 @@
 {
- "version": "2.7.1",
+ "version": "2.8",
  "date": "2026-11-14",
  "notes": [
-  "Panneaux solaires sensibles à l'usure",
-  "Hélium-3 et perte des batteries affichés"
+  "Navettes suspendues si le pas de tir est éteint",
+  "Attente en orbite 12 h"
  ]
 }
