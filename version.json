@@ -1,8 +1,7 @@
 {
- "version": "2.5",
+ "version": "2.5.1",
  "date": "2026-11-14",
  "notes": [
-  "Nouvelles icônes sur mesure",
-  "Icônes des jauges colorées selon le danger"
+  "Retour des icônes d'origine"
  ]
 }
