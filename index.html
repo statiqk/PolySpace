@@ -271,7 +271,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#eef2ff;font-family:
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v3.6</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v3.6.1</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -335,7 +335,7 @@ const gtao=new GTAOPass(scene,camera,innerWidth,innerHeight);gtao.updateGtaoMate
 gtao.setSceneClipBox(new THREE.Box3(new THREE.Vector3(-40,-6,-40),new THREE.Vector3(40,30,40)));
 gtao.overrideVisibility=function(){const c=this._visibilityCache;this.scene.traverse(o=>{c.set(o,o.visible);if(o.isPoints||o.isLine||o.isSprite||(o.material&&(o.material.transparent||o.material.depthWrite===false)))o.visible=false})};
 composer.addPass(gtao);window.__gt=gtao;
-const bloom=new UnrealBloomPass(new THREE.Vector2(innerWidth/2,innerHeight/2),.6,.4,2.4);
+const bloom=new UnrealBloomPass(new THREE.Vector2(innerWidth/2,innerHeight/2),.42,.25,3.2);
 composer.addPass(bloom);
 composer.addPass(new OutputPass());
 const fxaa=new ShaderPass(FXAAShader);
@@ -840,6 +840,7 @@ Object.assign(MODELS,{frigo(lv){const g=new THREE.Group();plinth(g);
   if(lv>=2)mesh(new THREE.BoxGeometry(1.1,1.1,1.1),ice,1.2,.85,1.2,g);
   g.userData.spin=fans[0];g.userData.spin2=fans[1];return g}});
 /* ===== modèles refaits (v3.4) ===== */
+const BATM=new THREE.MeshStandardMaterial({color:0x0a2a33,emissive:0x3fe0ff,emissiveIntensity:1.6});
 {
 const box=(w,h,d,mat,x,y,z,p)=>mesh(new THREE.BoxGeometry(w,h,d),mat,x,y,z,p);
 const cyl=(rt,rb,h,mat,x,y,z,p,seg=20)=>mesh(new THREE.CylinderGeometry(rt,rb,h,seg),mat,x,y,z,p);
@@ -933,7 +934,7 @@ N.extracteur=lv=>{const g=new THREE.Group();plinth(g);const W=new THREE.MeshStan
 N.batterie=lv=>{const g=new THREE.Group();plinth(g);const n=lv===1?4:lv===2?6:8,h=lv>=3?1.9:1.45,cols=n/2;const cells=[];
   box(3,.22,2.6,M.dark,0,.4,0,g);
   for(let k=0;k<n;k++){const x=((k%cols)-(cols-1)/2)*(2.6/cols),z=k<cols?-.6:.6;cyl(.36,.36,h,M.white,x,.51+h/2,z,g,20);cyl(.38,.38,.08,M.grey,x,.55+h,z,g,20);cyl(.15,.15,.08,M.copper,x,.63+h,z,g,12);
-    for(let i=0;i<5;i++){const c=mesh(new THREE.CylinderGeometry(.372,.372,h*.11,20,1,true),M.cyan,x,.65+i*h*.17,z,g);c.castShadow=false;cells.push(c)}}
+    for(let i=0;i<5;i++){const c=mesh(new THREE.CylinderGeometry(.372,.372,.05,20,1,true),BATM,x,.65+i*h*.17,z,g);c.castShadow=false;cells.push(c)}}
   box(.6,.8,.5,M.panelW,1.45,.9,1.3,g);box(.4,.05,.02,M.amber,1.45,1.2,1.56,g).castShadow=false;
   // les bandes sont rangées par niveau i%5 pour la jauge
   g.userData.cells=cells;return g};
@@ -2380,7 +2381,7 @@ function updateSky(){
   sunSprite.position.copy(sunDir).multiplyScalar(1400);sunCore.position.copy(sunSprite.position);sunSprite.visible=sunCore.visible=sunDir.y>-.08;
   const night=1-up;{const dt=Math.min(.5,tAll-(updateSky.t||tAll));updateSky.t=tAll;frostK+=((LUNAR?1:0)-frostK)*Math.min(1,dt*.6)}earthshine.color.setHex(0x8fb4ff);earthshine.intensity=lerp(.03,.22+(.42+frostK*.12)+frostK*.12,night);fill.intensity=night*.1;renderer.toneMappingExposure=lerp(.92,.95,night);
   for(const l of nightLights)l.intensity=night*25;
-  for(const l of modLights){const dm=l.userData.dome;l.intensity=l.userData.on&&!eco?night*(dm?13:l.userData.warm?9:7):0;l.color.copy(dm==='serre'?_cGrow:dm==='parc'?_cPark:l.userData.warm?_cWarm:_cCold);if(l.userData.warm&&!dm&&frostK>.01)l.color.lerp(_cHot,frostK)}
+  for(const l of modLights){const dm=l.userData.dome;l.intensity=l.userData.on&&!eco?night*(dm?9:l.userData.warm?6:4.5):0;l.color.copy(dm==='serre'?_cGrow:dm==='parc'?_cPark:l.userData.warm?_cWarm:_cCold);if(l.userData.warm&&!dm&&frostK>.01)l.color.lerp(_cHot,frostK)}
   M.glass.emissiveIntensity=M.glassG.emissiveIntensity=night*.7;
   const bo=rates&&rates.power<.999?1-rates.power:0,pulse=.55+.45*Math.sin(tAll*3.2);
   if(bo>0){for(const l of modLights){if(!l.userData.on)continue;l.color.setHex(0xff2a2a);l.intensity=(l.userData.warm?11:0)*Math.max(night,.35)*pulse*bo+l.intensity*(1-bo)}for(const l of nightLights)l.intensity*=1-bo}
@@ -2388,7 +2389,7 @@ function updateSky(){
   lampPoolMat.opacity=night*.3*(1-bo);gyroMat.opacity=.04+night*.08;
   if(!updateSky.gm){updateSky.gm=[];scene.traverse(o=>{if(o.isMesh&&o.material&&o.material.normalMap===groundNrm&&!updateSky.gm.includes(o.material)){o.material.userData.r0=o.material.roughness;updateSky.gm.push(o.material)}})}
   for(const m of updateSky.gm){m.color.copy(_gDay).lerp(_gFrost,frostK);m.roughness=lerp(m.userData.r0,.6,frostK*night);m.metalness=.15*frostK*night}
-  const fl=flicker>0?(Math.random()<.5?.05:1):1;{const bo=rates&&rates.power<.999?1-rates.power:0;for(const m of NIGHT_MATS)m.emissiveIntensity=m.userData.base*(.62+night*.45)*fl*(m===M.red?1+bo*2:1-.82*bo)*(m===M.win||m===M.winB?1+night*1.4:1)}for(const l of nightLights)l.intensity*=fl;for(const l of modLights)l.intensity*=fl;
+  const fl=flicker>0?(Math.random()<.5?.05:1):1;{const bo=rates&&rates.power<.999?1-rates.power:0;for(const m of NIGHT_MATS)m.emissiveIntensity=m.userData.base*(.62+night*.45)*fl*(m===M.red?1+bo*2:1-.82*bo)*(m===M.win||m===M.winB?1+night*.25:1)*(m===M.win?.7:1)}for(const l of nightLights)l.intensity*=fl;for(const l of modLights)l.intensity*=fl;
   scene.environmentIntensity=.05+night*.07;
   const esun=mode==='orbit'?OSUN:sunDir;earth.userData.atm.material.uniforms.uSun.value.copy(esun);earth.userData.eu.uSun.value.copy(esun);poolMat.opacity=Math.max(night*(.22+frostK*.23),.4*bo*pulse);
   return {night,up}}
@@ -2403,7 +2404,7 @@ window.__f=0;function animate(){window.__f++;requestAnimationFrame(animate);let 
      if(u.led&&u.b){const m=LEDM[ledState(u.b)];if(u.led.material!==m)u.led.material=m}
      if(u.b){const q=u.b.quar>0;if(q&&!u.qb){const hy=new THREE.Box3().setFromObject(o).max.y;const m=new THREE.Mesh(new THREE.SphereGeometry(.16,12,8),quarM);m.position.y=hy+.2;o.add(m);u.qb=m}else if(!q&&u.qb){o.remove(u.qb);u.qb.geometry.dispose();u.qb=null}if(u.qb)u.qb.visible=Math.sin(tAll*5)>-.2}}
    for(;k<2;k++)gyroL[k].intensity=0}
-  LEDM.dmg.emissiveIntensity=.6+Math.abs(Math.sin(tAll*4))*1.8;LEDM.warn.emissiveIntensity=1+Math.sin(tAll*2)*.3;
+  LEDM.dmg.emissiveIntensity=.6+Math.abs(Math.sin(tAll*4))*1.8;LEDM.warn.emissiveIntensity=1+Math.sin(tAll*2)*.3;LEDM.ok.emissiveIntensity=.55;
   growing=false;for(const o of bGroup.children){const u=o.userData;
     if(u.grow!==undefined){growing=true;u.grow+=dt*1.6;const g=Math.min(1,u.grow);const e=1+2.70158*Math.pow(g-1,3)+1.70158*Math.pow(g-1,2);o.scale.setScalar(e);if(g>=1)delete u.grow}
     const run=(S.shelter||o.userData.b.pwr===false?0:1)*(rates.power||1);if(u.spin)u.spin.rotation.y+=dt*3*run;if(u.rings)u.rings.forEach((r,i)=>r.rotation.z+=dt*(1.1+i*.6)*(i%2?-1:1)*run);if(u.dishes)u.dishes.forEach((d,i)=>d.rotation.y+=dt*(.3+i*.2)*run);
@@ -2474,8 +2475,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='3.6';
+const APP_VER='3.6.1';
 const CHANGELOG=[
+ {v:'3.6.1',d:'Nuit plus nette',n:[['🔋','Batteries sobres','Bandes de charge fines et douces.'],['🪟','Fenêtres','Moins éblouissantes la nuit, lumières des modules adoucies.'],['✨','Halo maîtrisé','Fini la brume blanche sur les grandes bases.']]},
  {v:'3.6',d:'Nouveau ciel',n:[['🌍','Terre détaillée','Forêts, déserts, montagnes, hauts-fonds, nuages plus fins et villes en milliers de points la nuit.'],['🌌','Voie lactée','Bande réaliste avec cœur plus chaud et bandes de poussière ; 11 000 étoiles fixes.'],['☀️','Soleil lunaire','Petit disque blanc avec une fine couronne, comme vu depuis la Lune.']]},
  {v:'3.5',d:'Bâtiments détaillés',n:[['🏗️','9 bâtiments refaits','Habitat, serre, recycleur, parc, foreuse, usine 3D, bouclier, observatoire et laboratoire entièrement remodélisés, avec beaucoup plus de détails.']]},
  {v:'3.4',d:'10 bâtiments refaits',n:[['🏗️','Nouvelle modélisation','Entrepôt réfrigéré, panneaux solaires, mine, spatioport, centrale hélium-3, extracteur de glace, batterie, réacteur, pas de tir et hôpital ont été entièrement refaits.'],['☀️','Panneaux solaires','1, 2 puis 4 panneaux selon le niveau, qui suivent tous le soleil.'],['🔋','Batterie','Les cellules s\'allument selon la vraie charge de la base.']]},
