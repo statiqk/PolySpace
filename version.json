@@ -1,8 +1,8 @@
 {
- "version": "2.8",
+ "version": "2.9",
  "date": "2026-11-14",
  "notes": [
-  "Navettes suspendues si le pas de tir est éteint",
-  "Attente en orbite 12 h"
+  "Rendu optimisé (8× moins d'appels de dessin)",
+  "Ombres et images par seconde adaptatives"
  ]
 }
