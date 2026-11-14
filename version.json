@@ -1,8 +1,8 @@
 {
- "version": "3.2",
+ "version": "3.3",
  "date": "2026-11-14",
  "notes": [
-  "Soleil lunaire réaliste",
-  "Gyrophare, coupure de courant, balise de quarantaine"
+  "Intérieurs éclairés la nuit",
+  "LED de statut sur chaque module"
  ]
 }

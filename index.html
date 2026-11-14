@@ -271,7 +271,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#eef2ff;font-family:
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v3.2</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v3.3</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -375,7 +375,7 @@ const gyroMat=new THREE.MeshBasicMaterial({color:0xff7a2a,transparent:true,opaci
 const gyroGeo=new THREE.ConeGeometry(1.2,9,20,1,true).translate(0,-4.5,0).rotateZ(Math.PI/2).rotateZ(-.3),gyroLampM=new THREE.MeshStandardMaterial({color:0xff6a20,emissive:0xff5a10,emissiveIntensity:5}),quarM=new THREE.MeshStandardMaterial({color:0xffd23a,emissive:0xffc21a,emissiveIntensity:4});
 const gyroL=[0,1].map(()=>{const l=new THREE.SpotLight(0xff7a2a,0,24,.35,.5,1.2);scene.add(l,l.target);return l});
 const modLights=[];for(let i=0;i<6;i++){const l=new THREE.PointLight(0xffb874,0,8,1.6);l.position.set(0,-50,0);scene.add(l);modLights.push(l)}
-let GROUND_MAT=null,frostK=0;const _cWarm=new THREE.Color(0xffb874),_cHot=new THREE.Color(0xff8a4a),_cCold=new THREE.Color(0x9fe8ff),_gDay=new THREE.Color(0xffffff),_gFrost=new THREE.Color(0xe8f2ff),_sunCol=new THREE.Color(),_earthCol=new THREE.Color(0xb8d0ff);
+let GROUND_MAT=null,frostK=0;const _cGrow=new THREE.Color(0xbfffd8),_cPark=new THREE.Color(0xffe2a8),_cWarm=new THREE.Color(0xffb874),_cHot=new THREE.Color(0xff8a4a),_cCold=new THREE.Color(0x9fe8ff),_gDay=new THREE.Color(0xffffff),_gFrost=new THREE.Color(0xe8f2ff),_sunCol=new THREE.Color(),_earthCol=new THREE.Color(0xb8d0ff);
 
 /* ================== TEXTURES PROCÉDURALES ================== */
 function canvasTex(w,h,fn,srgb=true){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');fn(g,w,h);const t=new THREE.CanvasTexture(c);if(srgb)t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=renderer.capabilities.getMaxAnisotropy();return t}
@@ -596,6 +596,7 @@ const M={
   paint:new THREE.MeshStandardMaterial({color:0xf2f2f2,roughness:.7}),
   tree:new THREE.MeshStandardMaterial({color:0x3fbf6a,roughness:.8,emissive:0x0e4020,emissiveIntensity:.5}),
 };
+M.glass.emissive=new THREE.Color(0x3a8a5a);M.glassG.emissive=new THREE.Color(0x4a9a6a);M.glass.emissiveIntensity=M.glassG.emissiveIntensity=0;
 const NIGHT_MATS=[M.win,M.winB,M.amber,M.growL,M.cyan,M.lvl3];NIGHT_MATS.forEach(m=>m.userData.base=m.emissiveIntensity);
 
 /* ================== MODÈLES 3D ================== */
@@ -1134,6 +1135,7 @@ function addBuilding(b,anim){const o=build3D(b.t,b.lv||1);
   if(b.pwr===false&&!b.dmg){const LIT=[M.win,M.winB,M.cyan,M.amber,M.growL,M.core,M.red,M.lvl3];o.traverse(m=>{if(m.isMesh&&LIT.includes(m.material))m.material=M.dark});const w=new THREE.Sprite(offMat);w.scale.set(1.1,1.1,1);w.position.y=5;w.renderOrder=5;o.add(w)}
   if(b.dmg){const hy=new THREE.Box3().setFromObject(o).max.y;const gyG=new THREE.Group();gyG.position.y=hy+.15;const lm=new THREE.Mesh(new THREE.CylinderGeometry(.18,.22,.3,14),gyroLampM);gyG.add(lm);const bm=new THREE.Mesh(gyroGeo,gyroMat);gyG.add(bm);o.add(gyG);o.userData.gyro=gyG;
     const w=new THREE.Sprite(warnMat);w.scale.set(1.3,1.3,1);w.position.y=5.2;w.renderOrder=5;o.add(w);o.userData.warn=w;o.traverse(m=>{if(m.isMesh&&m.material===M.win)m.material=M.dark})}
+  {const s=b.t==='parc'?3.85:b.t==='solaire'?3.35:b.t==='pad'?3.9:3.62;const led=new THREE.Mesh(ledGeom(s),LEDM[ledState(b)]);led.castShadow=false;o.add(led);o.userData.led=led}
   mergeStatic(o);bGroup.add(o);shadowDirty=true;if(anim&&S&&S.b.includes(b))spawnCrane(b);occ.set(key(b.i,b.j),o);if(anim==='up'){o.scale.setScalar(.88);o.userData.grow=.62;burst(o.position.x,.3,o.position.z,30);for(let k=0;k<60;k++){const a=Math.random()*6.28;fire.emit(o.position.x+Math.cos(a)*2,Math.random()*3,o.position.z+Math.sin(a)*2,Math.cos(a)*2,2+Math.random()*3,Math.sin(a)*2,.9,.5,.4,.85,1,0,-2)}}
   else if(anim){o.scale.setScalar(.01);o.userData.grow=0;burst(o.position.x,.3,o.position.z,40)}rebuildCorridors()}
 function removeBuilding(b){const o=occ.get(key(b.i,b.j));if(o){bGroup.remove(o);disposeMerged(o);occ.delete(key(b.i,b.j))}shadowDirty=true;rebuildCorridors()}
@@ -1197,8 +1199,12 @@ function updateVehicles(dt,gdt){if(!S)return;S.veh=S.veh||{hd:0};const run=gdt>0
 function spawnCrane(b){if(veh.cranes.length>=2)return;let pos=null;for(const [di,dj] of [[0,1],[1,0],[-1,0],[0,-1]])if(!occ.has(key(b.i+di,b.j+dj))&&Math.abs(b.i+di)<=HALF+1&&Math.abs(b.j+dj)<=HALF+1){pos=[(b.i+di)*TILE,(b.j+dj)*TILE,Math.atan2(-(b.j*TILE-(b.j+dj)*TILE),b.i*TILE-(b.i+di)*TILE)];break}
   if(!pos)pos=[b.i*TILE+2.6,b.j*TILE+2.6,-Math.PI*.75];const g=craneModel();g.position.set(pos[0],0,pos[1]);g.rotation.y=pos[2];g.scale.set(1,.01,1);scene.add(g);veh.cranes.push({g,t:0});shadowDirty=true}
 
+const LEDM={ok:0x3dff9a,warn:0xffa62a,dmg:0xff3a3a,quar:0xffd23a,off:0x5b6380};for(const k in LEDM){const c=LEDM[k];LEDM[k]=new THREE.MeshStandardMaterial({color:c,emissive:c,emissiveIntensity:k==='off'?.15:1.3,roughness:.5})}
+const ledGeo={};function ledGeom(s){if(ledGeo[s])return ledGeo[s];const th=.045,G=[];for(const [x,z,w,d] of [[0,s/2,s,th],[0,-s/2,s,th],[s/2,0,th,s],[-s/2,0,th,s]])G.push(new THREE.BoxGeometry(w,.06,d).translate(x,.31,z));G.push(new THREE.SphereGeometry(.12,12,8).translate(s/2-.1,.48,s/2-.1));
+  return ledGeo[s]=mergeGeometries(G.map(g=>g.toNonIndexed()))}
+function ledState(b){return b.dmg?'dmg':b.pwr===false||b.off>0?'off':b.quar>0?'quar':wearOf(b)<35?'warn':'ok'}
 function placeModLights(){const L=S.b.slice().sort((a,b)=>(PRESS.includes(b.t)?1:0)-(PRESS.includes(a.t)?1:0)||(a.i*a.i+a.j*a.j)-(b.i*b.i+b.j*b.j));
-  modLights.forEach((l,k)=>{const b=L[k];if(!b){l.position.set(0,-50,0);l.userData.on=0;return}l.position.set(b.i*TILE+1.6,2.2,b.j*TILE+2.2);l.userData.on=1;l.userData.warm=PRESS.includes(b.t)||b.t==='pad'})}
+  modLights.forEach((l,k)=>{const b=L[k];if(!b){l.position.set(0,-50,0);l.userData.on=0;return}const dome=b.t==='serre'||b.t==='parc';if(dome)l.position.set(b.i*TILE,1.6,b.j*TILE);else l.position.set(b.i*TILE+1.6,2.2,b.j*TILE+2.2);l.userData.on=1;l.userData.warm=PRESS.includes(b.t)||b.t==='pad';l.userData.dome=dome?b.t:0})}
 function rebuildCorridors(){placeModLights();disposeMerged(corridors);corridors.clear();for(const b of S.b){if(!PRESS.includes(b.t))continue;for(const [di,dj] of [[1,0],[0,1]]){const n=S.b.find(c=>c.i===b.i+di&&c.j===b.j+dj&&PRESS.includes(c.t));if(!n)continue;
   const g=new THREE.Group();g.position.set((b.i+di/2)*TILE,0,(b.j+dj/2)*TILE);if(dj)g.rotation.y=Math.PI/2;
   const t=mesh(new THREE.CylinderGeometry(.42,.42,1.6,20),M.panelW,0,.75,0,g);t.rotation.z=Math.PI/2;
@@ -2079,14 +2085,15 @@ function updateSky(){
   sunSprite.position.copy(sunDir).multiplyScalar(1400);sunCore.position.copy(sunSprite.position);sunSprite.visible=sunCore.visible=sunDir.y>-.08;
   const night=1-up;{const dt=Math.min(.5,tAll-(updateSky.t||tAll));updateSky.t=tAll;frostK+=((LUNAR?1:0)-frostK)*Math.min(1,dt*.6)}earthshine.color.setHex(0x8fb4ff);earthshine.intensity=lerp(.03,.22+(.42+frostK*.12)+frostK*.12,night);fill.intensity=night*.1;renderer.toneMappingExposure=lerp(.92,.95,night);
   for(const l of nightLights)l.intensity=night*25;
-  for(const l of modLights){l.intensity=l.userData.on&&!eco?night*(l.userData.warm?9:7):0;l.color.copy(l.userData.warm?_cWarm:_cCold);if(l.userData.warm&&frostK>.01)l.color.lerp(_cHot,frostK)}
+  for(const l of modLights){const dm=l.userData.dome;l.intensity=l.userData.on&&!eco?night*(dm?13:l.userData.warm?9:7):0;l.color.copy(dm==='serre'?_cGrow:dm==='parc'?_cPark:l.userData.warm?_cWarm:_cCold);if(l.userData.warm&&!dm&&frostK>.01)l.color.lerp(_cHot,frostK)}
+  M.glass.emissiveIntensity=M.glassG.emissiveIntensity=night*.7;
   const bo=rates&&rates.power<.999?1-rates.power:0,pulse=.55+.45*Math.sin(tAll*3.2);
   if(bo>0){for(const l of modLights){if(!l.userData.on)continue;l.color.setHex(0xff2a2a);l.intensity=(l.userData.warm?11:0)*Math.max(night,.35)*pulse*bo+l.intensity*(1-bo)}for(const l of nightLights)l.intensity*=1-bo}
   poolMat.color.setRGB(1,1-.85*bo,1-.85*bo);
   lampPoolMat.opacity=night*.3*(1-bo);gyroMat.opacity=.04+night*.08;
   if(!updateSky.gm){updateSky.gm=[];scene.traverse(o=>{if(o.isMesh&&o.material&&o.material.normalMap===groundNrm&&!updateSky.gm.includes(o.material)){o.material.userData.r0=o.material.roughness;updateSky.gm.push(o.material)}})}
   for(const m of updateSky.gm){m.color.copy(_gDay).lerp(_gFrost,frostK);m.roughness=lerp(m.userData.r0,.6,frostK*night);m.metalness=.15*frostK*night}
-  const fl=flicker>0?(Math.random()<.5?.05:1):1;{const bo=rates&&rates.power<.999?1-rates.power:0;for(const m of NIGHT_MATS)m.emissiveIntensity=m.userData.base*(.62+night*.45)*fl*(m===M.red?1+bo*2:1-.82*bo)}for(const l of nightLights)l.intensity*=fl;for(const l of modLights)l.intensity*=fl;
+  const fl=flicker>0?(Math.random()<.5?.05:1):1;{const bo=rates&&rates.power<.999?1-rates.power:0;for(const m of NIGHT_MATS)m.emissiveIntensity=m.userData.base*(.62+night*.45)*fl*(m===M.red?1+bo*2:1-.82*bo)*(m===M.win||m===M.winB?1+night*1.4:1)}for(const l of nightLights)l.intensity*=fl;for(const l of modLights)l.intensity*=fl;
   scene.environmentIntensity=.05+night*.07;
   const esun=mode==='orbit'?OSUN:sunDir;earth.userData.atm.material.uniforms.uSun.value.copy(esun);earth.userData.eu.uSun.value.copy(esun);poolMat.opacity=Math.max(night*(.22+frostK*.23),.4*bo*pulse);
   return {night,up}}
@@ -2098,8 +2105,10 @@ window.__f=0;function animate(){window.__f++;requestAnimationFrame(animate);let 
   updateVehicles(dt,gdt);
   // animations des modules
   {let k=0;for(const o of bGroup.children){const u=o.userData;if(u.gyro){u.gyro.rotation.y+=dt*4;if(k<2){const l=gyroL[k++];u.gyro.getWorldPosition(l.position);const a=-u.gyro.rotation.y-o.rotation.y;l.target.position.set(l.position.x+Math.cos(a)*8,0,l.position.z+Math.sin(a)*8);l.intensity=40+140*(1-sstep(-.02,.18,sunDir.y))}}
+     if(u.led&&u.b){const m=LEDM[ledState(u.b)];if(u.led.material!==m)u.led.material=m}
      if(u.b){const q=u.b.quar>0;if(q&&!u.qb){const hy=new THREE.Box3().setFromObject(o).max.y;const m=new THREE.Mesh(new THREE.SphereGeometry(.16,12,8),quarM);m.position.y=hy+.2;o.add(m);u.qb=m}else if(!q&&u.qb){o.remove(u.qb);u.qb.geometry.dispose();u.qb=null}if(u.qb)u.qb.visible=Math.sin(tAll*5)>-.2}}
    for(;k<2;k++)gyroL[k].intensity=0}
+  LEDM.dmg.emissiveIntensity=.6+Math.abs(Math.sin(tAll*4))*1.8;LEDM.warn.emissiveIntensity=1+Math.sin(tAll*2)*.3;
   growing=false;for(const o of bGroup.children){const u=o.userData;
     if(u.grow!==undefined){growing=true;u.grow+=dt*1.6;const g=Math.min(1,u.grow);const e=1+2.70158*Math.pow(g-1,3)+1.70158*Math.pow(g-1,2);o.scale.setScalar(e);if(g>=1)delete u.grow}
     const run=(S.shelter||o.userData.b.pwr===false?0:1)*(rates.power||1);if(u.spin)u.spin.rotation.y+=dt*3*run;if(u.rings)u.rings.forEach((r,i)=>r.rotation.z+=dt*(1.1+i*.6)*(i%2?-1:1)*run);if(u.dishes)u.dishes.forEach((d,i)=>d.rotation.y+=dt*(.3+i*.2)*run);
@@ -2170,8 +2179,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='3.2';
+const APP_VER='3.3';
 const CHANGELOG=[
+ {v:'3.3',d:'Modules vivants',n:[['🏡','Intérieurs éclairés','La nuit, les dômes de la serre et du parc s\'illuminent de l\'intérieur ; les fenêtres brillent davantage.'],['🟢','LED de statut','Un liseré autour de chaque module : vert OK, orange usé, rouge en panne, jaune quarantaine, gris éteint.']]},
  {v:'3.2',d:'Lumières',n:[['☀️','Soleil lunaire','Soleil blanc, ombres noires et nettes comme sur les photos Apollo.'],['🚨','Gyrophare','Un module en panne a un gyrophare orange qui tourne.'],['🔴','Coupure de courant','Quand l\'énergie manque, les fenêtres s\'éteignent et l\'éclairage de secours rouge s\'allume.'],['🟡','Quarantaine','Balise jaune clignotante sur les modules en quarantaine.']]},
  {v:'3.1',d:'Véhicules',n:[['🚚','Benne à régolithe','Fait la navette entre foreuses/mines et le dépôt : +15 % de régolithe. Peut tomber en panne.'],['🤖','Robot de maintenance','Va tout seul entretenir le module le plus usé (consomme 1 ⚡/h).'],['🏗️','Grue de chantier','Apparaît à chaque construction, amélioration ou réparation.']]},
  {v:'3.0',d:'Nouvelle nuit',n:[['💡','Base éclairée','Les modules éclairent leurs murs et le sol, les lampadaires du périmètre s\'allument.'],['🌍','Clair de Terre','La nuit, la Terre éclaire le paysage en bleu avec de vraies ombres.'],['❄️','Nuit lunaire givrée','Sol givré et brillant, modules qui chauffent plus fort.']]},
