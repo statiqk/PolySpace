@@ -1,8 +1,9 @@
 {
- "version": "2.9",
+ "version": "3.0",
  "date": "2026-11-14",
  "notes": [
-  "Rendu optimisé (8× moins d'appels de dessin)",
-  "Ombres et images par seconde adaptatives"
+  "Base éclairée la nuit",
+  "Clair de Terre",
+  "Nuit lunaire givrée"
  ]
 }

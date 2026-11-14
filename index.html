@@ -271,7 +271,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#eef2ff;font-family:
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v2.9</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v3.0</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -370,6 +370,9 @@ const earthshine=new THREE.HemisphereLight(0x6a8cff,0x1a1712,.22);scene.add(eart
 const fill=new THREE.DirectionalLight(0x7c9cff,.18);fill.position.set(-60,40,-70);scene.add(fill);
 const nightLights=[];
 for(const p of [[-14,4,14],[14,4,-14]]){const l=new THREE.PointLight(0xffc27a,0,60,1.6);l.position.set(...p);scene.add(l);nightLights.push(l)}
+// nuit : lumières des modules (nombre fixe = pas de recompilation), clair de Terre, givre
+const modLights=[];for(let i=0;i<6;i++){const l=new THREE.PointLight(0xffb874,0,8,1.6);l.position.set(0,-50,0);scene.add(l);modLights.push(l)}
+let GROUND_MAT=null,frostK=0;const _cWarm=new THREE.Color(0xffb874),_cHot=new THREE.Color(0xff8a4a),_cCold=new THREE.Color(0x9fe8ff),_gDay=new THREE.Color(0xffffff),_gFrost=new THREE.Color(0xe8f2ff),_sunCol=new THREE.Color(),_earthCol=new THREE.Color(0xb8d0ff);
 
 /* ================== TEXTURES PROCÉDURALES ================== */
 function canvasTex(w,h,fn,srgb=true){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');fn(g,w,h);const t=new THREE.CanvasTexture(c);if(srgb)t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=renderer.capabilities.getMaxAnisotropy();return t}
@@ -443,7 +446,7 @@ function groundShader(mat,glint){mat.onBeforeCompile=sh=>{sh.uniforms.detailMap=
     col[i*3]=v*warm;col[i*3+1]=v*.985;col[i*3+2]=v*.955*cool;
   }
   geo.setAttribute('color',new THREE.BufferAttribute(col,3));geo.computeVertexNormals();
-  const mat=new THREE.MeshStandardMaterial({map:groundTex,normalMap:groundNrm,normalScale:new THREE.Vector2(.7,.7),vertexColors:true,roughness:.96,metalness:0,envMapIntensity:.15});groundShader(mat,true);
+  const mat=new THREE.MeshStandardMaterial({map:groundTex,normalMap:groundNrm,normalScale:new THREE.Vector2(.7,.7),vertexColors:true,roughness:.96,metalness:0,envMapIntensity:.15});groundShader(mat,true);GROUND_MAT=mat;
   const ground=new THREE.Mesh(geo,mat);ground.receiveShadow=true;scene.add(ground);
   // puits du tunnel de lave : fond noir + parois
   const ph=heightAt(PIT.x,PIT.z)[0];
@@ -944,8 +947,9 @@ function updateDecor(dt){memorial.visible=(S.deaths||0)>0;const a=tAll*.18;drone
   decor.traverse(o=>{if(o.userData.blink)o.visible=Math.sin(tAll*3+o.id)>.3});drone.children.forEach(o=>{if(o.userData.blink)o.visible=Math.sin(tAll*6)>0})}
 
 /* lampadaires du périmètre */
+const lampPoolMat=new THREE.MeshBasicMaterial({map:radial('rgba(255,214,160,1)','rgba(255,200,140,0)'),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3});
 const lamps=[];{const R=HALF*TILE+TILE*.75;for(const [x,z] of [[-R,-R],[R,-R],[-R,R],[R,R],[0,-R],[0,R],[-R,0],[R,0]]){const g=new THREE.Group();g.position.set(x,0,z);
-  mesh(new THREE.CylinderGeometry(.08,.12,3.2,8),M.grey,0,1.6,0,g);mesh(new THREE.BoxGeometry(.5,.12,.3),M.dark,0,3.25,0,g);const b=mesh(new THREE.BoxGeometry(.4,.04,.22),M.amber,0,3.18,0,g);b.castShadow=false;scene.add(g);lamps.push(g)}}
+  mesh(new THREE.CylinderGeometry(.08,.12,3.2,8),M.grey,0,1.6,0,g);mesh(new THREE.BoxGeometry(.5,.12,.3),M.dark,0,3.25,0,g);const b=mesh(new THREE.BoxGeometry(.4,.04,.22),M.amber,0,3.18,0,g);b.castShadow=false;const lp=new THREE.Mesh(decalGeo,lampPoolMat);lp.scale.set(8,1,8);lp.position.set(-x*.06,.05,-z*.06);lp.renderOrder=1;g.add(lp);scene.add(g);lamps.push(g)}}
 
 /* ================== STATION EN ORBITE ================== */
 const SDEFS={
@@ -1129,7 +1133,9 @@ function addBuilding(b,anim){const o=build3D(b.t,b.lv||1);
   mergeStatic(o);bGroup.add(o);shadowDirty=true;occ.set(key(b.i,b.j),o);if(anim==='up'){o.scale.setScalar(.88);o.userData.grow=.62;burst(o.position.x,.3,o.position.z,30);for(let k=0;k<60;k++){const a=Math.random()*6.28;fire.emit(o.position.x+Math.cos(a)*2,Math.random()*3,o.position.z+Math.sin(a)*2,Math.cos(a)*2,2+Math.random()*3,Math.sin(a)*2,.9,.5,.4,.85,1,0,-2)}}
   else if(anim){o.scale.setScalar(.01);o.userData.grow=0;burst(o.position.x,.3,o.position.z,40)}rebuildCorridors()}
 function removeBuilding(b){const o=occ.get(key(b.i,b.j));if(o){bGroup.remove(o);disposeMerged(o);occ.delete(key(b.i,b.j))}shadowDirty=true;rebuildCorridors()}
-function rebuildCorridors(){disposeMerged(corridors);corridors.clear();for(const b of S.b){if(!PRESS.includes(b.t))continue;for(const [di,dj] of [[1,0],[0,1]]){const n=S.b.find(c=>c.i===b.i+di&&c.j===b.j+dj&&PRESS.includes(c.t));if(!n)continue;
+function placeModLights(){const L=S.b.slice().sort((a,b)=>(PRESS.includes(b.t)?1:0)-(PRESS.includes(a.t)?1:0)||(a.i*a.i+a.j*a.j)-(b.i*b.i+b.j*b.j));
+  modLights.forEach((l,k)=>{const b=L[k];if(!b){l.position.set(0,-50,0);l.userData.on=0;return}l.position.set(b.i*TILE+1.6,2.2,b.j*TILE+2.2);l.userData.on=1;l.userData.warm=PRESS.includes(b.t)||b.t==='pad'})}
+function rebuildCorridors(){placeModLights();disposeMerged(corridors);corridors.clear();for(const b of S.b){if(!PRESS.includes(b.t))continue;for(const [di,dj] of [[1,0],[0,1]]){const n=S.b.find(c=>c.i===b.i+di&&c.j===b.j+dj&&PRESS.includes(c.t));if(!n)continue;
   const g=new THREE.Group();g.position.set((b.i+di/2)*TILE,0,(b.j+dj/2)*TILE);if(dj)g.rotation.y=Math.PI/2;
   const t=mesh(new THREE.CylinderGeometry(.42,.42,1.6,20),M.panelW,0,.75,0,g);t.rotation.z=Math.PI/2;
   for(const x of [-.6,.6]){const r=mesh(new THREE.CylinderGeometry(.48,.48,.14,20),M.gold,x,.75,0,g);r.rotation.z=Math.PI/2}
@@ -1996,15 +2002,21 @@ function tap(x,y){ndc.set(x/innerWidth*2-1,-(y/innerHeight)*2+1);ray.setFromCame
 const clock=new THREE.Clock();const perf=[];let pr=DPR,qStep=0;let acc=0,uiT=0,tAll=0;const sunDir=new THREE.Vector3();
 function updateSky(){
   sunVec(sunDir,S.hour+hourFrac);GROUND_SUN.value.copy(sunDir);
-  sun.position.copy(sunDir).multiplyScalar(120);sun.target.position.set(0,0,0);
-  const up=sstep(-.02,.18,sunDir.y);sun.intensity=3.6*up;
-  sun.color.setRGB(1,lerp(.78,.96,sstep(0,.5,sunDir.y)),lerp(.6,.9,sstep(0,.5,sunDir.y)));
+  sun.target.position.set(0,0,0);
+  const up=sstep(-.02,.18,sunDir.y);const eco=SET.q==='eco';
+  // de nuit, la lumière directionnelle (et ses ombres) vient de la Terre
+  if(up>.02){sun.position.copy(sunDir).multiplyScalar(120);sun.intensity=3.6*up;sun.color.setRGB(1,lerp(.78,.96,sstep(0,.5,sunDir.y)),lerp(.6,.9,sstep(0,.5,sunDir.y)))}
+  else{sun.position.copy(earthDir).multiplyScalar(120);sun.intensity=eco?0:(1-up)*.85*(LUNAR?1.15:1);sun.color.copy(_earthCol)}
   sunSprite.position.copy(sunDir).multiplyScalar(1400);sunCore.position.copy(sunSprite.position);sunSprite.visible=sunCore.visible=sunDir.y>-.08;
-  const night=1-up;earthshine.intensity=(LUNAR?.4:.18)+night*.35;fill.intensity=.12+night*.18;
-  for(const l of nightLights)l.intensity=night*55;
-  const fl=flicker>0?(Math.random()<.5?.05:1):1;for(const m of NIGHT_MATS)m.emissiveIntensity=m.userData.base*(.62+night*.45)*fl;for(const l of nightLights)l.intensity*=fl;
+  const night=1-up;{const dt=Math.min(.5,tAll-(updateSky.t||tAll));updateSky.t=tAll;frostK+=((LUNAR?1:0)-frostK)*Math.min(1,dt*.6)}earthshine.color.setHex(0x8fb4ff);earthshine.intensity=.22+night*(.42+frostK*.12)+frostK*.12;fill.intensity=.1;
+  for(const l of nightLights)l.intensity=night*25;
+  for(const l of modLights){l.intensity=l.userData.on&&!eco?night*(l.userData.warm?9:7):0;l.color.copy(l.userData.warm?_cWarm:_cCold);if(l.userData.warm&&frostK>.01)l.color.lerp(_cHot,frostK)}
+  lampPoolMat.opacity=night*.3;
+  if(!updateSky.gm){updateSky.gm=[];scene.traverse(o=>{if(o.isMesh&&o.material&&o.material.normalMap===groundNrm&&!updateSky.gm.includes(o.material)){o.material.userData.r0=o.material.roughness;updateSky.gm.push(o.material)}})}
+  for(const m of updateSky.gm){m.color.copy(_gDay).lerp(_gFrost,frostK);m.roughness=lerp(m.userData.r0,.6,frostK*night);m.metalness=.15*frostK*night}
+  const fl=flicker>0?(Math.random()<.5?.05:1):1;for(const m of NIGHT_MATS)m.emissiveIntensity=m.userData.base*(.62+night*.45)*fl;for(const l of nightLights)l.intensity*=fl;for(const l of modLights)l.intensity*=fl;
   scene.environmentIntensity=.12+up*.16;
-  const esun=mode==='orbit'?OSUN:sunDir;earth.userData.atm.material.uniforms.uSun.value.copy(esun);earth.userData.eu.uSun.value.copy(esun);poolMat.opacity=night*.5;
+  const esun=mode==='orbit'?OSUN:sunDir;earth.userData.atm.material.uniforms.uSun.value.copy(esun);earth.userData.eu.uSun.value.copy(esun);poolMat.opacity=night*(.22+frostK*.23);
   return {night,up}}
 window.__f=0;function animate(){window.__f++;requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.05);tAll+=dt;
   if(!S){composer.render();return}
@@ -2082,8 +2094,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='2.9';
+const APP_VER='3.0';
 const CHANGELOG=[
+ {v:'3.0',d:'Nouvelle nuit',n:[['💡','Base éclairée','Les modules éclairent leurs murs et le sol, les lampadaires du périmètre s\'allument.'],['🌍','Clair de Terre','La nuit, la Terre éclaire le paysage en bleu avec de vraies ombres.'],['❄️','Nuit lunaire givrée','Sol givré et brillant, modules qui chauffent plus fort.']]},
  {v:'2.9',d:'Plus fluide',n:[['⚡','Rendu optimisé','Bâtiments et décor fusionnés : environ 8× moins d\'appels de dessin par image.'],['🌗','Ombres','Recalculées ~15 fois par seconde au lieu de 60, et tout de suite après une construction.'],['🔋','Batterie','30 images/s au repos, 10 sous un menu plein écran : moins de chauffe et d\'usure de la batterie.']]},
  {v:'2.8',d:'Pas de tir et navettes',n:[['⏸️','Navettes suspendues','Pas de tir éteint ou en panne : le compte à rebours se met en pause.'],['🛰️','Attente en orbite','Une navette déjà en approche attend 12 h en orbite ; sans pas de tir, elle repart (livraison perdue, prestige −3).'],['⚠️','Avertissement','Éteindre le pas de tir demande confirmation et annonce la conséquence.']]},
  {v:'2.7.1',d:'Énergie vérifiée',n:[['☀️','Panneaux solaires','Leur production baisse maintenant avec l\'usure (poussière), comme les autres modules.'],['🟣','Centrale hélium-3','Sa production d\'hélium-3 est affichée dans la fiche.'],['🔋','Batterie','La perte de charge la nuit est affichée ; la jauge indique « 99+ h » au lieu de « ∞ ».']]},
