@@ -271,7 +271,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#eef2ff;font-family:
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v3.5</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v3.6</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -471,40 +471,49 @@ function groundShader(mat,glint){mat.onBeforeCompile=sh=>{sh.uniforms.detailMap=
 
 /* ================== CIEL : ÉTOILES, VOIE LACTÉE, TERRE, SOLEIL ================== */
 {
-  const n=7000,p=new Float32Array(n*3),c=new Float32Array(n*3),sz=new Float32Array(n);seed=3;
+  const n=11000,p=new Float32Array(n*3),c=new Float32Array(n*3),sz=new Float32Array(n);seed=3;
   const band=new THREE.Vector3(.3,.8,.5).normalize();
-  for(let i=0;i<n;i++){let v;if(i<3200){v=new THREE.Vector3(rnd()*2-1,rnd()*2-1,rnd()*2-1).normalize()}else{const a=rnd()*Math.PI*2;const t=new THREE.Vector3(Math.cos(a),0,Math.sin(a));const q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),band);t.applyQuaternion(q);t.addScaledVector(band,(rnd()+rnd()+rnd()-1.5)*.16);v=t.normalize()}
+  for(let i=0;i<n;i++){let v;if(i<4500){v=new THREE.Vector3(rnd()*2-1,rnd()*2-1,rnd()*2-1).normalize()}else{const a=rnd()*Math.PI*2;const t=new THREE.Vector3(Math.cos(a),0,Math.sin(a));const q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),band);t.applyQuaternion(q);t.addScaledVector(band,(rnd()+rnd()+rnd()-1.5)*.16);v=t.normalize()}
     v.multiplyScalar(3000);p.set([v.x,Math.abs(v.y)*.9+v.y*.1+60,v.z],i*3);
     const k=rnd();const col=k<.15?[.7,.8,1]:k<.25?[1,.85,.7]:[1,1,1];const b=i<3200?.5+rnd()*rnd()*1.6:.25+rnd()*.5;c.set(col.map(x=>x*b),i*3);sz[i]=i<3200?(1+rnd()*rnd()*3.2):(.8+rnd()*1.4)}
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(p,3));g.setAttribute('color',new THREE.BufferAttribute(c,3));g.setAttribute('size',new THREE.BufferAttribute(sz,1));
   const m=new THREE.ShaderMaterial({uniforms:{uT:{value:0},uPR:{value:DPR}},vertexColors:true,transparent:true,depthWrite:false,
-   vertexShader:`attribute float size;varying vec3 vC;uniform float uT;uniform float uPR;void main(){vC=color*(.75+.25*sin(uT*2.+position.x*.13+position.z*.07));vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=size*uPR;gl_Position=projectionMatrix*mv;}`,
+   vertexShader:`attribute float size;varying vec3 vC;uniform float uT;uniform float uPR;void main(){vC=color;vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=size*uPR;gl_Position=projectionMatrix*mv;}`,
    fragmentShader:`varying vec3 vC;void main(){float d=length(gl_PointCoord-.5);float a=smoothstep(.5,.0,d);gl_FragColor=vec4(vC*1.6,a);}`});
   window.stars=new THREE.Points(g,m);stars.frustumCulled=false;scene.add(stars);
 }
 {
   const band=new THREE.Vector3(.3,.8,.5).normalize();
-  const mw=canvasTex(1024,512,(g,w,h)=>{const d=g.createImageData(w,h);const v=new THREE.Vector3();for(let y=0;y<h;y++){const lat=(.5-y/h)*Math.PI;for(let x=0;x<w;x++){const lon=x/w*Math.PI*2;
-    v.set(Math.cos(lat)*Math.cos(lon),Math.sin(lat),Math.cos(lat)*Math.sin(lon));const k=v.dot(band);const b=Math.exp(-k*k/.03);const i=(y*w+x)*4;if(b<.02){d.data[i+3]=0;continue}
-    const n=fbm(v.x*5,v.y*5,v.z*5,4),lane=Math.exp(-Math.pow((k+fbm(v.x*3,v.y*3+5,v.z*3,2)*.08)/.035,2));const a=clamp(b*(.55+n*1.4)*(1-lane*.7),0,1);
-    d.data[i]=150+a*80+n*40;d.data[i+1]=150+a*60;d.data[i+2]=200+a*40;d.data[i+3]=a*120}}g.putImageData(d,0,0)});
-  const sky=new THREE.Mesh(new THREE.SphereGeometry(3400,64,32),new THREE.MeshBasicMaterial({map:mw,side:THREE.BackSide,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:.4}));
+  const core=new THREE.Vector3().crossVectors(band,new THREE.Vector3(0,1,0)).normalize().applyAxisAngle(band,.9);const side=new THREE.Vector3().crossVectors(band,core);
+  const mw=canvasTex(1280,640,(g,w,h)=>{const d=g.createImageData(w,h);const v=new THREE.Vector3();for(let y=0;y<h;y++){const lat=(.5-y/h)*Math.PI;for(let x=0;x<w;x++){const lon=x/w*Math.PI*2;
+    v.set(Math.cos(lat)*Math.cos(lon),Math.sin(lat),Math.cos(lat)*Math.sin(lon));const k=v.dot(band);const i=(y*w+x)*4;if(Math.abs(k)>.42){d.data[i+3]=0;continue}
+    const ang=Math.atan2(v.dot(side),v.dot(core));const bulge=Math.exp(-ang*ang/.35);const wid=.018+.03*bulge;const b=Math.exp(-k*k/wid);if(b<.015){d.data[i+3]=0;continue}
+    const n=fbm(v.x*6,v.y*6,v.z*6,5),n2=fbm(v.x*18+3,v.y*18,v.z*18,3);const lw=(.01+.014*bulge)*(.6+fbm(v.x*7+2,v.y*7,v.z*7,2)*1.6);const lane=(Math.exp(-Math.pow((k+fbm(v.x*4,v.y*4+5,v.z*4,3)*.07)/Math.max(.004,lw),2))+.6*Math.exp(-Math.pow((k-.03+fbm(v.x*5+8,v.y*5,v.z*5,3)*.06)/.008,2)))*clamp(.45+fbm(v.x*9,v.y*9+3,v.z*9,3)*2.2,0,1);
+    const a=clamp(b*(.35+.9*bulge)*(.55+n*1.6+n2*.5)*(1-lane*.85),0,1);
+    const warm=bulge*.8;d.data[i]=clamp(175+warm*80+n*30,0,255);d.data[i+1]=clamp(185+warm*45,0,255);d.data[i+2]=clamp(255-warm*70,0,255);d.data[i+3]=a*235}}g.putImageData(d,0,0)});
+  const sky=new THREE.Mesh(new THREE.SphereGeometry(3400,64,32),new THREE.MeshBasicMaterial({map:mw,side:THREE.BackSide,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:.62}));
   sky.position.y=60;scene.add(sky);window.skyMW=sky;
 }
 const earthDir=new THREE.Vector3(-.78,.085,-1).normalize();
 const earth=new THREE.Group();earth.position.copy(earthDir).multiplyScalar(1500);scene.add(earth);
 {
-  const R=110;const ND=new Uint8ClampedArray(1024*512*4);
-  const tex=canvasTex(1024,512,(g,w,h)=>{const d=g.createImageData(w,h);for(let y=0;y<h;y++){const lat=(y/h-.5)*Math.PI;for(let x=0;x<w;x++){const lon=x/w*Math.PI*2;
-    const X=Math.cos(lat)*Math.cos(lon),Y=Math.sin(lat),Z=Math.cos(lat)*Math.sin(lon);
-    const n=fbm(X*1.6+3,Y*1.6,Z*1.6,6)+.06;const ice=Math.abs(Y)>.86+fbm(X*4,Y*4,Z*4,3)*.15;let r,gg,b;
-    const ii=(y*w+x)*4;ND[ii+3]=255;if(ice){r=235;gg=242;b=250}else if(n>.04){const t=fbm(X*5,Y*5+7,Z*5,4);if(Math.abs(Y)<.8&&n<.3){const c=clamp((fbm(X*16+1,Y*16,Z*16,3)-.08)*5,0,1)*clamp((fbm(X*3,Y*3+2,Z*3,2)+.1)*4,0,1);ND[ii]=255*c;ND[ii+1]=190*c;ND[ii+2]=110*c}const des=Math.abs(Y)<.45&&t>.05;r=des?186:58+t*90;gg=des?160:110+t*60;b=des?110:52;if(n>.25){r+=30;gg+=25;b+=20}}
-    else{const deep=clamp(-n*3,0,1);r=12+20*(1-deep);gg=48+50*(1-deep);b=110+60*(1-deep)}
+  const R=110,TW=1280,TH=640;const ND=new Uint8ClampedArray(TW*TH*4);const hh=(a,b)=>{const s=Math.sin(a*127.1+b*311.7)*43758.5453;return s-Math.floor(s)};
+  const tex=canvasTex(TW,TH,(g,w,h)=>{const d=g.createImageData(w,h);for(let y=0;y<h;y++){const lat=(y/h-.5)*Math.PI;for(let x=0;x<w;x++){const lon=x/w*Math.PI*2;
+    const X=Math.cos(lat)*Math.cos(lon),Y=Math.sin(lat),Z=Math.cos(lat)*Math.sin(lon);const ay=Math.abs(Y);
+    const n=fbm(X*1.6+3,Y*1.6,Z*1.6,6)+.06+fbm(X*9,Y*9,Z*9,2)*.035;const ice=ay>.86+fbm(X*4,Y*4,Z*4,3)*.15;let r,gg,b;const ii=(y*w+x)*4;ND[ii+3]=255;
+    if(ice){const t=fbm(X*20,Y*20,Z*20,2)*20;r=230+t;gg=238+t;b=248}
+    else if(n>.04){const e=n-.04,mo=fbm(X*3+9,Y*3,Z*3,4)-ay*.08,dt=fbm(X*26,Y*26,Z*26,3);
+      if(ay<.5&&mo<-.03){r=200;gg=172;b=122}else if(mo>.07){r=34;gg=78;b=36}else{r=92;gg=116;b=58}
+      if(ay>.68){r=r*.4+120*.6;gg=gg*.4+116*.6;b=b*.4+100*.6}
+      const mt=clamp((e-.2)*5,0,1);r=r*(1-mt)+128*mt;gg=gg*(1-mt)+118*mt;b=b*(1-mt)+104*mt;if(e>.36){r=gg=236;b=242}
+      const v=1+dt*.5;r*=v;gg*=v;b*=v;
+      const city=clamp((fbm(X*8,Y*8+2,Z*8,3)+.05)*4,0,1)*(ay<.75?1:0)*clamp((.25-e)*6,0,1);if(hh(x,y)<city*.16){const k=.5+hh(y,x)*.5;ND[ii]=255*k;ND[ii+1]=205*k;ND[ii+2]=130*k}}
+    else{const sh=clamp((n+.06)/.1,0,1);const deep=clamp(-n*3,0,1);r=8+30*sh;gg=34+70*sh+20*(1-deep);b=86+60*(1-deep)+20*sh}
     const i=(y*w+x)*4;d.data[i]=r;d.data[i+1]=gg;d.data[i+2]=b;d.data[i+3]=255}}g.putImageData(d,0,0)});
-  const clouds=canvasTex(1024,512,(g,w,h)=>{const d=g.createImageData(w,h);for(let y=0;y<h;y++){const lat=(y/h-.5)*Math.PI;for(let x=0;x<w;x++){const lon=x/w*Math.PI*2;
-    const X=Math.cos(lat)*Math.cos(lon),Y=Math.sin(lat),Z=Math.cos(lat)*Math.sin(lon);const n=fbm(X*2.5+11,Y*5,Z*2.5,6);const a=clamp((n+.02)*3.2,0,1);
-    const i=(y*w+x)*4;d.data[i]=d.data[i+1]=d.data[i+2]=255;d.data[i+3]=a*235}}g.putImageData(d,0,0)});
-  const nightTex=canvasTex(1024,512,(g,w,h)=>{const d=new ImageData(ND,w,h);g.putImageData(d,0,0);g.globalCompositeOperation='lighter';g.filter='blur(2px)';g.drawImage(g.canvas,0,0);});
+  const clouds=canvasTex(TW,TH,(g,w,h)=>{const d=g.createImageData(w,h);for(let y=0;y<h;y++){const lat=(y/h-.5)*Math.PI;for(let x=0;x<w;x++){const lon=x/w*Math.PI*2;
+    const X=Math.cos(lat)*Math.cos(lon),Y=Math.sin(lat),Z=Math.cos(lat)*Math.sin(lon);const wx=fbm(X*3,Y*3,Z*3,2)*.9;const n=fbm(X*2.5+11+wx,Y*5+wx,Z*2.5,5)+noise3(X*14,Y*14,Z*14)*.06;const a=clamp((n+.02)*3.4,0,1);
+    const i=(y*w+x)*4;d.data[i]=d.data[i+1]=d.data[i+2]=255;d.data[i+3]=a*240}}g.putImageData(d,0,0)});
+  const nightTex=canvasTex(TW,TH,(g,w,h)=>{const d=new ImageData(ND,w,h);g.putImageData(d,0,0);g.globalCompositeOperation='lighter';g.filter='blur(1px)';g.drawImage(g.canvas,0,0);});
   const earthU={uDay:{value:tex},uNight:{value:nightTex},uSun:{value:new THREE.Vector3(1,0,0)}};
   const em=new THREE.Mesh(new THREE.SphereGeometry(R,96,64),new THREE.ShaderMaterial({uniforms:earthU,
     vertexShader:`varying vec2 vUv;varying vec3 vN;varying vec3 vW;void main(){vUv=uv;vN=normalize(mat3(modelMatrix)*normal);vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}`,
@@ -526,9 +535,9 @@ const earth=new THREE.Group();earth.position.copy(earthDir).multiplyScalar(1500)
   earth.add(em,cm,atm,inner);earth.userData.atm=atm;earth.userData.eu=earthU;
 }
 const sunSprite=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:0xffffff,blending:THREE.AdditiveBlending,depthWrite:false,transparent:true}));
-sunSprite.scale.set(520,520,1);scene.add(sunSprite);
+sunSprite.scale.set(300,300,1);sunSprite.material.opacity=.75;scene.add(sunSprite);
 const sunCore=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:0xffffff,blending:THREE.AdditiveBlending,depthWrite:false,transparent:true}));
-sunCore.scale.set(150,150,1);scene.add(sunCore);
+sunCore.scale.set(70,70,1);{const cor=canvasTex(256,256,(g,w)=>{g.translate(128,128);for(let i=0;i<48;i++){g.rotate(Math.PI*2/48);const L=60+Math.random()*60;const gr=g.createLinearGradient(0,0,L,0);gr.addColorStop(0,'rgba(255,250,240,.55)');gr.addColorStop(1,'rgba(255,250,240,0)');g.fillStyle=gr;g.fillRect(0,-1.2,L,2.4)}});const cs=new THREE.Sprite(new THREE.SpriteMaterial({map:cor,blending:THREE.AdditiveBlending,depthWrite:false,transparent:true}));cs.scale.set(230,230,1);sunCore.add(cs);cs.scale.set(3.3,3.3,1)}scene.add(sunCore);
 
 /* ================== PARTICULES ================== */
 class Particles{
@@ -2465,8 +2474,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='3.5';
+const APP_VER='3.6';
 const CHANGELOG=[
+ {v:'3.6',d:'Nouveau ciel',n:[['🌍','Terre détaillée','Forêts, déserts, montagnes, hauts-fonds, nuages plus fins et villes en milliers de points la nuit.'],['🌌','Voie lactée','Bande réaliste avec cœur plus chaud et bandes de poussière ; 11 000 étoiles fixes.'],['☀️','Soleil lunaire','Petit disque blanc avec une fine couronne, comme vu depuis la Lune.']]},
  {v:'3.5',d:'Bâtiments détaillés',n:[['🏗️','9 bâtiments refaits','Habitat, serre, recycleur, parc, foreuse, usine 3D, bouclier, observatoire et laboratoire entièrement remodélisés, avec beaucoup plus de détails.']]},
  {v:'3.4',d:'10 bâtiments refaits',n:[['🏗️','Nouvelle modélisation','Entrepôt réfrigéré, panneaux solaires, mine, spatioport, centrale hélium-3, extracteur de glace, batterie, réacteur, pas de tir et hôpital ont été entièrement refaits.'],['☀️','Panneaux solaires','1, 2 puis 4 panneaux selon le niveau, qui suivent tous le soleil.'],['🔋','Batterie','Les cellules s\'allument selon la vraie charge de la base.']]},
  {v:'3.3',d:'Modules vivants',n:[['🏡','Intérieurs éclairés','La nuit, les dômes de la serre et du parc s\'illuminent de l\'intérieur ; les fenêtres brillent davantage.'],['🟢','LED de statut','Un liseré autour de chaque module : vert OK, orange usé, rouge en panne, jaune quarantaine, gris éteint.']]},
