@@ -271,7 +271,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#eef2ff;font-family:
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v3.3</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v3.4</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -830,6 +830,137 @@ Object.assign(MODELS,{frigo(lv){const g=new THREE.Group();plinth(g);
   const fans=[];for(const x of [-.75,.75]){mesh(new THREE.CylinderGeometry(.5,.5,.2,24),M.panelW,x,2.2,-.1,g);const f=new THREE.Group();f.position.set(x,2.32,-.1);g.add(f);for(let k=0;k<4;k++){mesh(new THREE.BoxGeometry(.85,.02,.12),M.grey,0,0,0,f).rotation.y=k*Math.PI/4}fans.push(f)}
   if(lv>=2)mesh(new THREE.BoxGeometry(1.1,1.1,1.1),ice,1.2,.85,1.2,g);
   g.userData.spin=fans[0];g.userData.spin2=fans[1];return g}});
+/* ===== modèles refaits (v3.4) ===== */
+{
+const box=(w,h,d,mat,x,y,z,p)=>mesh(new THREE.BoxGeometry(w,h,d),mat,x,y,z,p);
+const cyl=(rt,rb,h,mat,x,y,z,p,seg=20)=>mesh(new THREE.CylinderGeometry(rt,rb,h,seg),mat,x,y,z,p);
+const VIO=new THREE.MeshStandardMaterial({color:0x1a0830,emissive:0x9a6bff,emissiveIntensity:3.2});
+const ICE=new THREE.MeshStandardMaterial({color:0xeaf6ff,roughness:.35,metalness:.1});
+const FROST=new THREE.MeshStandardMaterial({color:0xdff3ff,emissive:0x9fd8ff,emissiveIntensity:.35,roughness:.6});
+const SCREEN=new THREE.MeshStandardMaterial({color:0x061018,emissive:0x5fe1ff,emissiveIntensity:1.6});
+// treillis entre deux points
+const strut=(a,b,mat,p,t=.06)=>{const A=new THREE.Vector3(...a),B=new THREE.Vector3(...b);const L=A.distanceTo(B);const m=mesh(new THREE.BoxGeometry(t,L,t),mat,(A.x+B.x)/2,(A.y+B.y)/2,(A.z+B.z)/2,p);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),B.clone().sub(A).normalize());return m};
+const N={};
+/* 1. Entrepôt réfrigéré */
+N.frigo=lv=>{const g=new THREE.Group();plinth(g);
+  box(2.7,1.6,2.2,ICE,-.15,1.1,-.25,g);for(let i=0;i<11;i++)box(.05,1.58,.04,M.panelW,-1.45+i*.26,1.1,.87,g);for(let i=0;i<8;i++)box(.04,1.58,.05,M.panelW,1.21,1.1,-1.3+i*.3,g);
+  box(2.78,.1,2.28,FROST,-.15,1.95,-.25,g);box(2.78,.06,.06,FROST,-.15,1.88,.9,g);
+  // quai + porte sectionnelle éclairée
+  box(1.3,1.1,.06,M.grey,-.35,.88,.89,g);for(let i=0;i<6;i++)box(1.2,.14,.04,M.panelW,-.35,.42+i*.165,.93,g);
+  box(1.42,.06,.08,M.cyan,-.35,1.47,.93,g).castShadow=false;for(const x of [-1.04,.34])box(.06,1.1,.08,M.cyan,x,.9,.93,g).castShadow=false;
+  box(1.6,.22,.6,M.grey,-.35,.39,1.3,g);for(const x of [-1.1,.4])box(.12,.4,.12,M.amber,x,.5,1.55,g).castShadow=false;
+  // groupes froids sur le toit
+  const fans=[];for(const x of [-.9,.4]){box(.9,.32,.9,M.panelW,x,2.16,-.45,g);cyl(.36,.36,.06,M.dark,x,2.34,-.45,g,24);const f=new THREE.Group();f.position.set(x,2.38,-.45);g.add(f);for(let k=0;k<3;k++)box(.62,.02,.1,M.grey,0,0,0,f).rotation.y=k*Math.PI/3;fans.push(f)}
+  // radiateurs latéraux
+  for(let i=0;i<6;i++)box(.04,1.1,.7,M.grey,-1.62,1.05,-1.2+i*.22,g);
+  if(lv>=2){cyl(.5,.5,1.7,ICE,1.25,1.15,-1.15,g,24);for(const y of [.6,1.15,1.7])cyl(.52,.52,.06,M.cyan,1.25,y,-1.15,g,24);cyl(.5,.5,.05,FROST,1.25,2.02,-1.15,g,24)}
+  if(lv>=3){for(const [x,z,s] of [[.95,1.25,.45],[1.35,1.25,.4],[1.12,1.3,.38]])box(s,s,s,M.orange,x,.33+s/2+(x===1.12?.42:0),z,g)}
+  g.userData.spin=fans[0];g.userData.spin2=fans[1];return g};
+/* 2. Panneaux solaires : 1, 2 puis 4 trackers */
+N.solaire=lv=>{const g=new THREE.Group();plinth(g,3.2);const pos=lv===1?[[0,0,1]]:lv===2?[[-.8,0,.5]  ,[.8,0,.5]]:[[-.78,-.78,.4],[.78,-.78,.4],[-.78,.78,.4],[.78,.78,.4]];const tr=[];
+  for(const [x,z,s] of pos){const mh=.9+s*.9;cyl(.07+s*.05,.1+s*.06,mh,M.grey,x,.25+mh/2,z,g,10);const piv=new THREE.Group();piv.position.set(x,.3+mh,z);g.add(piv);const tilt=new THREE.Group();piv.add(tilt);
+    const n=2,c=1.45*s;tilt.rotation.x=lv>1?.35:0;for(let i=0;i<n;i++)for(let j=0;j<n;j++){const px=(i-.5)*(c+.06),pz=(j-.5)*(c+.06);box(c,.05,c,M.solar,px,0,pz,tilt);box(c+.06,.04,c+.06,M.panelW,px,-.03,pz,tilt)}box(2*c+.1,.06,.07,M.grey,0,-.05,0,tilt);tr.push({piv,tilt})}
+  if(lv>=2){box(.5,.4,.35,M.white,1.25,.48,-1.25,g);box(.3,.05,.02,M.cyan,1.25,.55,-1.07,g).castShadow=false}
+  g.userData.track=tr[0];g.userData.tracks=tr;return g};
+/* 3. Mine souterraine : chevalement en treillis */
+N.mine=lv=>{const g=new THREE.Group();plinth(g);const H=lv>=2?4.2:3.5,cx=-.45,cz=-.45;
+  cyl(.8,.9,.34,M.dark,cx,.42,cz,g,28);cyl(.62,.62,.04,new THREE.MeshBasicMaterial({color:0x050505}),cx,.6,cz,g,28);mesh(new THREE.TorusGeometry(.72,.05,8,32),M.amber,cx,.6,cz,g).rotation.x=Math.PI/2;
+  const legs=[[cx-.75,.3,cz-.55],[cx+.75,.3,cz-.55],[cx-.75,.3,cz+.55],[cx+.75,.3,cz+.55]],top=[[cx-.28,H,cz-.22],[cx+.28,H,cz-.22],[cx-.28,H,cz+.22],[cx+.28,H,cz+.22]];
+  for(let i=0;i<4;i++)strut(legs[i],top[i],M.orange,g,.09);
+  for(let k=1;k<5;k++){const t=k/5;const P=legs.map((l,i)=>l.map((v,a)=>v+(top[i][a]-v)*t));strut(P[0],P[1],M.orange,g,.045);strut(P[2],P[3],M.orange,g,.045);strut(P[0],P[2],M.orange,g,.045);strut(P[1],P[3],M.orange,g,.045);if(k<4){const Q=legs.map((l,i)=>l.map((v,a)=>v+(top[i][a]-v)*(t+.2)));strut(P[0],Q[1],M.orange,g,.035);strut(P[2],Q[3],M.orange,g,.035)}}
+  box(.75,.12,.6,M.grey,cx,H+.05,cz,g);
+  const wheel=new THREE.Group();wheel.position.set(cx,H+.42,cz);g.add(wheel);mesh(new THREE.TorusGeometry(.38,.05,8,28),M.grey,0,0,0,wheel);for(let i=0;i<4;i++)box(.76,.04,.04,M.grey,0,0,0,wheel).rotation.z=i*Math.PI/4;
+  cyl(.012,.012,H-.5,M.dark,cx+.38,(H+.9)/2,cz,g,4);box(.3,.45,.3,M.grey,cx+.38,1.1,cz,g);
+  // rails + wagonnet
+  for(const z of [.85,1.15])box(2.4,.04,.05,M.grey,.35,.36,z,g);for(let i=0;i<7;i++)box(.08,.03,.5,M.dark,-.75+i*.37,.34,1,g);
+  const cart=new THREE.Group();cart.position.set(.9,.36,1);g.add(cart);box(.7,.32,.5,M.orange,0,.24,0,cart);for(const x of [-.22,.22])for(const z of [-.2,.2])cyl(.08,.08,.05,M.dark,x,.08,z,cart,10).rotation.x=Math.PI/2;
+  for(let i=0;i<4;i++)mesh(new THREE.DodecahedronGeometry(.11,0),M2.rock,-.18+i*.12,.45,(i%2-.5)*.15,cart);
+  for(let i=0;i<8;i++)mesh(new THREE.DodecahedronGeometry(.2+((i*7)%5)*.05,0),M2.rock,1.2+((i*3)%4-1.5)*.2,.42+((i*5)%3)*.1,-1.1+((i*2)%3-1)*.25,g);
+  box(.9,.8,.8,M.white,1.1,.73,-.1,g);box(.92,.08,.82,M.grey,1.1,1.16,-.1,g);box(.5,.25,.04,M.win,1.1,.85,.31,g).castShadow=false;
+  if(lv>=3){cyl(.45,.45,1.6,M.panelW,1.15,1.35,-1.25,g,20);mesh(new THREE.ConeGeometry(.45,.45,20),M.grey,1.15,2.38,-1.25,g);const cv=box(.3,.08,1.8,M.dark,.4,1.4,-.9,g);cv.rotation.x=.55;cv.rotation.y=-.9}
+  mesh(new THREE.SphereGeometry(.09,8,6),M.red,cx,H+.85,cz,g).userData.blink=1;
+  g.userData.wheel=wheel;return g};
+/* 4. Spatioport */
+N.spatioport=lv=>{const g=new THREE.Group();box(3.8,.24,3.8,M.pad,0,.12,0,g);for(const k of [-1,1])box(3.6,.03,.1,M.paint,0,.26,k*1.75,g);
+  // aire d'atterrissage
+  cyl(1.05,1.05,.05,M.grey,.75,.27,.65,g,40);mesh(new THREE.TorusGeometry(.95,.04,6,40),M.paint,.75,.31,.65,g).rotation.x=Math.PI/2;for(let i=0;i<12;i++){const a=i/12*Math.PI*2;mesh(new THREE.SphereGeometry(.05,8,6),i%2?M.cyan:M.amber,.75+Math.cos(a)*1.1,.32,.65+Math.sin(a)*1.1,g).castShadow=false}
+  // terminal arrondi + fenêtres + écran des arrivées
+  const t=mesh(new THREE.CylinderGeometry(.9,.9,2.6,32,1,false,0,Math.PI),M.white,-.95,.24,-.9,g);t.rotation.z=Math.PI/2;t.rotation.y=Math.PI/2;
+  box(1.85,.9,1.8,M.white,-.95,.69,-.9,g);box(1.86,.14,.05,M.winB,-.95,.85,.01,g).castShadow=false;box(.9,.42,.04,SCREEN,-1.15,1.42,.03,g).castShadow=false;box(.5,.65,.05,M.dark,-.4,.6,.01,g);
+  // tour de contrôle vitrée
+  cyl(.28,.36,2.4,M.panelW,-1.45,1.5,1.1,g,16);cyl(.62,.48,.55,M.glass,-1.45,2.98,1.1,g,20).castShadow=false;const cab=cyl(.5,.42,.45,new THREE.MeshStandardMaterial({color:0x0a1a24,emissive:0x5fe1ff,emissiveIntensity:.8}),-1.45,2.98,1.1,g,20);cyl(.66,.66,.08,M.white,-1.45,3.29,1.1,g,20);
+  cyl(.02,.02,.7,M.grey,-1.45,3.65,1.1,g,6);mesh(new THREE.SphereGeometry(.08,8,6),M.red,-1.45,4.02,1.1,g).userData.blink=1;
+  if(lv>=2){const s=new THREE.Group();s.position.set(.75,.32,.65);g.add(s);cyl(.22,.34,.95,M.white,0,.65,0,s,16);mesh(new THREE.ConeGeometry(.22,.4,16),M.white,0,1.32,0,s);for(let i=0;i<3;i++){const a=i/3*Math.PI*2;box(.04,.35,.3,M.orange,Math.cos(a)*.3,.3,Math.sin(a)*.3,s).rotation.y=-a}box(.12,.12,.02,M.win,0,.85,.33,s)}
+  if(lv>=3){for(const z of [-1.55,-1.05]){cyl(.25,.25,1.1,M.white,1.45,.79,z,g,16);cyl(.27,.27,.06,M.orange,1.45,1.1,z,g,16)}const d=new THREE.Group();d.position.set(-1.45,3.4,1.1);g.add(d);mesh(new THREE.SphereGeometry(.35,20,8,0,Math.PI*2,0,Math.PI/3.2),M.panelW,.3,.15,0,d).rotation.z=-1;g.userData.dishes=[d]}
+  return g};
+/* 5. Centrale hélium-3 */
+N.helium3=lv=>{const g=new THREE.Group();plinth(g);
+  const tanks=lv>=2?[[-.95,-.7],[-.95,.55],[.1,-1.05]]:[[-.95,-.7],[-.95,.55]];
+  for(const [x,z] of tanks){cyl(.48,.48,2.1,M.white,x,1.38,z,g,28);mesh(new THREE.SphereGeometry(.48,24,12,0,Math.PI*2,0,Math.PI/2),M.white,x,2.43,z,g);for(const y of [.8,1.4,2])cyl(.5,.5,.09,VIO,x,y,z,g,28).castShadow=false;cyl(.52,.52,.12,M.grey,x,.39,z,g,28)}
+  // colonne de traitement + jauge
+  box(1,2.5,.9,M.panelW,.85,1.55,.45,g);box(1.02,.12,.92,M.grey,.85,2.84,.45,g);box(.16,1.7,.04,M.dark,.65,1.5,.92,g);const gauge=box(.1,1.1,.03,VIO,.65,1.2,.95,g);gauge.castShadow=false;box(.4,.25,.03,M.win,1.05,2.2,.92,g).castShadow=false;
+  // tuyaux
+  for(const [x,z] of tanks){const a=new THREE.Vector3(x,1.1,z),b=new THREE.Vector3(.35,1.1,.45);strut([x+.45*Math.sign(.35-x||1),1.1,z],[.35,1.1,.45],M.copper,g,.09)}
+  strut([.35,1.6,.45],[-.5,1.6,-.1],M.copper,g,.07);
+  // petite sphère de stockage dorée
+  mesh(new THREE.SphereGeometry(.5,24,16),M.gold,.95,.98,-1.05,g);cyl(.52,.52,.06,M.white,.95,.98,-1.05,g,24);for(const [dx,dz] of [[-.3,-.3],[.3,-.3],[-.3,.3],[.3,.3]])cyl(.04,.04,.6,M.grey,.95+dx,.6,-1.05+dz,g,6);
+  if(lv>=3){for(let i=0;i<4;i++)box(.04,1.4,.7,M.dark,1.4,1.5,-.05+i*.3,g);cyl(.05,.05,1.2,M.grey,.85,3.5,.45,g,8);mesh(new THREE.SphereGeometry(.11,8,6),VIO,.85,4.15,.45,g).castShadow=false}
+  g.userData.pulse=gauge;return g};
+
+/* 6. Extracteur de glace */
+N.extracteur=lv=>{const g=new THREE.Group();plinth(g);const W=new THREE.MeshStandardMaterial({color:0x0a2a44,emissive:0x2a9cff,emissiveIntensity:2.2,transparent:true,opacity:.9});
+  const ICEB=new THREE.MeshStandardMaterial({color:0xcfefff,emissive:0x5fbfff,emissiveIntensity:.4,roughness:.15,transparent:true,opacity:.85});
+  cyl(.85,.85,1.9,M.white,-.75,1.25,-.6,g,32);mesh(new THREE.SphereGeometry(.85,32,16,0,Math.PI*2,0,Math.PI/2),M.white,-.75,2.2,-.6,g);const lvl=mesh(new THREE.CylinderGeometry(.865,.865,.85,32,1,true),W,-.75,.95,-.6,g);lvl.castShadow=false;cyl(.87,.87,.07,M.copper,-.75,1.4,-.6,g,32);
+  // forage : trépied au-dessus d'un trou givré
+  cyl(.55,.55,.04,FROST,.75,.33,.65,g,28);cyl(.22,.22,.05,new THREE.MeshBasicMaterial({color:0x050a10}),.75,.35,.65,g,20);
+  for(let i=0;i<3;i++){const a=i/3*Math.PI*2;strut([.75+Math.cos(a)*.75,.33,.65+Math.sin(a)*.75],[.75,2.1,.65],M.grey,g,.07)}
+  box(.4,.3,.4,M.orange,.75,2.15,.65,g);const bit=cyl(.07,.07,1.6,M.dark,.75,1.2,.65,g,8);
+  for(let i=0;i<6;i++)mesh(new THREE.DodecahedronGeometry(.12+((i*7)%4)*.04,0),ICEB,.15+((i*5)%4)*.18,.45,1.25+((i*3)%3-1)*.15,g);
+  strut([-.1,.7,-.6],[.75,.7,.3],M.copper,g,.09);box(.5,.45,.5,M.panelW,.2,.55,-.95,g);
+  if(lv>=2){cyl(.5,.5,1.4,M.white,-1.15,1,1.05,g,24);const l2=mesh(new THREE.CylinderGeometry(.515,.515,.55,24,1,true),W,-1.15,.8,1.05,g);l2.castShadow=false;mesh(new THREE.SphereGeometry(.5,24,12,0,Math.PI*2,0,Math.PI/2),M.white,-1.15,1.7,1.05,g)}
+  if(lv>=3){box(.9,.08,.35,M.dark,1.15,.75,-.6,g).rotation.z=.4;for(let i=0;i<3;i++)box(.2,.2,.2,ICEB,.85+i*.25,.62+i*.1,-.6,g);mesh(new THREE.SphereGeometry(.09,8,6),M.cyan,.75,2.45,.65,g).castShadow=false}
+  g.userData.spin=bit;return g};
+/* 7. Batterie : cellules cylindriques + jauge réelle */
+N.batterie=lv=>{const g=new THREE.Group();plinth(g);const n=lv===1?4:lv===2?6:8,h=lv>=3?1.9:1.45,cols=n/2;const cells=[];
+  box(3,.22,2.6,M.dark,0,.4,0,g);
+  for(let k=0;k<n;k++){const x=((k%cols)-(cols-1)/2)*(2.6/cols),z=k<cols?-.6:.6;cyl(.36,.36,h,M.white,x,.51+h/2,z,g,20);cyl(.38,.38,.08,M.grey,x,.55+h,z,g,20);cyl(.15,.15,.08,M.copper,x,.63+h,z,g,12);
+    for(let i=0;i<5;i++){const c=mesh(new THREE.CylinderGeometry(.372,.372,h*.11,20,1,true),M.cyan,x,.65+i*h*.17,z,g);c.castShadow=false;cells.push(c)}}
+  box(.6,.8,.5,M.panelW,1.45,.9,1.3,g);box(.4,.05,.02,M.amber,1.45,1.2,1.56,g).castShadow=false;
+  // les bandes sont rangées par niveau i%5 pour la jauge
+  g.userData.cells=cells;return g};
+/* 8. Réacteur à fusion : cœur visible, radiateurs clairs */
+N.reacteur=lv=>{const g=new THREE.Group();plinth(g);const h=lv>=3?1.7:1.3;
+  cyl(1.3,1.45,h,M.white,0,.3+h/2,0,g,48);const band=cyl(1.32,1.32,.22,M.core,0,.3+h*.55,0,g,48);band.castShadow=false;for(let i=0;i<12;i++){const a=i/12*Math.PI*2;box(.08,h-.1,.12,M.panelW,Math.cos(a)*1.36,.3+h/2,Math.sin(a)*1.36,g).rotation.y=-a}
+  cyl(1.1,1.3,.4,M.grey,0,.5+h,0,g,48);mesh(new THREE.SphereGeometry(.95,40,20,0,Math.PI*2,0,Math.PI/2),M.glass,0,.7+h,0,g).castShadow=false;
+  const rings=[];for(let k=0;k<lv;k++){const r=mesh(new THREE.TorusGeometry(.72-k*.12,.07,12,48),M.core,0,1.12+h,0,g);r.rotation.x=Math.PI/2+k*.7;r.rotation.y=k*1.1;r.castShadow=false;rings.push(r)}
+  const ball=mesh(new THREE.SphereGeometry(.3,24,12),M.core,0,1.12+h,0,g);ball.castShadow=false;
+  const nr=lv>=2?4:2;for(let i=0;i<nr;i++){const a=i/nr*Math.PI*2+Math.PI/4;const rg=new THREE.Group();rg.position.set(Math.cos(a)*1.45,.3,Math.sin(a)*1.45);rg.rotation.y=-a;g.add(rg);for(let k=0;k<4;k++)box(.04,1.1,.55,M.panelW,.15+k*.1,.75,0,rg);box(.5,.06,.6,M.cyan,.3,1.32,0,rg).castShadow=false}
+  g.userData.rings=rings;g.userData.pulse=ball;return g};
+/* 9. Pas de tir */
+N.pad=lv=>{const g=new THREE.Group();box(3.9,.12,3.9,M.dark,0,.06,0,g);
+  mesh(new THREE.CylinderGeometry(1.85,1.95,.2,8),M.pad,0,.2,0,g).rotation.y=Math.PI/8;
+  const sc=new THREE.Mesh(new THREE.CircleGeometry(.9,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.45,depthWrite:false}));sc.position.y=.31;g.add(sc);
+  box(.2,.03,1.3,M.paint,-.42,.31,0,g);box(.2,.03,1.3,M.paint,.42,.31,0,g);box(.64,.03,.2,M.paint,0,.31,0,g);mesh(new THREE.TorusGeometry(1.4,.03,6,48),M.paint,0,.31,0,g).rotation.x=Math.PI/2;
+  const nl=lv>=2?16:10;for(let i=0;i<nl;i++){const a=i/nl*Math.PI*2;mesh(new THREE.SphereGeometry(.07,8,6),lv>=3?M.cyan:M.amber,Math.cos(a)*1.72,.34,Math.sin(a)*1.72,g).castShadow=false}
+  for(const [x,z] of [[1.75,1.75],[-1.75,1.75],[1.75,-1.75],[-1.75,-1.75]]){cyl(.05,.05,.8,M.grey,x,.5,z,g,6);mesh(new THREE.SphereGeometry(.07,8,6),M.red,x,.92,z,g).userData.blink=1}
+  box(.3,2.2,.3,M.grey,1.55,1.2,-1.55,g);box(.5,.3,.5,M.panelW,1.55,2.4,-1.55,g);box(.3,.06,.02,M.cyan,1.55,2.45,-1.29,g).castShadow=false;
+  if(lv>=2){const t=new THREE.Group();t.position.set(-1.4,.12,1.45);t.rotation.y=.6;g.add(t);box(.9,.18,.45,M.dark,0,.2,0,t);box(.3,.3,.42,M.white,.32,.42,0,t);cyl(.18,.18,.55,M.orange,-.12,.45,0,t,14).rotation.z=Math.PI/2;for(const x of [-.3,.3])for(const z of [-.24,.24])cyl(.09,.09,.06,M.dark,x,.1,z,t,10).rotation.x=Math.PI/2}
+  if(lv>=3){for(let i=0;i<3;i++)strut([-1.6,.12,-1.4+i*.05],[-1.6,3.2,-1.4],M.orange,g,.06);const gt=new THREE.Group();g.add(gt);for(let y=.6;y<3.2;y+=.5)box(.06,.06,.6,M.orange,-1.6,y,-1.1,gt);box(.08,.08,1,M.orange,-1.6,2.9,-.9,gt);mesh(new THREE.SphereGeometry(.09,8,6),M.red,-1.6,3.35,-1.4,g).userData.blink=1}
+  return g};
+/* 10. Hôpital : croix rouge lumineuse, entrée des urgences */
+N.hopital=lv=>{const g=new THREE.Group();plinth(g);const RED=new THREE.MeshStandardMaterial({color:0x330000,emissive:0xff2a3a,emissiveIntensity:3});
+  box(2.8,1.3,1.7,M.white,0,.95,-.6,g);cyl(.85,.85,2.82,M.white,0,1.6,-.6,g,32).rotation.z=Math.PI/2;box(2.84,.1,1.74,RED,0,.36,-.6,g).castShadow=false;
+  for(const x of [-1,-.35,.35,1])box(.4,.22,.05,M.winB,x,1.1,.26,g).castShadow=false;
+  // panneau croix sur le toit
+  const sg=new THREE.Group();sg.position.set(0,2.65,-.6);g.add(sg);box(.06,.5,.06,M.grey,0,-.25,0,sg);box(1.05,1.05,.1,M.white,0,.5,0,sg);box(.75,.24,.12,RED,0,.5,0,sg).castShadow=false;box(.24,.75,.12,RED,0,.5,0,sg).castShadow=false;
+  // auvent des urgences
+  box(1.5,.08,.9,M.panelW,-.55,1.25,.75,g);for(const x of [-1.2,.1])cyl(.04,.04,.9,M.grey,x,.8,1.15,g,6);box(.7,.75,.05,M.glass,-.55,.7,.27,g).castShadow=false;box(1.2,.12,.03,RED,-.55,1.35,1.21,g).castShadow=false;
+  // ambulance rover
+  const a=new THREE.Group();a.position.set(1.05,.3,1.05);a.rotation.y=-.5;g.add(a);box(.9,.4,.5,M.white,0,.38,0,a);box(.9,.06,.52,RED,0,.42,0,a).castShadow=false;mesh(new THREE.SphereGeometry(.05,8,6),M.cyan,.2,.62,0,a).userData.blink=1;for(const x of [-.3,.3])for(const z of [-.27,.27])cyl(.12,.12,.08,M.dark,x,.12,z,a,12).rotation.x=Math.PI/2;
+  if(lv>=2){cyl(.7,.7,1,M.white,1.3,.8,-1.35,g,28);mesh(new THREE.SphereGeometry(.7,28,14,0,Math.PI*2,0,Math.PI/2),M.glass,1.3,1.3,-1.35,g).castShadow=false}
+  if(lv>=3){box(1.1,.7,1.1,M.white,-1.1,2.75,-.9,g);box(.9,.12,.04,M.winB,-1.1,2.8,-.33,g).castShadow=false}
+  return g};
+Object.assign(MODELS,N)}
 
 /* navette de ravitaillement */
 function shuttleModel(){const g=new THREE.Group();
@@ -2114,7 +2245,7 @@ window.__f=0;function animate(){window.__f++;requestAnimationFrame(animate);let 
     const run=(S.shelter||o.userData.b.pwr===false?0:1)*(rates.power||1);if(u.spin)u.spin.rotation.y+=dt*3*run;if(u.rings)u.rings.forEach((r,i)=>r.rotation.z+=dt*(1.1+i*.6)*(i%2?-1:1)*run);if(u.dishes)u.dishes.forEach((d,i)=>d.rotation.y+=dt*(.3+i*.2)*run);
     if(u.pulse){const s=1+Math.sin(tAll*3)*.08;u.pulse.scale.setScalar(s)}
     if(u.drill&&!S.shelter&&o.userData.b.pwr!==false){u.drill.rotation.y+=dt*6;u.drill.position.y=2.6+Math.sin(tAll*1.3)*.35;if(Math.random()<dt*14)dust.emit(o.position.x+(Math.random()-.5)*1.6,1.3,o.position.z+(Math.random()-.5)*1.6,(Math.random()-.5)*1.5,.6+Math.random(),(Math.random()-.5)*1.5,1.4,.55,.62,.6,.57,.9)}
-    if(u.track){const a=Math.atan2(sunDir.x,sunDir.z);let da=a-u.track.piv.rotation.y;da=Math.atan2(Math.sin(da),Math.cos(da));u.track.piv.rotation.y+=da*.05;u.track.tilt.rotation.x=lerp(u.track.tilt.rotation.x,clamp(Math.PI/2-Math.max(sunDir.y,.15)-.0,0,1.2),.05)}
+    if(u.track){for(const tk of u.tracks||[u.track]){const a=Math.atan2(sunDir.x,sunDir.z);let da=a-tk.piv.rotation.y;da=Math.atan2(Math.sin(da),Math.cos(da));tk.piv.rotation.y+=da*.05;tk.tilt.rotation.x=lerp(tk.tilt.rotation.x,clamp(Math.PI/2-Math.max(sunDir.y,.15)-.0,0,1.2),.05)}}
     {const worn=!o.userData.b.dmg&&wearOf(o.userData.b)<25;if(worn&&!u.worn){const w=new THREE.Sprite(wornMat);w.scale.set(1.1,1.1,1);w.position.y=5;w.renderOrder=5;o.add(w);u.worn=w}if(u.worn){u.worn.visible=worn;u.worn.position.y=5+Math.sin(tAll*2.5)*.2}
      if(o.userData.b.off>0&&Math.random()<dt*3)dust.emit(o.position.x,3,o.position.z,(Math.random()-.5)*.3,.6,(Math.random()-.5)*.3,2,.7,.85,.85,.9,1,.1)}
     if(o.userData.b.dmg){if(Math.random()<dt*10)dust.emit(o.position.x+(Math.random()-.5),2+Math.random(),o.position.z+(Math.random()-.5),(Math.random()-.5)*.4,.8+Math.random()*.6,(Math.random()-.5)*.4,3,1.2,.18,.17,.17,1.6,.15);
@@ -2179,8 +2310,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='3.3';
+const APP_VER='3.4';
 const CHANGELOG=[
+ {v:'3.4',d:'10 bâtiments refaits',n:[['🏗️','Nouvelle modélisation','Entrepôt réfrigéré, panneaux solaires, mine, spatioport, centrale hélium-3, extracteur de glace, batterie, réacteur, pas de tir et hôpital ont été entièrement refaits.'],['☀️','Panneaux solaires','1, 2 puis 4 panneaux selon le niveau, qui suivent tous le soleil.'],['🔋','Batterie','Les cellules s\'allument selon la vraie charge de la base.']]},
  {v:'3.3',d:'Modules vivants',n:[['🏡','Intérieurs éclairés','La nuit, les dômes de la serre et du parc s\'illuminent de l\'intérieur ; les fenêtres brillent davantage.'],['🟢','LED de statut','Un liseré autour de chaque module : vert OK, orange usé, rouge en panne, jaune quarantaine, gris éteint.']]},
  {v:'3.2',d:'Lumières',n:[['☀️','Soleil lunaire','Soleil blanc, ombres noires et nettes comme sur les photos Apollo.'],['🚨','Gyrophare','Un module en panne a un gyrophare orange qui tourne.'],['🔴','Coupure de courant','Quand l\'énergie manque, les fenêtres s\'éteignent et l\'éclairage de secours rouge s\'allume.'],['🟡','Quarantaine','Balise jaune clignotante sur les modules en quarantaine.']]},
  {v:'3.1',d:'Véhicules',n:[['🚚','Benne à régolithe','Fait la navette entre foreuses/mines et le dépôt : +15 % de régolithe. Peut tomber en panne.'],['🤖','Robot de maintenance','Va tout seul entretenir le module le plus usé (consomme 1 ⚡/h).'],['🏗️','Grue de chantier','Apparaît à chaque construction, amélioration ou réparation.']]},
