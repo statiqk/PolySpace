@@ -270,7 +270,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#eef2ff;font-family:
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v2.6</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v2.7</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -1056,7 +1056,7 @@ const DEFS={
  spatioport:{name:'Spatioport',cat:'industrie',icon:'🛸',cost:1400,rare:16,en:-4,unique:true,needPad:1,desc:'Navettes 35 % plus fréquentes et +2 colons par vol.',bg:'#3a2a5a'},
  bouclier:{name:'Bouclier antimétéorites',cat:'industrie',icon:'🛡️',cost:950,rare:12,en:-8,unique:true,desc:'Un dôme d\'énergie protège la base : plus aucun module touché par les météorites.',bg:'#0f4a66',req:'champ'},
  helium3:{name:'Centrale hélium-3',cat:'energie',icon:'🟣',cost:1100,rare:12,en:24,desc:'Fusion propre à l\'hélium-3, jour et nuit.',bg:'#4a1a5a',req:'he3'},
- hopital:{name:'Hôpital',cat:'vie',icon:'🏥',cost:700,rare:6,en:-5,moral:5,desc:'Blessés soignés 3× plus vite, moins de victimes des tempêtes. Moral +5.',bg:'#1a5a4a'},
+ hopital:{name:'Hôpital',cat:'vie',icon:'🏥',cost:700,rare:6,en:-5,moral:5,desc:'Malades soignés 2× plus vite et isolés (3 lits par niveau) : plus de contagion ni de morts. Un médecin y soigne encore plus vite et dépiste les nouveaux cas. Blessés soignés 3× plus vite. Moral +5.',bg:'#1a5a4a'},
  observatoire:{name:'Observatoire',cat:'science',icon:'🔭',cost:550,rare:6,en:-4,sci:1.5,desc:'+1,5 🔬/h, et repère les dangers : expéditions 20 % moins risquées.',bg:'#2a2a6a'},
  labo:{name:'Laboratoire',cat:'science',icon:'🔬',cost:520,rare:4,en:-6,sci:1,desc:'Produit des points de science.',bg:'#4a2a66'},
 };
@@ -1157,7 +1157,7 @@ function effList(b,lv){const e=bEff(b,lv),L=[];const f=v=>(Math.round(v*10)/10).
   if(e.cap)L.push(['👩‍🚀','+'+e.cap+' places']);if(e.solar)L.push(['☀️','+'+f(e.solar)+' le jour']);if(e.prod)L.push(['⚡','+'+f(e.prod)+'/h']);if(e.use)L.push(['⚡','−'+f(e.use)+'/h']);if(e.store)L.push(['🔋','+'+e.store]);
   if(e.o2)L.push(['💨','+'+f(e.o2)+'/h']);if(e.water)L.push(['💧','+'+f(e.water)+'/h']);if(e.wuse)L.push(['💧','−'+f(e.wuse)+'/h']);if(e.rare)L.push(['🔩','+'+f(e.rare)+'/h']);if(e.food)L.push(['🌱','+'+f(e.food)+'/h']);if(e.rego)L.push(['⛏','+'+f(e.rego)+'/h']);if(e.sci)L.push(['🔬','+'+f(e.sci)+'/h']);if(e.moral)L.push(['🙂','+'+e.moral]);
   if(b.t==='pad')L.push(['🚀',['toutes les 36 h','toutes les 26 h','toutes les 20 h'][lv-1]]);
-  const SP={frigo:['🧊','vivres conservés'],imprimante:['🛠️','réparations −50 %'],spatioport:['🛸','navettes −35 % · +2 colons'],bouclier:['🛡️','base protégée'],hopital:['🏥','soins ×3'],observatoire:['🧭','expéditions −20 % risque']};if(SP[b.t])L.push(SP[b.t]);return L}
+  const SP={frigo:['🧊','vivres conservés'],imprimante:['🛠️','réparations −50 %'],spatioport:['🛸','navettes −35 % · +2 colons'],bouclier:['🛡️','base protégée'],hopital:['🏥','soins ×2 · isolement'],observatoire:['🧭','expéditions −20 % risque']};if(SP[b.t])L.push(SP[b.t]);return L}
 let rates={};
 function computeRates(){
   const day=sstep(-.02,.3,sunVec(_sv,S.hour+hourFrac).y);
@@ -1437,7 +1437,7 @@ function renderCrew(){const H=$('#crew');
    const fb=(k,l,n,c)=>`<button class="cf${F===k?' on':''}" data-f="${k}" ${c&&F!==k?`style="color:${c}"`:''}>${l}${n!==undefined?` <i>${n}</i>`:''}</button>`;
    H.innerHTML=tabs+`<div class="cfil">${fb('all','Tous',S.people.length)}${fb('idle','Sans poste',C.idle,C.idle?'#ffcf9a':null)}${fb('sick','Malades',C.sick,C.sick?'#b6ff9a':null)}${fb('tired','Épuisés',C.tired,C.tired?'#ffcf9a':null)}<button class="cf auto" id="autoA">✨ Auto</button></div>
     <div class="cgrid">${list.map(p=>{const m=moodOf(p);const b=p.a&&S.b.find(b=>bkey(b)===p.a);const fit=b&&JOBS[p.j].fit.includes(b.t);const Cc=2*Math.PI*29,col=m>55?'#6dffb5':m>35?'#ffd36b':'#ff8a7a';
-      const ic=onExp(p)?'🚙':p.child>0?'👶':p.sick>0?'🤒':p.hurt>0?'🤕':p.rest>0||(p.fat||0)>80?'😴':p.relay?'🔁':S.strike>0?'✊':fit?'<span style="color:#ffd36b">★</span>':!b?'<span style="color:#ffb36b">●</span>':'';
+      const ic=onExp(p)?'🚙':p.child>0?'👶':p.sick>0?(p.iso?'🏥':'🤒'):p.hurt>0?'🤕':p.rest>0||(p.fat||0)>80?'😴':p.relay?'🔁':S.strike>0?'✊':fit?'<span style="color:#ffd36b">★</span>':!b?'<span style="color:#ffb36b">●</span>':'';
       return `<div class="cp" data-p="${p.id}"><span class="cst">${ic}</span><div class="cav"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="3"/><circle cx="32" cy="32" r="29" fill="none" stroke="${col}" stroke-width="3" stroke-linecap="round" stroke-dasharray="${(Cc*m/100).toFixed(1)} ${Cc.toFixed(1)}" transform="rotate(-90 32 32)"/></svg><div class="cin">${avatar(p,50)}</div></div>
        <b>${p.n}</b><small>${JOBS[p.j].i} ${b?DEFS[b.t].icon+' '+DEFS[b.t].name.split(' ')[0]:onExp(p)?'Expédition':'Sans poste'}</small><div class="cfat"><span style="width:${Math.round(p.fat||0)}%;background:${(p.fat||0)>80?'#ff8a7a':(p.fat||0)>50?'#ffd36b':'#7fd3ff'}"></span></div></div>`}).join('')||'<p class="iempty">Personne ici.</p>'}</div>
     <div class="chint"><span>🧑‍🔧</span><span><b>Glisse un portrait sur un module</b> de la base pour l'y affecter, ou touche-le pour choisir son poste. La barre sous le nom = fatigue : à 80 %, le colon part se reposer seul et un colon libre prend le relais.</span></div>`;
@@ -1493,11 +1493,15 @@ function tickHealth(){
   const hosp=active('hopital'),vac=has('vaccin'),park=active('parc');
   // contagion
   const sick=S.people.filter(p=>p.sick>0);
-  for(const s of sick){const mb=s.a&&S.b.find(b=>bkey(b)===s.a);if(mb&&mb.quar>0)continue;
+  // hôpital : lits d'isolement (3 par niveau), médecin = soins + dépistage
+  const hb=S.b.filter(b=>b.t==='hopital'&&!b.dmg&&b.pwr!==false&&!(b.off>0));const beds=hb.reduce((a,b)=>a+3*lvOf(b),0);
+  const doc=hb.some(b=>workersOf(b).some(p=>p.j==='med'));S.people.forEach(p=>p.iso=0);
+  sick.slice().sort((a,b)=>(b.sev||0)-(a.sev||0)).slice(0,beds).forEach(p=>p.iso=1);
+  for(const s of sick){if(s.iso)continue;const mb=s.a&&S.b.find(b=>bkey(b)===s.a);if(mb&&mb.quar>0)continue;
     for(const o of S.people){if(o===s||o.sick>0||o.imm>0||onExp(o))continue;const sameMod=o.a&&o.a===s.a;const ob=o.a&&S.b.find(b=>bkey(b)===o.a);if(ob&&ob.quar>0)continue;
-      const ch=(sameMod?.07:.012)*(vac?.3:1);if(Math.random()<ch){infect(o);toast(`🦠 ${o.n} a attrapé le virus`,'#b6ff9a')}}}
+      const ch=(sameMod?.07:.012)*(vac?.3:1);if(Math.random()<ch){infect(o);if(doc&&S.people.filter(p=>p.iso).length<beds){o.iso=1;toast(`🩺 Dépistage : ${o.n} est malade, isolé·e à l'hôpital`,'#b6ff9a',1)}else toast(`🦠 ${o.n} a attrapé le virus`,'#b6ff9a')}}}
   for(const p of S.people){
-    if(p.sick>0){p.sick-=hosp?2:1;if(p.sick<=0){p.sick=0;p.imm=240;logx(`${p.n} est guéri·e.`)}
+    if(p.sick>0){p.sick-=p.iso&&doc?3:hosp?2:1;if(p.sick<=0){p.sick=0;p.imm=240;logx(`${p.n} est guéri·e.`)}
       else if(p.sev>.8&&!hosp&&Math.random()<.006){killColon(p,'maladie');continue}}
     if(p.imm>0)p.imm--;if(p.rest>0){p.rest--;if(p.rest===0&&p.auto)endRest(p)}if(p.child>0){p.child--;if(p.child===0)toast(`🧒 ${p.n} est assez grand·e pour travailler`,'#9fe0ff')}
     // fatigue
@@ -1768,7 +1772,7 @@ function suggested(){const s=new Set();for(const a of (curAlerts||[]))if(a.sev>=
 function fxChips(k){const d=DEFS[k],L=[];if(d.water)L.push(['#4fb8ff','💧 +'+d.water+'/h']);if(d.o2)L.push(['#5fe1ff','💨 +'+d.o2+'/h']);if(d.food)L.push(['#6dffb5','🌱 +'+d.food+'/h']);if(d.rego)L.push(['#ffb36b','⛏ +'+d.rego+'/h']);if(d.sci)L.push(['#d39bff','🔬 +'+String(d.sci).replace('.',',')+'/h']);
   if(d.cap)L.push(['#fff','👩‍🚀 +'+d.cap]);if(d.store)L.push(['#5fe1ff','🔋 +'+d.store]);if(d.solar)L.push(['#ffd84a','☀️ +'+d.solar]);if(d.moral)L.push(['#ffd36b','🙂 +'+d.moral]);
   if(k==='recycleur')L.push(['#ff9a8a','💧 −0,6']);if(k==='serre')L.push(['#ff9a8a','💧 −0,5']);if(d.en)L.push([d.en>0?'#ffd84a':'#9aa6c8','⚡ '+(d.en>0?'+':'−')+Math.abs(d.en)]);
-  const SP={imprimante:'🛠️ −50 % réparations',spatioport:'🛸 navettes ×1,5',bouclier:'🛡️ anti-météorites',hopital:'🏥 soins ×3',observatoire:'🧭 −20 % risque',frigo:'🧊 vivres conservés',pad:'🚀 navettes'};if(SP[k])L.unshift(['#fff',SP[k]]);
+  const SP={imprimante:'🛠️ −50 % réparations',spatioport:'🛸 navettes ×1,5',bouclier:'🛡️ anti-météorites',hopital:'🏥 isole les malades',observatoire:'🧭 −20 % risque',frigo:'🧊 vivres conservés',pad:'🚀 navettes'};if(SP[k])L.unshift(['#fff',SP[k]]);
   return L.slice(0,3).map(([c,t])=>`<span style="color:${c}">${t}</span>`).join('')}
 function renderBuild(){const sug=suggested();
   $('#bBal').innerHTML=`<span>⛏ ${fmt(S.rego)}</span><span style="color:#ffcf9a">🔩 ${fmt(S.rare)}</span>`;
@@ -1784,7 +1788,7 @@ function renderBuild(){const sug=suggested();
 /* ================== FICHE MODULE ================== */
 let infoTab='prod',infoMini=false,infoConf=null,tagY=6;
 const FLD=[['cap','👩‍🚀','Capacité','places','#ffffff'],['solar','☀️','Solaire','le jour','#ffd84a'],['prod','⚡','Énergie','/h','#ffd84a'],['use','⚡','Énergie','/h','#ffd84a',1],['store','🔋','Stockage','','#5fe1ff'],['o2','💨','Oxygène','/h','#5fe1ff'],['water','💧','Eau','/h','#4fb8ff'],['wuse','💧','Eau','/h','#4fb8ff',1],['rare','🔩','Rares','/h','#ffcf9a'],['food','🌱','Vivres','/h','#6dffb5'],['rego','⛏','Régolithe','/h','#ffb36b'],['sci','🔬','Science','/h','#d39bff'],['moral','🙂','Moral','','#ffd36b']];
-const SPX={frigo:['🧊','vivres conservés'],imprimante:['🛠️','réparations −50 %'],spatioport:['🛸','navettes −35 % · +2 colons'],bouclier:['🛡️','base protégée'],hopital:['🏥','soins ×3'],observatoire:['🧭','expéditions −20 % risque']};
+const SPX={frigo:['🧊','vivres conservés'],imprimante:['🛠️','réparations −50 %'],spatioport:['🛸','navettes −35 % · +2 colons'],bouclier:['🛡️','base protégée'],hopital:['🏥','soins ×2 · isolement'],observatoire:['🧭','expéditions −20 % risque']};
 const PADT=['toutes les 36 h','toutes les 26 h','toutes les 20 h'];
 const nf=v=>(Math.round(v*10)/10).toString().replace('.',',');
 const nomOf=(b,lv=lvOf(b))=>bEff({...b,pwr:undefined,off:0,quar:0,dmg:false},lv);
@@ -2049,8 +2053,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='2.6';
+const APP_VER='2.7';
 const CHANGELOG=[
+ {v:'2.7',d:'Hôpital contre les épidémies',n:[['🏥','Isolement','L\'hôpital isole les malades (3 lits par niveau) : ils ne contaminent plus personne.'],['🩺','Médecin','Un médecin à l\'hôpital soigne 3× plus vite et dépiste les nouveaux cas.']]},
  {v:'2.6',d:'Repos automatique',n:[['😴','Repos automatique','À 80 % de fatigue, un colon part se reposer seul (~13 h) puis reprend son poste.'],['🔁','Relais','Un colon sans poste prend sa place pendant son repos. Deux colons d\'un même module ne se reposent pas en même temps.']]},
  {v:'2.5.1',d:'Retour des icônes',n:[['↩️','Icônes d\'origine','Retour aux icônes d\'avant la 2.5.']]},
  {v:'2.4.1',d:'Fiche module plus lisible',n:[['🎨','Fond de fiche','Fond plus sombre et opaque, comme sur la maquette : le texte ressort mieux sur le décor.']]},

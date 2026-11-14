@@ -1,8 +1,8 @@
 {
- "version": "2.6",
+ "version": "2.7",
  "date": "2026-11-14",
  "notes": [
-  "Repos automatique des colons fatigués",
-  "Relais par un colon sans poste"
+  "Hôpital : isolement des malades",
+  "Médecin : soins 3× et dépistage"
  ]
 }
