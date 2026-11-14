@@ -243,7 +243,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#eef2ff;font-family:
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver">Powered by PolyTabs · Avant-Poste v2.1</div>
+  <div class="sp-ver">Powered by PolyTabs · Avant-Poste v2.2</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -343,12 +343,23 @@ for(const p of [[-14,4,14],[14,4,-14]]){const l=new THREE.PointLight(0xffc27a,0,
 
 /* ================== TEXTURES PROCÉDURALES ================== */
 function canvasTex(w,h,fn,srgb=true){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');fn(g,w,h);const t=new THREE.CanvasTexture(c);if(srgb)t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=renderer.capabilities.getMaxAnisotropy();return t}
-const groundTex=canvasTex(512,512,(g,w,h)=>{const d=g.createImageData(w,h);for(let y=0;y<h;y++)for(let x=0;x<w;x++){
-  const nx=Math.cos(x/w*Math.PI*2),ny=Math.sin(x/w*Math.PI*2),nz=Math.cos(y/h*Math.PI*2),nw=Math.sin(y/h*Math.PI*2);
-  let v=.62+.35*fbm(nx*2+nz*.7,ny*2+nw*.7,nz*2+nw,6)+(rnd()-.5)*.16;const i=(y*w+x)*4;const c=clamp(v,0,1)*255;d.data[i]=c;d.data[i+1]=c*.985;d.data[i+2]=c*.96;d.data[i+3]=255}
-  g.putImageData(d,0,0);
-  for(let k=0;k<70;k++){const x=rnd()*w,y=rnd()*h,r=2+rnd()*rnd()*16;const gr=g.createRadialGradient(x,y,r*.2,x,y,r);gr.addColorStop(0,'rgba(0,0,0,.28)');gr.addColorStop(.8,'rgba(0,0,0,.05)');gr.addColorStop(.92,'rgba(255,255,255,.25)');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.beginPath();g.arc(x,y,r,0,7);g.fill()}
-});
+// bruit périodique (texture qui se répète sans couture ni vagues)
+function pnoise(x,y,P){const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi;const H=(i,j)=>{i=((i%P)+P)%P;j=((j%P)+P)%P;let h=(i*374761393+j*668265263)^0x5bd1e995;h=(h^(h>>>13))*1274126177;return ((h^(h>>>16))>>>0)/4294967295};
+  const u=fade(xf),v=fade(yf);return lerp(lerp(H(xi,yi),H(xi+1,yi),u),lerp(H(xi,yi+1),H(xi+1,yi+1),u),v)}
+function pfbm(x,y,P,o){let s=0,a=.5,f=1;for(let i=0;i<o;i++){s+=a*pnoise(x*f,y*f,P*f);a*=.5;f*=2}return s}
+const GT=1024,HM=new Float32Array(GT*GT);seed=31;
+for(let y=0;y<GT;y++)for(let x=0;x<GT;x++){HM[y*GT+x]=pfbm(x/GT*8,y/GT*8,8,7)}
+// micro-cratères dans la carte de hauteur
+for(let k=0;k<150;k++){const cx=rnd()*GT,cy=rnd()*GT,r=3+Math.pow(rnd(),2.5)*55;const dep=.08+rnd()*.12;for(let dy=-r*1.5;dy<=r*1.5;dy++)for(let dx=-r*1.5;dx<=r*1.5;dx++){const d=Math.hypot(dx,dy)/r;if(d>1.5)continue;const X=((Math.round(cx+dx)%GT)+GT)%GT,Y=((Math.round(cy+dy)%GT)+GT)%GT;
+  HM[Y*GT+X]+=(d<1?(d*d-1)*dep:0)+Math.exp(-Math.pow((d-1)/.22,2))*dep*.35}}
+// cailloux
+for(let k=0;k<2600;k++){const cx=Math.floor(rnd()*GT),cy=Math.floor(rnd()*GT),r=1+rnd()*rnd()*3.5;for(let dy=-3;dy<=3;dy++)for(let dx=-3;dx<=3;dx++){const d=Math.hypot(dx,dy)/r;if(d>1)continue;const X=(cx+dx+GT)%GT,Y=(cy+dy+GT)%GT;HM[Y*GT+X]+=(1-d*d)*.07}}
+const groundTex=canvasTex(GT,GT,(g,w,h)=>{const d=g.createImageData(w,h);for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x;
+   const hx=HM[y*w+(x+1)%w]-HM[y*w+(x-1+w)%w],hy=HM[((y+1)%h)*w+x]-HM[((y-1+h)%h)*w+x];const shade=clamp(.5-(hx*.8+hy*.5)*6,0,1);
+   let v=.56+(HM[i]-.5)*.5+(shade-.5)*.14+(rnd()-.5)*.08;const c=clamp(v,0,1)*255;const o=i*4;d.data[o]=c;d.data[o+1]=c*.985;d.data[o+2]=c*.955;d.data[o+3]=255}g.putImageData(d,0,0)});
+const groundNrm=canvasTex(GT,GT,(g,w,h)=>{const d=g.createImageData(w,h);for(let y=0;y<h;y++)for(let x=0;x<w;x++){const hx=(HM[y*w+(x+1)%w]-HM[y*w+(x-1+w)%w])*14,hy=(HM[((y+1)%h)*w+x]-HM[((y-1+h)%h)*w+x])*14;const l=Math.hypot(hx,hy,1);const o=(y*w+x)*4;
+   d.data[o]=(-hx/l*.5+.5)*255;d.data[o+1]=(hy/l*.5+.5)*255;d.data[o+2]=(1/l*.5+.5)*255;d.data[o+3]=255}g.putImageData(d,0,0)},false);
+groundNrm.wrapS=groundNrm.wrapT=THREE.RepeatWrapping;
 groundTex.wrapS=groundTex.wrapT=THREE.RepeatWrapping;
 const glowTex=canvasTex(128,128,(g,w)=>{const gr=g.createRadialGradient(64,64,0,64,64,64);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.2,'rgba(255,240,215,.7)');gr.addColorStop(.5,'rgba(255,200,140,.15)');gr.addColorStop(1,'rgba(255,200,140,0)');g.fillStyle=gr;g.fillRect(0,0,128,128)});
 
@@ -395,14 +406,14 @@ function groundShader(mat,glint){mat.onBeforeCompile=sh=>{sh.uniforms.detailMap=
   const pos=geo.attributes.position,uv=geo.attributes.uv;const col=new Float32Array(pos.count*3);
   for(let i=0;i<pos.count;i++){
     let x=pos.getX(i),z=pos.getZ(i);x=Math.sign(x)*Math.pow(Math.abs(x),2)*S/2;z=Math.sign(z)*Math.pow(Math.abs(z),2)*S/2;
-    const [h,dark,rays]=heightAt(x,z);pos.setXYZ(i,x,h,z);uv.setXY(i,x/9,z/9);
+    const [h,dark,rays]=heightAt(x,z);pos.setXYZ(i,x,h,z);uv.setXY(i,x/18,z/18);
     const mare=sstep(-.05,.25,fbm(x*.003,5,z*.003,3));const r=Math.hypot(x,z);const mt=sstep(160,500,r)*clamp(h/90,0,1);
     let v=.42-mare*.15-dark+rays+mt*.12+fbm(x*.03,7,z*.03,2)*.07-(r<24?.06*(1-r/24):0);v=clamp(v,.08,.85);
     const warm=1+(1-mare)*.04,cool=1+mare*.03;
     col[i*3]=v*warm;col[i*3+1]=v*.985;col[i*3+2]=v*.955*cool;
   }
   geo.setAttribute('color',new THREE.BufferAttribute(col,3));geo.computeVertexNormals();
-  const mat=new THREE.MeshStandardMaterial({map:groundTex,bumpMap:groundTex,bumpScale:.9,vertexColors:true,roughness:.96,metalness:0,envMapIntensity:.15});groundShader(mat,true);
+  const mat=new THREE.MeshStandardMaterial({map:groundTex,normalMap:groundNrm,normalScale:new THREE.Vector2(.7,.7),vertexColors:true,roughness:.96,metalness:0,envMapIntensity:.15});groundShader(mat,true);
   const ground=new THREE.Mesh(geo,mat);ground.receiveShadow=true;scene.add(ground);
   // puits du tunnel de lave : fond noir + parois
   const ph=heightAt(PIT.x,PIT.z)[0];
@@ -792,6 +803,15 @@ const rover=new THREE.Group();{
   mesh(new THREE.CylinderGeometry(.02,.02,.7,6),M.grey,-.55,1.25,.3,rover);mesh(new THREE.SphereGeometry(.06,8,6),M.amber,-.55,1.62,.3,rover);
   rover.scale.setScalar(.95);scene.add(rover)}
 
+/* gravier 3D autour de la base */
+{const gg=new THREE.DodecahedronGeometry(1,0);const gm=new THREE.MeshStandardMaterial({color:0x8d8a84,roughness:.95,flatShading:true});const N=3000;const im=new THREE.InstancedMesh(gg,gm,N);const m=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler();seed=88;
+ for(let i=0;i<N;i++){const a=rnd()*6.283,d=19+Math.pow(rnd(),.8)*70;const x=Math.cos(a)*d,z=Math.sin(a)*d;const s=.03+Math.pow(rnd(),3)*.22;q.setFromEuler(e.set(rnd()*3,rnd()*3,rnd()*3));m.compose(new THREE.Vector3(x,heightAt(x,z)[0]+s*.3,z),q,new THREE.Vector3(s,s*.7,s));im.setMatrixAt(i,m)}
+ im.receiveShadow=true;im.castShadow=false;scene.add(im)}
+/* sol tassé et marques de chantier sous la base */
+{const t=canvasTex(1024,1024,(g,w,h)=>{const c=w/2;const gr=g.createRadialGradient(c,c,w*.2,c,c,w*.5);gr.addColorStop(0,'rgba(20,18,16,.38)');gr.addColorStop(.7,'rgba(20,18,16,.22)');gr.addColorStop(1,'rgba(20,18,16,0)');g.fillStyle=gr;g.fillRect(0,0,w,h);
+   g.strokeStyle='rgba(0,0,0,.18)';g.lineWidth=7;for(let k=0;k<14;k++){g.beginPath();const a=Math.random()*6.28,r1=w*.08,r2=w*(.3+Math.random()*.18);g.moveTo(c+Math.cos(a)*r1,c+Math.sin(a)*r1);g.quadraticCurveTo(c+Math.cos(a+.4)*r2*.6,c+Math.sin(a+.4)*r2*.6,c+Math.cos(a+.2)*r2,c+Math.sin(a+.2)*r2);g.stroke();
+     g.beginPath();g.moveTo(c+Math.cos(a)*r1+10,c+Math.sin(a)*r1+10);g.quadraticCurveTo(c+Math.cos(a+.4)*r2*.6+10,c+Math.sin(a+.4)*r2*.6+10,c+Math.cos(a+.2)*r2+10,c+Math.sin(a+.2)*r2+10);g.stroke()}});
+ const pl=new THREE.Mesh(new THREE.PlaneGeometry(60,60).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({map:t,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1}));pl.position.y=.04;scene.add(pl)}
 /* traces du rover */
 {const tt=canvasTex(64,128,(g,w,h)=>{g.clearRect(0,0,w,h);for(const x0 of [6,44]){g.fillStyle='rgba(0,0,0,.5)';g.fillRect(x0,0,14,h);g.fillStyle='rgba(0,0,0,.35)';for(let y=0;y<h;y+=8)g.fillRect(x0,y,14,4)}});
  tt.wrapT=THREE.RepeatWrapping;const N=480,pos=[],uv=[],idx=[];
