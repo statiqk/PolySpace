@@ -112,6 +112,11 @@ html,body{height:100%;overflow:hidden;background:#000;color:#eef2ff;font-family:
 .sp-tg{display:flex;gap:3px;padding:3px;border-radius:10px;background:rgba(255,255,255,.07)}.sp-tg button{border:0;font:inherit;font-size:11.5px;font-weight:800;padding:6px 10px;border-radius:8px;background:none;color:#9aa6c8;cursor:pointer}.sp-tg button.on{background:#fff;color:#0a0d1d}
 .sp-rec{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center}.sp-rec div{border-radius:13px;background:rgba(255,255,255,.06);padding:8px 4px}.sp-rec b{font-size:19px;display:block}.sp-rec small{font-size:10px;color:#9aa6c8}
 .sp #hud,.sp #side,.sp #nav,.sp #obj,.sp #alert,.sp #toasts,.sp #info{visibility:hidden!important;pointer-events:none}#hud,#side,#nav,#obj,#alert{transition:opacity .6s}
+.sp-upd{display:none;border-radius:18px;padding:11px 14px;margin-bottom:10px;border-color:rgba(127,211,255,.5)}.sp-upd.on{display:block;animation:pop .35s}
+.sp-upd .h{display:flex;justify-content:space-between;font-size:12px;font-weight:800}.sp-upd .h span:first-child{color:#7fd3ff;letter-spacing:.5px}
+.sp-upd .b{height:6px;border-radius:6px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:8px}.sp-upd .b i{display:block;height:100%;width:0;background:linear-gradient(90deg,#3dc1ff,#7fd3ff);transition:width .25s}
+.sp-upd small{display:block;font-size:11.5px;color:#9aa6c8;margin-top:6px}
+.wn li{list-style:none;display:flex;gap:10px;padding:9px 0;border-top:1px solid rgba(255,255,255,.08);font-size:13px;line-height:1.4;text-align:left}.wn li>span{font-size:19px}.wn small{color:#9aa6c8;font-size:12px}
 .sp-ver{text-align:center;font-size:10.5px;color:#5c6688;margin-top:12px}
 #load{position:fixed;inset:0;z-index:70;background:#03040a;display:grid;place-items:center;font-size:14px;color:#8a93b5;letter-spacing:2px;transition:opacity .8s}
 #load.hide{opacity:0;pointer-events:none}
@@ -239,11 +244,12 @@ html,body{height:100%;overflow:hidden;background:#000;color:#eef2ff;font-family:
 <div id="splash">
  <div class="sp-top"><div class="sp-k">MISSION SÉLÉNÉ</div><div class="sp-logo">AVANT-<br>POSTE</div><div class="sp-line"></div><div class="sp-tag">Bâtis la première base sur la Lune.</div></div>
  <div class="sp-bot">
+  <div class="sp-upd glass" id="spUpd"></div>
   <div class="sp-card glass" id="spCard"></div>
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver">Powered by PolyTabs · Avant-Poste v2.2</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v2.3</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -1926,7 +1932,7 @@ $('#load').classList.add('hide');
 // caméra d'intro
 const introFrom=new THREE.Vector3(70,40,95),introTo=camera.position.clone(),HOME_T=controls.target.clone();camera.position.copy(introFrom);let intro=0,introOn=false;
 function leaveSplash(){onSplash=false;document.body.classList.remove('sp');$('#splash').classList.add('hide');introFrom.copy(camera.position);controls.target.copy(HOME_T);intro=0;introOn=true;paused=false;$('#speed').textContent='▶×1';introLast=performance.now();introStep()}
-$('#start').onclick=()=>{REC.games+=0;leaveSplash();if(!saved){logx('La base Séléné est fondée. Bonne chance, commandant·e !');toast('👋 Construis un recycleur O₂ pour commencer','#7fd3ff')}};
+$('#start').onclick=()=>{if(updBusy)return;REC.games+=0;leaveSplash();showWhatsNew();if(!saved){logx('La base Séléné est fondée. Bonne chance, commandant·e !');toast('👋 Construis un recycleur O₂ pour commencer','#7fd3ff')}};
 let onSplash=true,spA=Math.atan2(introTo.z,introTo.x)+1.2;
 let introLast=performance.now();const introStep=()=>{const now=performance.now();const idt=Math.min(.1,(now-introLast)/1000);introLast=now;if(introOn&&intro<1){intro=Math.min(1,intro+idt/3.2);const e=1-Math.pow(1-intro,3);camera.position.lerpVectors(introFrom,introTo,e)}if(intro<1)requestAnimationFrame(introStep)};introStep();
 setInterval(()=>{if(S&&!over)save()},8000);
@@ -1934,13 +1940,42 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 // pendant l'écran d'accueil, le temps est figé
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
+/* ================== MISES À JOUR ================== */
+const APP_VER='2.3';
+const CHANGELOG=[
+ {v:'2.3',d:'Mises à jour automatiques',n:[['🔄','Mises à jour automatiques','Le jeu se met à jour tout seul à l\'ouverture, ta partie est conservée.'],['✨','Quoi de neuf','Les nouveautés s\'affichent après chaque mise à jour.']]},
+ {v:'2.2',d:'Nouveau sol lunaire',n:[['🌑','Nouveau sol lunaire','Régolithe plus réaliste, micro-cratères en relief, gravier et sol tassé autour de la base.']]},
+ {v:'2.1',d:'Interrupteur des modules',n:[['⏻','Interrupteur','Éteins un module pour économiser l\'énergie.']]},
+ {v:'2.0',d:'Graphismes',n:[['🧱','Dalles et couleurs','Dalles de béton, liserés de couleur par catégorie, ombres de contact.']]},
+ {v:'1.9',d:'Nouvel accueil',n:[['🎬','Accueil cinématique','Caméra autour de la base, reprise de partie, réglages et records.']]},
+];
+const vnum=v=>String(v).split('.').map(Number).reduce((a,x,i)=>a+x*Math.pow(1000,2-i),0);
+const ON_PAGES=/github\.io$/.test(location.hostname);
+let updBusy=false;
+async function checkUpdate(manual){if(updBusy)return;if(!ON_PAGES){if(manual)toast('ℹ️ Les mises à jour automatiques fonctionnent sur la version GitHub','#9fe0ff');return}
+  let remote;try{const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;remote=await r.json()}catch(_){if(manual)toast('📡 Impossible de vérifier pour l\'instant','#ffb36b');return}
+  if(vnum(remote.version)<=vnum(APP_VER)){if(manual)toast('✅ Tu as la dernière version (v'+APP_VER+')','#6dffb5');return}
+  let tried='';try{tried=localStorage.getItem('ap_upd_try')||''}catch(_){}if(tried===remote.version&&!manual)return;
+  updBusy=true;const U=$('#spUpd');U.innerHTML=`<div class="h"><span>⬇️ MISE À JOUR v${remote.version}</span><span id="updP">0 %</span></div><div class="b"><i id="updB"></i></div><small>Ta partie est conservée</small>`;U.classList.add('on');$('#start').disabled=true;$('#spNew').disabled=true;
+  const setP=p=>{$('#updB').style.width=Math.round(p*100)+'%';$('#updP').textContent=Math.round(p*100)+' %'};
+  try{const r=await fetch('./?v='+remote.version,{cache:'reload'});const tot=+(r.headers.get('content-length'))||300000;const rd=r.body.getReader();let got=0;
+    for(;;){const {done,value}=await rd.read();if(done)break;got+=value.length;setP(Math.min(.95,got/tot))}
+    await fetch('./',{cache:'reload'}).catch(()=>{});await fetch('index.html',{cache:'reload'}).catch(()=>{});setP(1)}catch(_){setP(1)}
+  try{localStorage.setItem('ap_upd_try',remote.version)}catch(_){}save();$('#spUpd small').textContent='Redémarrage…';
+  setTimeout(()=>{location.replace(location.pathname+'?v='+remote.version)},600)}
+function showWhatsNew(){let seen='';try{seen=localStorage.getItem('ap_seen_ver')||''}catch(_){}try{localStorage.setItem('ap_seen_ver',APP_VER)}catch(_){}
+  if(!saved||!seen&&!saved||seen===APP_VER)return false;const news=CHANGELOG.filter(c=>vnum(c.v)>vnum(seen||'0')).slice(0,3);if(!news.length)return false;
+  const items=news.flatMap(c=>c.n).slice(0,4);modalOpen=true;
+  $('#mbox').innerHTML=`<div style="font-size:11px;color:#7fd3ff;font-weight:800;letter-spacing:1.5px">MISE À JOUR INSTALLÉE</div><h3 style="font-size:23px">Quoi de neuf · v${APP_VER}</h3><ul class="wn">${items.map(([i,t,d])=>`<li><span>${i}</span><div><b>${t}</b><br><small>${d}</small></div></li>`).join('')}</ul><button class="choice" id="wnOk" style="text-align:center;background:linear-gradient(135deg,#ff9a3d,#ff5a3d);border:0"><b>C'est parti !</b></button><div style="text-align:center;font-size:11px;color:#6c7699;margin-top:8px">Historique complet dans ⚙️ Réglages</div>`;
+  $('#mbox').style.borderColor='rgba(127,211,255,.35)';$('#modal').classList.add('show');$('#wnOk').onclick=()=>{$('#modal').classList.remove('show');$('#mbox').style.borderColor='';modalOpen=false};return true}
 function renderSplash(){const has=!!saved;$('#start').textContent=has?'▶ Reprendre':'▶ Commencer';$('#spNew').style.display=has?'':'none';
   if(has){let th='';try{th=localStorage.getItem('ap_thumb')||''}catch(_){}
     $('#spCard').innerHTML=`<div class="sp-th" style="${th?`background-image:url(${th})`:''}">${th?'':'🌕'}</div><div style="flex:1;min-width:0"><div class="k">DERNIÈRE PARTIE${S.savedAt?' · '+ago(S.savedAt).toUpperCase():''}</div><b>Base Séléné · Sol ${S.sol}</b><div class="sp-chips"><span>👩‍🚀 ${S.colons}</span><span style="color:#ffd36b">💰 ${fmtC(S.cr||0)}</span><span style="color:#ffcf6b">⭐ ${Math.round(S.prestige||0)}</span><span>🏗️ ${S.b.length}</span></div></div>`;$('#spCard').classList.add('on')}}
 renderSplash();
+setTimeout(()=>checkUpdate(false),1200);
 let spPanel='';function showPanel(k){spPanel=spPanel===k?'':k;const P=$('#spPanel');P.classList.toggle('on',!!spPanel);
-  if(spPanel==='set'){P.innerHTML=`<h4>⚙️ Réglages</h4><div class="sp-opt"><span>Qualité graphique</span><div class="sp-tg"><button data-q="high" class="${SET.q==='high'?'on':''}">Haute</button><button data-q="eco" class="${SET.q==='eco'?'on':''}">Économie</button></div></div><div class="sp-opt"><span>Vibrations</span><div class="sp-tg"><button data-v="1" class="${SET.vib?'on':''}">Oui</button><button data-v="0" class="${!SET.vib?'on':''}">Non</button></div></div>`;
-    P.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{SET.q=b.dataset.q;applyQ();storeSet();showPanel('');showPanel('set')});P.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{SET.vib=b.dataset.v==='1';storeSet();vib(40);showPanel('');showPanel('set')})}
+  if(spPanel==='set'){P.innerHTML=`<h4>⚙️ Réglages</h4><div class="sp-opt"><span>Qualité graphique</span><div class="sp-tg"><button data-q="high" class="${SET.q==='high'?'on':''}">Haute</button><button data-q="eco" class="${SET.q==='eco'?'on':''}">Économie</button></div></div><div class="sp-opt"><span>Vibrations</span><div class="sp-tg"><button data-v="1" class="${SET.vib?'on':''}">Oui</button><button data-v="0" class="${!SET.vib?'on':''}">Non</button></div></div><div class="sp-opt"><span>Version v${APP_VER}</span><button class="btn ghost" id="chk" style="padding:6px 10px;font-size:11.5px">🔄 Vérifier maintenant</button></div><div style="max-height:150px;overflow-y:auto;margin-top:4px">${CHANGELOG.map(c=>`<div class="sp-opt" style="display:block"><b style="color:#7fd3ff">v${c.v}</b> · ${c.d}<div style="font-size:11.5px;color:#9aa6c8;margin-top:2px">${c.n.map(n=>n[0]+' '+n[1]).join(' · ')}</div></div>`).join('')}</div>`;
+    const ck=$('#chk');if(ck)ck.onclick=()=>checkUpdate(true);P.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{SET.q=b.dataset.q;applyQ();storeSet();showPanel('');showPanel('set')});P.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{SET.vib=b.dataset.v==='1';storeSet();vib(40);showPanel('');showPanel('set')})}
   else if(spPanel==='rec'){P.innerHTML=`<h4>🏆 Records</h4><div class="sp-rec"><div><b>${REC.bestSol}</b><small>sols tenus</small></div><div><b>${REC.maxCol}</b><small>colons max</small></div><div><b>${REC.missions}</b><small>expéditions</small></div></div><div class="sp-opt" style="margin-top:8px"><span>Objectifs de la partie</span><b>${S.obj}/${OBJ.length}</b></div><div class="ibar"><span style="width:${S.obj/OBJ.length*100}%;background:linear-gradient(90deg,#ffb347,#ffd36b)"></span></div>`}}
 function storeSet(){try{localStorage.setItem('ap_settings',JSON.stringify(SET))}catch(_){}}
 function applyQ(){const eco=SET.q==='eco';gtao.enabled=!eco&&qStep<1;pr=eco?Math.min(1.25,DPR):DPR;renderer.setPixelRatio(pr);composer.setPixelRatio(pr);bloom.enabled=!eco;renderer.shadowMap.enabled=true;sun.shadow.mapSize.set(eco?1024:(MOBILE?1536:2048),eco?1024:(MOBILE?1536:2048));if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}resize()}
