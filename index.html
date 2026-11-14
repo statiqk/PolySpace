@@ -271,7 +271,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#eef2ff;font-family:
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v3.0</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v3.1</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -1130,9 +1130,69 @@ function addBuilding(b,anim){const o=build3D(b.t,b.lv||1);
   {const a=new THREE.Mesh(decalGeo,aoMat);a.scale.set(6.4,1,6.4);a.position.y=.03;o.add(a);if(PRESS.includes(b.t)||b.t==='pad'){const p=new THREE.Mesh(decalGeo,poolMat);p.scale.set(11,1,11);p.position.y=.04;o.add(p)}}o.position.set(b.i*TILE,0,b.j*TILE);o.userData.b=b;o.rotation.y=b.t==='labo'||b.t==='batterie'?((b.i+b.j)&1)*Math.PI/2:0;
   if(b.pwr===false&&!b.dmg){const LIT=[M.win,M.winB,M.cyan,M.amber,M.growL,M.core,M.red,M.lvl3];o.traverse(m=>{if(m.isMesh&&LIT.includes(m.material))m.material=M.dark});const w=new THREE.Sprite(offMat);w.scale.set(1.1,1.1,1);w.position.y=5;w.renderOrder=5;o.add(w)}
   if(b.dmg){const w=new THREE.Sprite(warnMat);w.scale.set(1.3,1.3,1);w.position.y=5.2;w.renderOrder=5;o.add(w);o.userData.warn=w;o.traverse(m=>{if(m.isMesh&&m.material===M.win)m.material=M.dark})}
-  mergeStatic(o);bGroup.add(o);shadowDirty=true;occ.set(key(b.i,b.j),o);if(anim==='up'){o.scale.setScalar(.88);o.userData.grow=.62;burst(o.position.x,.3,o.position.z,30);for(let k=0;k<60;k++){const a=Math.random()*6.28;fire.emit(o.position.x+Math.cos(a)*2,Math.random()*3,o.position.z+Math.sin(a)*2,Math.cos(a)*2,2+Math.random()*3,Math.sin(a)*2,.9,.5,.4,.85,1,0,-2)}}
+  mergeStatic(o);bGroup.add(o);shadowDirty=true;if(anim&&S&&S.b.includes(b))spawnCrane(b);occ.set(key(b.i,b.j),o);if(anim==='up'){o.scale.setScalar(.88);o.userData.grow=.62;burst(o.position.x,.3,o.position.z,30);for(let k=0;k<60;k++){const a=Math.random()*6.28;fire.emit(o.position.x+Math.cos(a)*2,Math.random()*3,o.position.z+Math.sin(a)*2,Math.cos(a)*2,2+Math.random()*3,Math.sin(a)*2,.9,.5,.4,.85,1,0,-2)}}
   else if(anim){o.scale.setScalar(.01);o.userData.grow=0;burst(o.position.x,.3,o.position.z,40)}rebuildCorridors()}
 function removeBuilding(b){const o=occ.get(key(b.i,b.j));if(o){bGroup.remove(o);disposeMerged(o);occ.delete(key(b.i,b.j))}shadowDirty=true;rebuildCorridors()}
+/* ================== VÉHICULES : benne, robot de maintenance, grue ================== */
+const vWheel=(p,x,z,r=.28,w=.18)=>{mesh(new THREE.CylinderGeometry(r,r,w,16),M.dark,x,r,z,p).rotation.x=Math.PI/2;mesh(new THREE.CylinderGeometry(r*.5,r*.5,w+.02,10),M.grey,x,r,z,p).rotation.x=Math.PI/2};
+function haulerModel(){const g=new THREE.Group();mesh(new THREE.BoxGeometry(2.6,.28,1.15),M.dark,0,.5,0,g);mesh(new THREE.BoxGeometry(.85,.75,1.05),M.white,.95,1.02,0,g);mesh(new THREE.BoxGeometry(.05,.3,.8),M.win,1.38,1.15,0,g);
+  const bin=new THREE.Group();bin.position.set(-.4,.7,0);bin.rotation.z=-.12;g.add(bin);mesh(new THREE.BoxGeometry(1.5,.12,1.1),M.orange,0,0,0,bin);for(const z of [-.5,.5])mesh(new THREE.BoxGeometry(1.5,.6,.1),M.orange,0,.3,z,bin);mesh(new THREE.BoxGeometry(.1,.6,1.1),M.orange,.72,.3,0,bin);
+  const load=new THREE.Group();bin.add(load);for(let k=0;k<6;k++)mesh(new THREE.DodecahedronGeometry(.2+(k%3)*.05,0),M.grey,-.5+(k%3)*.45,.42,k<3?-.22:.22,load);
+  for(const x of [-.95,-.2,.95])for(const z of [-.62,.62])vWheel(g,x,z,.32,.2);mesh(new THREE.SphereGeometry(.07,8,6),M.amber,1,1.45,.3,g).userData.blink=1;mesh(new THREE.BoxGeometry(.5,.05,.4),M.solar,.95,1.42,-.15,g);
+  g.userData.load=load;mergeStatic(g);g.scale.setScalar(.9);return g}
+function botModel(){const g=new THREE.Group();mesh(new THREE.BoxGeometry(.8,.32,.6),M.white,0,.38,0,g);mesh(new THREE.BoxGeometry(.82,.06,.62),M.orange,0,.56,0,g);mesh(new THREE.CylinderGeometry(.05,.05,.5,8),M.grey,-.25,.8,0,g);
+  const arm=new THREE.Group();arm.position.set(.15,.6,0);g.add(arm);const a1=mesh(new THREE.BoxGeometry(.1,.55,.1),M.orange,0,.2,0,arm);a1.rotation.z=-.6;const a2=mesh(new THREE.BoxGeometry(.5,.08,.08),M.orange,.3,.42,0,arm);a2.rotation.z=.3;mesh(new THREE.SphereGeometry(.07,8,6),M.grey,.55,.46,0,arm);
+  mesh(new THREE.SphereGeometry(.07,10,8),M.cyan,-.25,1.08,0,g).userData.blink=1;mesh(new THREE.BoxGeometry(.04,.12,.3),M.win,.41,.4,0,g);for(const x of [-.28,.28])for(const z of [-.36,.36])vWheel(g,x,z,.17,.12);
+  g.userData.arm=arm;mergeStatic(g);return g}
+function craneModel(){const g=new THREE.Group();mesh(new THREE.BoxGeometry(2,.3,1.3),M.dark,0,.45,0,g);for(const x of [-.65,.65])for(const z of [-.7,.7])vWheel(g,x,z,.3,.2);mesh(new THREE.BoxGeometry(.9,.6,1),M.orange,-.4,.9,0,g);
+  const mast=new THREE.Group();mast.position.set(.4,.6,0);g.add(mast);for(const [x,z] of [[-.15,-.15],[.15,-.15],[-.15,.15],[.15,.15]])mesh(new THREE.BoxGeometry(.06,3.6,.06),M.orange,x,1.8,z,mast);
+  for(let y=.3;y<3.6;y+=.45){mesh(new THREE.BoxGeometry(.36,.04,.04),M.orange,0,y,-.15,mast);mesh(new THREE.BoxGeometry(.36,.04,.04),M.orange,0,y,.15,mast);mesh(new THREE.BoxGeometry(.04,.04,.36),M.orange,-.15,y,0,mast);mesh(new THREE.BoxGeometry(.04,.04,.36),M.orange,.15,y,0,mast)}
+  const boom=new THREE.Group();boom.position.set(.4,4.25,0);g.add(boom);mesh(new THREE.BoxGeometry(3.6,.18,.22),M.orange,1.1,0,0,boom);mesh(new THREE.BoxGeometry(.6,.4,.5),M.grey,-.8,-.15,0,boom);mesh(new THREE.SphereGeometry(.07,8,6),M.red,0,.2,0,boom).userData.blink=1;
+  const hook=new THREE.Group();hook.position.set(2.6,0,0);boom.add(hook);const cab=mesh(new THREE.CylinderGeometry(.012,.012,1,4),M.dark,0,-.5,0,hook);mesh(new THREE.BoxGeometry(.25,.25,.25),M.amber,0,-1,0,hook);
+  g.userData.boom=boom;g.userData.hook=hook;g.userData.cable=cab;mergeStatic(g);return g}
+const VPER=(HALF+1.4)*TILE,VDEPOT=[-7,VPER],VHOME=[7,VPER];
+const veh={hauler:null,bot:null,cranes:[]};
+// pile de régolithe au dépôt
+{const pile=new THREE.Group();for(let k=0;k<9;k++)mesh(new THREE.DodecahedronGeometry(.35+Math.random()*.3,0),M.grey,(Math.random()-.5)*1.8,.15,(Math.random()-.5)*1.4,pile);pile.position.set(VDEPOT[0]-1.6,gy(VDEPOT[0]-1.6,VDEPOT[1]+1.8),VDEPOT[1]+1.8);mergeStatic(pile);scene.add(pile);veh.pile=pile}
+function vSq(p){const P=VPER,[x,z]=p;if(Math.abs(z-P)<.5)return P-x;if(Math.abs(x+P)<.5)return 2*P+(P-z);if(Math.abs(z+P)<.5)return 4*P+(x+P);return 6*P+(z+P)}
+function vPerim(a,b){const P=VPER,L=8*P,sa=vSq(a),sb=vSq(b),C=[[P,P],[-P,P],[-P,-P],[P,-P]];const fwd=(sb-sa+L)%L,out=[];
+  if(fwd<=L/2){for(let k=1;k<=4;k++){const s=k*2*P;const d=(s-sa+L)%L;if(d>0&&d<fwd)out.push([d,C[k%4]])}out.sort((x,y)=>x[0]-y[0])}
+  else{for(let k=0;k<4;k++){const s=k*2*P;const d=(sa-s+L)%L;if(d>0&&d<L-fwd)out.push([d,C[k]])}out.sort((x,y)=>x[0]-y[0])}
+  return out.map(x=>x[1]).concat([b])}
+function vLane(ti,tj){let best=null;for(const [di,dj] of [[0,1],[1,0],[-1,0],[0,-1]]){let i=ti+di,j=tj+dj,ok=true;if(occ.has(key(i,j)))continue;const dock=[i*TILE,j*TILE];
+    while(Math.abs(i)<=HALF+1&&Math.abs(j)<=HALF+1){if(occ.has(key(i,j))){ok=false;break}i+=di;j+=dj}if(!ok)continue;
+    const out=[di?Math.sign(di)*VPER:dock[0],dj?Math.sign(dj)*VPER:dock[1]];const len=Math.hypot(out[0]-dock[0],out[1]-dock[1])+(dj>0?-3:0);if(!best||len<best.len)best={dock,out,len,di,dj}}
+  if(!best){const x=ti*TILE,z=tj*TILE,P=VPER;const out=Math.abs(x)>Math.abs(z)?[Math.sign(x)*P,z]:[x,Math.sign(z||1)*P];best={dock:out,out,len:0}}return best}
+function vRoute(v,lane){const pts=[];if(v.inside)pts.push(v.inside);const from=v.inside||v.pos;pts.push(...vPerim(from,lane.out));if(lane.dock!==lane.out)pts.push(lane.dock);v.pts=pts;v.inside=lane.dock!==lane.out?lane.out:null}
+function vHome(v,home){const pts=[];if(v.inside)pts.push(v.inside);pts.push(...vPerim(v.inside||v.pos,home));v.pts=pts;v.inside=null}
+function vMove(v,dt){if(!v.pts.length)return true;const [tx,tz]=v.pts[0];const dx=tx-v.pos[0],dz=tz-v.pos[1],d=Math.hypot(dx,dz),st=v.spd*dt;
+  if(d<=st){v.pos=[tx,tz];v.pts.shift()}else{v.pos=[v.pos[0]+dx/d*st,v.pos[1]+dz/d*st];const a=Math.atan2(-dz,dx);let da=a-v.g.rotation.y;da=Math.atan2(Math.sin(da),Math.cos(da));v.g.rotation.y+=da*Math.min(1,dt*6)}
+  v.g.position.set(v.pos[0],gy(v.pos[0],v.pos[1])*(Math.max(Math.abs(v.pos[0]),Math.abs(v.pos[1]))>HALF*TILE+2?1:0),v.pos[1]);return !v.pts.length}
+const haulerOn=()=>S.b.some(b=>(b.t==='foreuse'||b.t==='mine')&&!b.dmg)&&!(S.veh&&S.veh.hd>0);
+const botOn=()=>S.b.length>=3;
+function updateVehicles(dt,gdt){if(!S)return;S.veh=S.veh||{hd:0};const run=gdt>0&&!S.shelter;const vdt=run?Math.min(.2,gdt):0;
+  // benne
+  const H=veh.hauler,mines=S.b.filter(b=>(b.t==='foreuse'||b.t==='mine')&&!b.dmg);
+  if(mines.length&&!H){const g=haulerModel();scene.add(g);veh.hauler={g,pos:[...VDEPOT],pts:[],spd:3.2,st:'idle',w:1,inside:null,n:0};g.position.set(VDEPOT[0],gy(...VDEPOT),VDEPOT[1])}
+  if(!mines.length&&H){scene.remove(H.g);veh.hauler=null}
+  if(veh.hauler){const v=veh.hauler;v.g.userData.load.visible=v.st==='back'||v.st==='unload';
+    if(S.veh.hd>0){if(!v.broke){v.broke=1;v.g.rotation.z=.08}}else if(v.broke){v.broke=0;v.g.rotation.z=0}
+    if(!v.broke&&vdt){if(v.w>0)v.w-=vdt;else if(v.st==='idle'){const m=mines[v.n++%mines.length];v.tgt=m;vRoute(v,vLane(m.i,m.j));v.st='go'}
+      else if(vMove(v,vdt)){if(v.st==='go'){v.st='load';v.w=3}else if(v.st==='load'){v.st='back';vHome(v,VDEPOT)}else if(v.st==='back'){v.st='unload';v.w=2}else if(v.st==='unload'){v.st='idle';v.w=.5}}
+      if((v.st==='load'||v.st==='unload')&&v.w>0&&Math.random()<vdt*12)dust.emit(v.pos[0]+(Math.random()-.5)*2,1,v.pos[1]+(Math.random()-.5)*2,(Math.random()-.5),.6+Math.random(),(Math.random()-.5),1.3,.5,.62,.6,.57,.85)}}
+  // robot de maintenance
+  if(botOn()&&!veh.bot){const g=botModel();scene.add(g);veh.bot={g,pos:[...VHOME],pts:[],spd:2.4,st:'idle',w:1,inside:null};g.position.set(VHOME[0],gy(...VHOME),VHOME[1])}
+  if(veh.bot&&vdt){const v=veh.bot;v.g.userData.arm.rotation.z=v.st==='work'?Math.sin(tAll*4)*.35:0;
+    if(v.st==='work'){if(!S.b.includes(v.tgt)||v.tgt.dmg||wearOf(v.tgt)>=96){v.st='idle';v.w=.6}else if(Math.random()<vdt*6)fire.emit(v.pos[0]+.4,1.05,v.pos[1],(Math.random()-.5)*2,1.5+Math.random(),(Math.random()-.5)*2,.4,.25,.5,.9,1,0,-3)}
+    else if(v.w>0)v.w-=vdt;
+    else if(v.st==='idle'){const t=S.b.filter(b=>!b.dmg&&wearOf(b)<88).sort((a,b)=>wearOf(a)-wearOf(b))[0];if(t){v.tgt=t;vRoute(v,vLane(t.i,t.j));v.st='go'}else if(v.pos[0]!==VHOME[0]||v.pos[1]!==VHOME[1]){vHome(v,VHOME);v.st='home'}else v.w=3}
+    else if(vMove(v,vdt)){if(v.st==='go'){v.st='work';v.g.rotation.y=Math.atan2(-(v.tgt.j*TILE-v.pos[1]),v.tgt.i*TILE-v.pos[0])}else{v.st='idle';v.w=3}}}
+  // grues
+  for(const c of veh.cranes){c.t+=dt;const u=c.g.userData;const k=c.t<.7?c.t/.7:c.t>5.3?Math.max(0,(6-c.t)/.7):1;c.g.scale.set(1,Math.max(.01,k),1);u.boom.rotation.y=Math.sin(c.t*.8)*.9;const hy=-.6-Math.abs(Math.sin(c.t*1.3))*1.6;u.hook.children[1].position.y=hy;u.cable.scale.y=-hy;u.cable.position.y=hy/2}
+  for(const c of veh.cranes.filter(c=>c.t>=6)){scene.remove(c.g);disposeMerged(c.g)}veh.cranes=veh.cranes.filter(c=>c.t<6)}
+function spawnCrane(b){if(veh.cranes.length>=2)return;let pos=null;for(const [di,dj] of [[0,1],[1,0],[-1,0],[0,-1]])if(!occ.has(key(b.i+di,b.j+dj))&&Math.abs(b.i+di)<=HALF+1&&Math.abs(b.j+dj)<=HALF+1){pos=[(b.i+di)*TILE,(b.j+dj)*TILE,Math.atan2(-(b.j*TILE-(b.j+dj)*TILE),b.i*TILE-(b.i+di)*TILE)];break}
+  if(!pos)pos=[b.i*TILE+2.6,b.j*TILE+2.6,-Math.PI*.75];const g=craneModel();g.position.set(pos[0],0,pos[1]);g.rotation.y=pos[2];g.scale.set(1,.01,1);scene.add(g);veh.cranes.push({g,t:0});shadowDirty=true}
+
 function placeModLights(){const L=S.b.slice().sort((a,b)=>(PRESS.includes(b.t)?1:0)-(PRESS.includes(a.t)?1:0)||(a.i*a.i+a.j*a.j)-(b.i*b.i+b.j*b.j));
   modLights.forEach((l,k)=>{const b=L[k];if(!b){l.position.set(0,-50,0);l.userData.on=0;return}l.position.set(b.i*TILE+1.6,2.2,b.j*TILE+2.2);l.userData.on=1;l.userData.warm=PRESS.includes(b.t)||b.t==='pad'})}
 function rebuildCorridors(){placeModLights();disposeMerged(corridors);corridors.clear();for(const b of S.b){if(!PRESS.includes(b.t))continue;for(const [di,dj] of [[1,0],[0,1]]){const n=S.b.find(c=>c.i===b.i+di&&c.j===b.j+dj&&PRESS.includes(c.t));if(!n)continue;
@@ -1191,13 +1251,14 @@ function computeRates(){
     cap+=e.cap;store+=e.store;prod+=e.solar*day+e.prod;use+=e.use;o2+=e.o2;food+=e.food;rego+=e.rego*eff;sci+=e.sci*eff;moral+=e.moral;water+=e.water;wuse+=e.wuse;rare+=e.rare*eff;
     if(LUNAR&&PRESS.includes(b.t)&&!b.dmg&&b.pwr!==false)use+=1.5}
   for(const m of S.st.built&&!(S.st.down>0)?S.st.m:[]){const d=SDEFS[m.t];if(d.en)prod+=d.en;if(d.sci)sci+=d.sci;if(d.cap)cap+=d.cap;if(d.food)food+=d.food;if(d.moral)moral+=d.moral}
+  if(botOn())use+=1;
   const net=prod-use;let power=1;if(S.energy<=0&&net<0)power=clamp(prod/use,0,1);
   const need=1+Math.max(0,S.colons-8)*.03;const wneed=wuse+S.colons*.22*need;const wok=S.water>1?1:clamp(water/Math.max(.01,wneed),0,1);
   const heat=LUNAR?S.b.filter(b=>PRESS.includes(b.t)&&!b.dmg&&b.pwr!==false).length*1.5:0;
   const soc=(S.strike>0?.3:1)*(S.conflict>0?.9:1);
   rates={prod,use,net,cap,store,day,power,heat,soc,
     need,wok,water:water*power*soc-wuse*power-S.colons*.22*need,rare:rare*power*soc,
-    o2:o2*power*wok*soc-S.colons*.32*need,food:food*power*wok*soc-S.colons*.28*need,rego:rego*power*soc,sci:sci*power*soc,moralBonus:moral};
+    o2:o2*power*wok*soc-S.colons*.32*need,food:food*power*wok*soc-S.colons*.28*need,rego:rego*power*soc*(haulerOn()?1.15:1),sci:sci*power*soc,moralBonus:moral};
   const leak=S.b.filter(b=>PRESS.includes(b.t)&&!b.dmg).reduce((a,b)=>a+.1*(1.6-wearOf(b)/100),0);const spoil=S.food*(active('frigo')?.001:.004);const dis=day<.05?S.energy*.01:0;
   rates.o2-=leak;rates.food-=spoil;rates.net-=dis;rates.leak=leak;rates.spoil=spoil;rates.dis=dis;
   return rates}
@@ -1225,6 +1286,7 @@ function tickHour(){
   // usure, arrêts, maintenance automatique
   for(const b of S.b){if(b.dmg||b.pwr===false)continue;if(b.off>0)b.off--;b.wear=Math.max(0,wearOf(b)-(WEAR_RATE[b.t]||.3)*(LUNAR?1.3:1));
     if(b.wear<25&&Math.random()<.025*(1-b.wear/25)+.004)damage(b,b.t==='recycleur'?'filtre colmaté':'usure')}
+  if(veh.bot&&veh.bot.st==='work'&&veh.bot.tgt&&S.b.includes(veh.bot.tgt)&&!veh.bot.tgt.dmg)veh.bot.tgt.wear=Math.min(100,wearOf(veh.bot.tgt)+1.6);
   const techs=S.people?S.people.filter(p=>p.j==='tec'&&!onExp(p)&&!(p.hurt>0)):[];
   for(const t of techs){const worn=S.b.filter(b=>!b.dmg).sort((a,b)=>wearOf(a)-wearOf(b))[0];if(worn&&wearOf(worn)<90)worn.wear=Math.min(100,wearOf(worn)+1.6);
     const br=S.b.filter(b=>b.dmg&&repCost(b)<=320);if(br.length&&Math.random()<.035){const b=br[0];b.dmg=false;b.wear=70;removeBuilding(b);addBuilding(b,'up');toast(`🧑‍🔧 ${t.n} a réparé : ${DEFS[b.t].name}`,'#6dffb5');logx(`${t.n} a réparé ${DEFS[b.t].name} (maintenance).`)}}
@@ -1234,6 +1296,8 @@ function tickHour(){
   // colons
   const before=S.people.length;syncPeople('est reparti·e vers la Terre');for(const p of S.people)if(p.hurt>0)p.hurt=Math.max(0,p.hurt-(active('hopital')?3:1));
   tickExp();tickHealth();tickSociety();
+  // véhicules
+  S.veh=S.veh||{hd:0};if(S.veh.hd>0){S.veh.hd--;if(!S.veh.hd)toast('🚚 Benne réparée par l\'équipe','#6dffb5')}else if(haulerOn()&&Math.random()<.004){S.veh.hd=10;toast('🚚 La benne à régolithe est en panne (−15 % de régolithe)','#ffb36b',1);logx('Benne à régolithe en panne.')}
   // navette
   {const pad=S.b.find(b=>b.t==='pad'),ok=padOK();
    if(pad&&shipState==='idle'&&!S.embargo){
@@ -1705,6 +1769,7 @@ function getAlerts(){const r=rates,A=[];if(!r.store)return A;
   const sick=S.people.filter(p=>p.sick>0);if(sick.length){const byMod={};sick.forEach(p=>{if(p.a)byMod[p.a]=(byMod[p.a]||0)+1});const mk=Object.keys(byMod).sort((a,b)=>byMod[b]-byMod[a])[0];const mb=mk&&S.b.find(b=>bkey(b)===mk);
     A.push({sev:3,ic:'🦠',t:`${sick.length} malade${sick.length>1?'s':''}`,sub:mb?(mb.quar>0?`${DEFS[mb.t].name} en quarantaine`:`Foyer : ${DEFS[mb.t].name}`):'Contagion possible',btn:mb&&!(mb.quar>0)?'Isoler':null,col:'#56b84a',fn:()=>{mb.quar=48;toast('🚧 '+DEFS[mb.t].name+' en quarantaine 48 h','#ffd36b');computeRates();save()},go:()=>openCrew('team')})}
   if(S.orbW>0){const pd=S.b.find(b=>b.t==='pad');A.push({sev:3,ic:'🛰️',t:`Navette en orbite · repart dans ${S.orbW} h`,sub:pd&&pd.dmg?'Répare le pas de tir pour qu\'elle se pose':'Rallume le pas de tir pour qu\'elle se pose',btn:pd&&pd.pwr===false&&!pd.dmg?'Rallumer':'Voir',col:'#ff9a3d',fn:()=>{if(pd&&pd.pwr===false&&!pd.dmg){pd.pwr=undefined;pd.off=0;removeBuilding(pd);addBuilding(pd,false);toast('⏻ Pas de tir rallumé','#6dffb5');computeRates();save()}else if(pd)focusB(pd)},go:()=>pd&&focusB(pd)})}
+  if(S.veh&&S.veh.hd>0)A.push({sev:1,ic:'🚚',t:`Benne en panne · ${S.veh.hd} h`,sub:'Régolithe −15 % · réparation auto',btn:'Réparer ⛏ 60',col:'#ff9a3d',fn:()=>{if(S.rego<60)return toast('⛏ Pas assez de régolithe','#ff8a7a');S.rego-=60;S.veh.hd=0;toast('🚚 Benne réparée','#6dffb5');computeRates();save()}});
   if(LUNAR)A.push({sev:2,ic:'🌑',t:`Nuit lunaire · ${S.ln.left} h`,sub:`Chauffage −${(r.heat||0).toFixed(0)} ⚡/h`});else if(S.ln.next<=24)A.push({sev:S.ln.next<=10?3:2,ic:'🌑',t:`Nuit lunaire dans ${Math.max(1,S.ln.next)} h`,sub:'32 h sans soleil : stocke de l\'énergie',btn:'Batterie',col:'#7a5cff',fn:()=>tryBuild('batterie')});
   if(S.req){const R=REQS[S.req.k];const map={parc:'parc',hopital:'hopital',vivres:'serre',eau:'extracteur',place:'habitat'};const bk=map[S.req.k];A.push({sev:2,ic:'💬',t:`Demande : ${R.t}`,sub:`${S.req.by.split(' ')[0]} · ${S.req.left} h restantes`,btn:bk?'Construire':'Équipe',col:'#3d8bff',fn:()=>bk?tryBuild(bk):openCrew('team')})}
   if(r.cap<=S.colons&&count('pad'))A.push({sev:2,ic:'🏠',t:'Habitats pleins',sub:'Les navettes ne peuvent plus amener de colons',btn:'Habitat',col:'#3d8bff',fn:()=>tryBuild('habitat')});
@@ -2023,6 +2088,7 @@ window.__f=0;function animate(){window.__f++;requestAnimationFrame(animate);let 
   const gdt=paused||modalOpen?0:dt*speed;
   acc+=gdt;while(acc>=HOUR){acc-=HOUR;tickHour()}hourFrac=acc/HOUR;
   const {night}=updateSky();
+  updateVehicles(dt,gdt);
   // animations des modules
   growing=false;for(const o of bGroup.children){const u=o.userData;
     if(u.grow!==undefined){growing=true;u.grow+=dt*1.6;const g=Math.min(1,u.grow);const e=1+2.70158*Math.pow(g-1,3)+1.70158*Math.pow(g-1,2);o.scale.setScalar(e);if(g>=1)delete u.grow}
@@ -2094,8 +2160,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='3.0';
+const APP_VER='3.1';
 const CHANGELOG=[
+ {v:'3.1',d:'Véhicules',n:[['🚚','Benne à régolithe','Fait la navette entre foreuses/mines et le dépôt : +15 % de régolithe. Peut tomber en panne.'],['🤖','Robot de maintenance','Va tout seul entretenir le module le plus usé (consomme 1 ⚡/h).'],['🏗️','Grue de chantier','Apparaît à chaque construction, amélioration ou réparation.']]},
  {v:'3.0',d:'Nouvelle nuit',n:[['💡','Base éclairée','Les modules éclairent leurs murs et le sol, les lampadaires du périmètre s\'allument.'],['🌍','Clair de Terre','La nuit, la Terre éclaire le paysage en bleu avec de vraies ombres.'],['❄️','Nuit lunaire givrée','Sol givré et brillant, modules qui chauffent plus fort.']]},
  {v:'2.9',d:'Plus fluide',n:[['⚡','Rendu optimisé','Bâtiments et décor fusionnés : environ 8× moins d\'appels de dessin par image.'],['🌗','Ombres','Recalculées ~15 fois par seconde au lieu de 60, et tout de suite après une construction.'],['🔋','Batterie','30 images/s au repos, 10 sous un menu plein écran : moins de chauffe et d\'usure de la batterie.']]},
  {v:'2.8',d:'Pas de tir et navettes',n:[['⏸️','Navettes suspendues','Pas de tir éteint ou en panne : le compte à rebours se met en pause.'],['🛰️','Attente en orbite','Une navette déjà en approche attend 12 h en orbite ; sans pas de tir, elle repart (livraison perdue, prestige −3).'],['⚠️','Avertissement','Éteindre le pas de tir demande confirmation et annonce la conséquence.']]},
