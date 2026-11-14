@@ -270,7 +270,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#eef2ff;font-family:
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v2.7</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v2.7.1</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -1142,7 +1142,7 @@ const LV_K=[1,1.6,2.3],LV_U=[1,1.3,1.6];const lvOf=b=>b.lv||1;
 function bEff(b,lv=lvOf(b)){const d=DEFS[b.t],u=LV_U[lv-1],wk=S.people?workersOf(b):[],w=(1+(S.people?workBonus(b):0))*(.55+.45*wearOf(b)/100),k=LV_K[lv-1]*w,kb=LV_K[lv-1];
   if(b.pwr===false&&lv===lvOf(b))return{cap:0,store:d.store?Math.round(d.store*kb):0,solar:0,prod:0,use:0,o2:0,food:0,rego:0,sci:0,moral:0,water:0,rare:0,wuse:0};
   if((b.off>0||b.quar>0)&&lv===lvOf(b))return{cap:d.cap?Math.round(d.cap*kb):0,store:d.store?Math.round(d.store*kb):0,solar:0,prod:0,use:0,o2:0,food:0,rego:0,sci:0,moral:0,water:0,rare:0,wuse:0};if(b.dmg&&lv===lvOf(b))return{cap:d.cap?Math.round(d.cap*k*.5):0,store:d.store?Math.round(d.store*k*.5):0,solar:0,prod:0,use:0,o2:0,food:0,rego:0,sci:0,moral:0,water:0,rare:0,wuse:0};return{
-  cap:d.cap?Math.round(d.cap*kb):0,store:d.store?Math.round(d.store*kb):0,solar:d.solar?d.solar*kb*(has('panneaux')?1.4:1):0,
+  cap:d.cap?Math.round(d.cap*kb):0,store:d.store?Math.round(d.store*kb):0,solar:d.solar?d.solar*kb*(has('panneaux')?1.4:1)*(.55+.45*wearOf(b)/100):0,
   prod:d.en>0?d.en*k:0,use:d.en<0?-d.en*u:0,o2:(d.o2||0)*k,water:(d.water||0)*k,rare:b.t==='mine'?.25*k:0,wuse:(b.t==='recycleur'?.6:b.t==='serre'?.5:0)*kb,food:(d.food||0)*k*(has('serreled')?1.5:1),rego:(d.rego||0)*k*(has('forage')?1.5:1),sci:(d.sci||0)*k,moral:Math.round((d.moral||0)*kb)+wk.filter(p=>p.j==='med').length*3+(b.t==='parc'?wk.length*2:0)}}
 const nOf=t=>S.b.filter(b=>b.t===t).length;
 function bCost(k){const d=DEFS[k],f=Math.pow(1.15,nOf(k));return{rego:Math.round(d.cost*f),rare:d.rare?Math.round(d.rare*f):0}}
@@ -1688,7 +1688,7 @@ function getAlerts(){const r=rates,A=[];if(!r.store)return A;
 let curAlerts=[],lastAlertH=null,lastAlertsSheet='';
 const SEVC=['#3d8bff','#7fd3ff','#ffcf6b','#ff8a5a','#ff4d5e'];
 function ring(k,ic,label,val,cap,rate,col){const G=S.glitch&&S.glitch.res===k;const f=clamp(val/Math.max(1,cap),0,1);const h=rate<0?val/-rate:Infinity;const warn=h<8?'#ff4d5e':h<24?'#ffb347':null;const C=2*Math.PI*27;
-  const sub=G?'???':rate>=0?'+'+(Math.abs(rate)<10?rate.toFixed(1).replace('.',','):Math.round(rate))+'/h':h>99?'∞':Math.floor(h)+' h';
+  const sub=G?'???':rate>=0?'+'+(Math.abs(rate)<10?rate.toFixed(1).replace('.',','):Math.round(rate))+'/h':h>99?'99+ h':Math.floor(h)+' h';
   return `<div class="gz glass${warn?' gw':''}" style="${warn?`border-color:${warn}`:''}"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="5"/><circle cx="32" cy="32" r="27" fill="none" stroke="${warn||col}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${(C*f).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 32 32)"/></svg>
    <div class="gv"><span class="gi">${ic}</span><b>${G?`<span class="glitch">${['??','#E','0x'][Math.floor(tAll*3)%3]}</span>`:Math.round(f*100)+'%'}</b><small style="${warn?`color:${warn}`:''}">${sub}</small></div></div>`}
 function renderHUD(){const r=rates;if(!r.store)return;
@@ -1772,7 +1772,7 @@ function suggested(){const s=new Set();for(const a of (curAlerts||[]))if(a.sev>=
 function fxChips(k){const d=DEFS[k],L=[];if(d.water)L.push(['#4fb8ff','💧 +'+d.water+'/h']);if(d.o2)L.push(['#5fe1ff','💨 +'+d.o2+'/h']);if(d.food)L.push(['#6dffb5','🌱 +'+d.food+'/h']);if(d.rego)L.push(['#ffb36b','⛏ +'+d.rego+'/h']);if(d.sci)L.push(['#d39bff','🔬 +'+String(d.sci).replace('.',',')+'/h']);
   if(d.cap)L.push(['#fff','👩‍🚀 +'+d.cap]);if(d.store)L.push(['#5fe1ff','🔋 +'+d.store]);if(d.solar)L.push(['#ffd84a','☀️ +'+d.solar]);if(d.moral)L.push(['#ffd36b','🙂 +'+d.moral]);
   if(k==='recycleur')L.push(['#ff9a8a','💧 −0,6']);if(k==='serre')L.push(['#ff9a8a','💧 −0,5']);if(d.en)L.push([d.en>0?'#ffd84a':'#9aa6c8','⚡ '+(d.en>0?'+':'−')+Math.abs(d.en)]);
-  const SP={imprimante:'🛠️ −50 % réparations',spatioport:'🛸 navettes ×1,5',bouclier:'🛡️ anti-météorites',hopital:'🏥 isole les malades',observatoire:'🧭 −20 % risque',frigo:'🧊 vivres conservés',pad:'🚀 navettes'};if(SP[k])L.unshift(['#fff',SP[k]]);
+  const SP={imprimante:'🛠️ −50 % réparations',spatioport:'🛸 navettes ×1,5',bouclier:'🛡️ anti-météorites',hopital:'🏥 isole les malades',helium3:'🟣 +hélium-3',observatoire:'🧭 −20 % risque',frigo:'🧊 vivres conservés',pad:'🚀 navettes'};if(SP[k])L.unshift(['#fff',SP[k]]);
   return L.slice(0,3).map(([c,t])=>`<span style="color:${c}">${t}</span>`).join('')}
 function renderBuild(){const sug=suggested();
   $('#bBal').innerHTML=`<span>⛏ ${fmt(S.rego)}</span><span style="color:#ffcf9a">🔩 ${fmt(S.rare)}</span>`;
@@ -1839,10 +1839,12 @@ function showInfo(o,opt){if(!o)return;const b=o.userData.b,d=DEFS[b.t],lv=lvOf(b
   else{
   let body='';
   if(infoTab==='prod'){
-    const tiles=FLD.filter(f=>e[f[0]]>0).map(([k,ic,lab,u,c,neg])=>{const v=e[k],tot=baseTot(k)||v;const pct=Math.round(v/Math.max(.001,stale?tot+v:tot)*100);
+    const tiles=FLD.filter(f=>e[f[0]]>0).map(([k,ic,lab,u,c,neg])=>{const v=e[k],tot=k==='store'?(rates.store||v):(baseTot(k)||v);const pct=Math.round(v/Math.max(.001,stale?tot+v:tot)*100);
       const cap=k==='cap'?`${v} / ${rates.cap} places · ${S.colons} colons`:k==='use'?`${pct} % de ta consommation`:k==='wuse'?`${pct} % de la conso d'eau`:k==='moral'?'bonus de moral':`${pct} % de la base`;
       return `<div class="itile${stale?' dim':''}"><small>${lab.toUpperCase()}${neg?' · CONSO':''}</small><b style="color:${k==='cap'?'#fff':c}">${ic} ${neg?'−':'+'}${k==='cap'||k==='store'||k==='moral'?v:nf(v)}<i>${u==='/h'?'/h':' '+u}</i></b>${k==='moral'?'':`<div class="ibar"><span style="width:${Math.min(100,k==='cap'?v/Math.max(1,rates.cap)*100:pct)}%;background:${c}"></span></div>`}<em>${cap}</em></div>`});
     if(b.t==='pad')tiles.push(`<div class="itile"><small>NAVETTES</small><b>🚀 ${PADT[lv-1]}</b></div>`);if(SPX[b.t])tiles.push(`<div class="itile"><small>EFFET SPÉCIAL</small><b>${SPX[b.t][0]} ${SPX[b.t][1]}</b></div>`);
+    if(b.t==='helium3')tiles.push(`<div class="itile${stale?' dim':''}"><small>HÉLIUM-3</small><b style="color:#d39bff">🟣 +${nf(.35*LV_K[lv-1])}<i>/h</i></b><em>à vendre au Commerce</em></div>`);
+    if(b.t==='batterie')tiles.push(`<div class="itile"><small>PERTE LA NUIT</small><b style="color:#9aa6c8">−1 %<i>/h</i></b><em>du stock, sans soleil (−${nf(S.energy*.01)}/h)</em></div>`);
     const adv=adviceFor(b);
     body=(b.pwr===false?`<div class="itip w"><span>⏻</span><div>Module éteint : il ne produit ni ne consomme. Valeurs affichées : en marche.</div></div>`:'')+(b.dmg?`<div class="itip r"><span>⚠</span><div>En panne : production arrêtée. Valeurs affichées : une fois réparé.</div></div>`:'')+
       `<div class="itiles">${tiles.join('')||'<p class="iempty">Aucune production directe.</p>'}</div>`+
@@ -2053,8 +2055,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='2.7';
+const APP_VER='2.7.1';
 const CHANGELOG=[
+ {v:'2.7.1',d:'Énergie vérifiée',n:[['☀️','Panneaux solaires','Leur production baisse maintenant avec l\'usure (poussière), comme les autres modules.'],['🟣','Centrale hélium-3','Sa production d\'hélium-3 est affichée dans la fiche.'],['🔋','Batterie','La perte de charge la nuit est affichée ; la jauge indique « 99+ h » au lieu de « ∞ ».']]},
  {v:'2.7',d:'Hôpital contre les épidémies',n:[['🏥','Isolement','L\'hôpital isole les malades (3 lits par niveau) : ils ne contaminent plus personne.'],['🩺','Médecin','Un médecin à l\'hôpital soigne 3× plus vite et dépiste les nouveaux cas.']]},
  {v:'2.6',d:'Repos automatique',n:[['😴','Repos automatique','À 80 % de fatigue, un colon part se reposer seul (~13 h) puis reprend son poste.'],['🔁','Relais','Un colon sans poste prend sa place pendant son repos. Deux colons d\'un même module ne se reposent pas en même temps.']]},
  {v:'2.5.1',d:'Retour des icônes',n:[['↩️','Icônes d\'origine','Retour aux icônes d\'avant la 2.5.']]},
