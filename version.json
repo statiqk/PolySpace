@@ -1,7 +1,8 @@
 {
- "version": "2.4.1",
+ "version": "2.5",
  "date": "2026-11-14",
  "notes": [
-  "Fond de la fiche module plus sombre, comme la maquette"
+  "Nouvelles icônes sur mesure",
+  "Icônes des jauges colorées selon le danger"
  ]
 }
