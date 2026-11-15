@@ -319,7 +319,7 @@ body.free #hud,body.free #side,body.free #obj,body.free #nav,body.free #menuPop{
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.6.1</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.6.2</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -2494,6 +2494,7 @@ function getAlerts(){const r=rates,A=[];if(!r.store)return A;
   const res=[['o2','💨','Oxygène',r.o2],['water','💧','Eau',r.water],['food','🌱','Vivres',r.food],['energy','⚡','Énergie',r.net]];
   for(const [k,ic,n,rt] of res){if(rt>=0)continue;const h=S[k]/-rt;if(h<30){const sev=h<6?4:h<14?3:2;const sk=SUGGEST[k];A.push({sev,ic,t:`${n} épuisé${k==='water'||k==='energy'?'e':''}${k==='food'?'s':''} dans ${Math.max(0,Math.floor(h))} h`,sub:`Construire : ${DEFS[sk].name}`,btn:'Construire',col:'#3d8bff',fn:()=>tryBuild(sk)})}}
   for(const [k,cf,n,ic,t] of [['o2',o2Cap,'Oxygène','🫧','reservoirO2'],['water',waterCap,'Eau','🛢️','citerne'],['food',foodCap,'Vivres','🧊','frigo']]){const rt=k==='o2'?rates.o2:k==='water'?rates.water:rates.food;if(S[k]>=cf()-1&&rt>.5)A.push({sev:1,ic,t:`${n} au maximum`,sub:`+${fR(rt)}/h perdus · construis ${k==='o2'?'un réservoir':k==='water'?'une citerne':'un entrepôt réfrigéré'}`,btn:'Construire',col:'#3d8bff',fn:()=>{cat='vie';setView('build')}})}
+  if(rates.store&&S.energy>=rates.store-1&&rates.net>.5&&count('solaire'))A.push({sev:1,ic:'🔋',t:'Batteries pleines',sub:`+${fR(rates.net)}/h d'énergie perdus · construis une batterie`,btn:'Construire',col:'#3d8bff',fn:()=>{cat='energie';setView('build')}});
   if(S.ds&&S.ds.ph==='fc')A.push({sev:S.ds.prep?1:3,ic:'🌪️',t:`Tempête de poussière dans ${S.ds.in} h`,sub:S.ds.prep?'Base préparée':`Force ${S.ds.f}/5 · ${S.ds.dur} h`,btn:S.ds.prep?null:'Préparer',col:'#ff9a3d',fn:()=>dsPrep()});
   if(dsOn())A.push({sev:3,ic:'🌪️',t:'Tempête en cours',sub:`Force ${S.ds.f}/5 · encore ${S.ds.left} h${S.ds.fold?' · panneaux repliés':''}`,col:'#ff9a3d'});
   {const d=dirtyB();if(d.length&&!dsOn())A.push({sev:2,ic:'🧹',t:`${d.length} module${d.length>1?'s':''} encrassé${d.length>1?'s':''}`,sub:`Nettoyage ⛏ 40 chacun${botOn()?' · le robot s\'en occupe':''}`,btn:'Nettoyer',col:'#3d8bff',fn:()=>cleanAll()})}
@@ -2541,7 +2542,7 @@ function hudRes(r){const I=resInfo(r),W=I.filter(x=>x.warn).sort((a,b)=>a.h-b.h)
   const hh=String(S.hour).padStart(2,'0');
   return `${ring}<div class="ht">${tl}</div>${it}<div class="hclk"><b>SOL ${S.sol}</b><small>${hh}:00 ${mode==='orbit'?'🛰️':LUNAR?'🌑':r.day>0?'☀':'☾'}</small></div><span class="hcar">${hudOpen?'⌃':'⌄'}</span>`}
 function hudPanel(r){const I=resInfo(r);
-  const rows=I.map(x=>{const g=r.g[x.k]||[0,0];const c=x.warn||x.col;return `<div class="hpr" data-hr="${x.k}"><span class="hpi">${x.ic}</span><div><div class="hpn"><span>${x.n}</span><b style="color:${c}">${x.G?'??':(x.k==='o2'||x.k==='water'||x.k==='food')?`${fmtS(x.v)}<span style="color:#8d97b5;font-weight:700"> / ${fmtS(x.cp)}</span>`:Math.round(x.f*100)+' %'}</b></div><div class="gbr"><span style="width:${(x.f*100).toFixed(1)}%;background:${c}"></span></div></div><div class="hpg"><span style="color:#6dffb5">+${fR(g[0])}</span> / <span style="color:#ff9a8a">−${fR(g[1])}</span><br>${x.rate<0?`<span style="color:${c}">${x.h>99?'99+':Math.floor(x.h)} h</span>`:'par heure'}</div></div>`}).join('');
+  const rows=I.map(x=>{const g=r.g[x.k]||[0,0];const c=x.warn||x.col;return `<div class="hpr" data-hr="${x.k}"><span class="hpi">${x.ic}</span><div><div class="hpn"><span>${x.n}</span><b style="color:${c}">${x.G?'??':(x.k==='o2'||x.k==='water'||x.k==='food'||x.k==='energy')?`${fmtS(x.v)}<span style="color:#8d97b5;font-weight:700"> / ${fmtS(x.cp)}</span>`:Math.round(x.f*100)+' %'}</b></div><div class="gbr"><span style="width:${(x.f*100).toFixed(1)}%;background:${c}"></span></div></div><div class="hpg"><span style="color:#6dffb5">+${fR(g[0])}</span> / <span style="color:#ff9a8a">−${fR(g[1])}</span><br>${x.rate<0?`<span style="color:${c}">${x.h>99?'99+':Math.floor(x.h)} h</span>`:'par heure'}</div></div>`}).join('');
   const kv=(l,v,c)=>`<div class="hkv"><span>${l}</span><b style="color:${c||'#fff'}">${v}</b></div>`;
   const bl=[['🌍 Subvention',subsidy()],['🏨 Touristes',tourists()],['🏛️ Taxe',taxEst().g],['🏠 Loyers',lodgeEst()],['👩‍🚀 Salaires',-salaries()],['🧾 Terrain',-rent()]].filter(x=>x[1]),nt=netSol();
   return rows+`<div class="hbl">${bl.map(([l,v])=>`<div><span>${l}</span><b style="color:${v>0?'#6dffb5':'#ff9a8a'}">${v>0?'+':'−'}${fmtC(Math.abs(v))}</b></div>`).join('')}<div class="hbt"><b>Bilan / sol</b><b style="color:${nt>=0?'#6dffb5':'#ff8a7a'}">${nt>=0?'+':'−'}${fmtC(Math.abs(nt))} 💰</b></div></div><div class="hkg">${kv('💰 Crédits',fmtC(S.cr),'#ffd36b')}${kv('🎁 Prime',S.prime?'+20 %':'non',S.prime?'#6dffb5':'#9aa6c8')}${kv('⛏ Régolithe',fmtC(S.rego))}${kv('🔩 Rares',fmtC(S.rare),'#ffcf9a')}${kv('🔬 Science',fmtC(S.sci),'#d39bff')}${kv('👩‍🚀 Colons',`${S.colons}/${r.cap} ${moodIco(S.moral)} ${Math.round(S.moral)}`)}</div><div class="hpf">Tap sur une ressource → Construire</div>`}
@@ -2981,8 +2982,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='4.6.1';
+const APP_VER='4.6.2';
 const CHANGELOG=[
+  {v:'4.6.2',d:'15 nov.',n:[['🔋','Énergie','Stock / capacité dans le panneau Ressources, et alerte « Batteries pleines » quand l\'énergie produite est perdue.']]},
   {v:'4.6.1',d:'15 nov.',n:[['🧊','Entrepôt réfrigéré','Il stocke maintenant +250 de vivres (×1,6 / ×2,3), avec une jauge sur la façade, et on peut en construire plusieurs.']]},
   {v:'4.6',d:'15 nov.',n:[['🛢️','Citerne d\'eau','+300 de stock d\'eau (×1,6 / ×2,3), jauge lumineuse qui suit le niveau.'],['🫧','Réservoir d\'O₂','+250 de stock d\'oxygène dans des sphères cryogéniques.'],['🛡️','Réserve d\'urgence','10 % libérés automatiquement sous 5 %. Stock / capacité dans le panneau Ressources, alerte quand la production est perdue.']]},
   {v:'4.5.3',d:'15 nov.',n:[['☀️','Suivi du soleil','Les rangées de panneaux pivotent maintenant d\'est en ouest avec le soleil, et se mettent à plat la nuit.']]},
