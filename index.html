@@ -319,7 +319,7 @@ body.free #hud,body.free #side,body.free #obj,body.free #nav,body.free #menuPop{
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.4.3</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.5</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -2568,6 +2568,24 @@ function thumbSetup(){thumbRT=new THREE.WebGLRenderTarget(192,192,{samples:0});t
   thumbScene=new THREE.Scene();thumbScene.environment=scene.environment;thumbScene.environmentIntensity=.45;
   const l=new THREE.DirectionalLight(0xfff1dc,1.7);l.position.set(5,8,6);thumbScene.add(l);thumbScene.add(new THREE.HemisphereLight(0x8aa0ff,0x302a24,.55));
   thumbCam=new THREE.PerspectiveCamera(30,1,.1,100)}
+/* ===== kit futuriste (v4.5) ===== */
+const FM=(()=>{const acc=new THREE.MeshStandardMaterial({color:0x002233,emissive:0x3fe0ff,emissiveIntensity:3.4});
+  return{pearl:new THREE.MeshPhysicalMaterial({color:0xf3f6fc,map:M.white.map,roughness:.22,metalness:.15,clearcoat:1,clearcoatRoughness:.08}),
+  chrome:new THREE.MeshStandardMaterial({color:0xaab4c6,roughness:.16,metalness:1}),
+  dglass:new THREE.MeshPhysicalMaterial({color:0x0c1626,roughness:.08,metalness:.5,clearcoat:1}),
+  slab:new THREE.MeshStandardMaterial({map:canvasTex(256,256,(g,w,h)=>{g.fillStyle='#1b2130';g.fillRect(0,0,w,h);g.strokeStyle='rgba(63,224,255,.55)';g.lineWidth=3;g.strokeRect(10,10,w-20,h-20);g.strokeStyle='rgba(63,224,255,.18)';g.lineWidth=1;for(let k=32;k<w;k+=32){g.beginPath();g.moveTo(k,10);g.lineTo(k,h-10);g.stroke();g.beginPath();g.moveTo(10,k);g.lineTo(w-10,k);g.stroke()}g.fillStyle='#3fe0ff';for(const [x,y] of [[10,10],[w-30,10],[10,h-14],[w-30,h-14]])g.fillRect(x,y,20,4)},true),roughness:.5,metalness:.4,emissive:0xffffff,emissiveIntensity:.25,emissiveMap:null}),
+  satin:new THREE.MeshPhysicalMaterial({color:0x2a3446,roughness:.3,metalness:.7,clearcoat:.6}),
+  acc,acc2:new THREE.MeshStandardMaterial({color:0x220022,emissive:0xb07bff,emissiveIntensity:3})}})();
+FM.slab.emissiveMap=FM.slab.map;
+const FMAP=new Map([[slabM,FM.slab],[M.white,FM.pearl],[M.panelW,FM.satin],[M.gold,FM.acc],[M.orange,FM.acc2],[M.grey,FM.chrome],[M.copper,FM.chrome],[M.dark,FM.dglass]]);
+const _b3=build3D;
+build3D=function(t,lv=1){const g=_b3(t,lv);
+  g.traverse(o=>{if(o.isMesh&&!Array.isArray(o.material)&&FMAP.has(o.material))o.material=FMAP.get(o.material)});
+  const s=3.5,y=.335;for(const [w,d,x,z] of [[s-.1,.05,0,(s-.1)/2],[s-.1,.05,0,-(s-.1)/2],[.05,s-.1,(s-.1)/2,0],[.05,s-.1,-(s-.1)/2,0]]){const m=new THREE.Mesh(new THREE.BoxGeometry(w,.04,d),FM.acc);m.position.set(x,y,z);g.add(m)}
+  for(const [x,z] of [[1,1],[1,-1],[-1,1],[-1,-1]]){const c=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,.05,12),FM.acc2);c.position.set(x*(s/2-.2),.43,z*(s/2-.2));g.add(c)}
+  const bb=new THREE.Box3().setFromObject(g);const r=new THREE.Mesh(new THREE.TorusGeometry(.32,.025,8,6),FM.acc);r.rotation.x=Math.PI/2;r.position.set(0,bb.max.y+.45,0);g.add(r);
+  return g};
+
 function makeThumb(t,lv){if(!thumbRT)thumbSetup();const g=build3D(t,lv);thumbScene.add(g);const box=new THREE.Box3().setFromObject(g);const c=box.getCenter(new THREE.Vector3()),s=box.getSize(new THREE.Vector3()).length();
   thumbCam.position.set(c.x+s*1.15,c.y+s*.75,c.z+s*1.35);thumbCam.lookAt(c.x,c.y-s*.05,c.z);
   const tm=renderer.toneMapping;renderer.setRenderTarget(thumbRT);renderer.setClearColor(0x000000,0);renderer.clear();renderer.render(thumbScene,thumbCam);
@@ -2916,8 +2934,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='4.4.3';
+const APP_VER='4.5';
 const CHANGELOG=[
+  {v:'4.5',d:'15 nov.',n:[['✨','Look futuriste','Coques nacrées, bardage anthracite, bandes lumineuses cyan et violettes, structures chromées.'],['🟦','Dalle connectée','Les socles ont une grille lumineuse ; un anneau holographique flotte au-dessus de chaque module.']]},
   {v:'4.4.3',d:'15 nov.',n:[['🐛','Modules niveau 3','La fiche d\'un module au niveau maximum plantait : ⏻ Allumer, Entretien, Quarantaine et Démonter ne répondaient plus. Corrigé.']]},
   {v:'4.4.2',d:'15 nov.',n:[['⚡','Module délesté','Le bouton ⏻ d\'un module délesté (ex. pas de tir) devient « Forcer » : il repasse en priorité Vitale et se rallume.']]},
   {v:'4.4.1',d:'15 nov.',n:[['🏠','Fiche logement','Chaque colon a un logement : résidents, occupation, confort, loyer et repos dans la fiche.'],['🛋️','Confort','Selon le modèle, le niveau, l\'usure, les voisins et l\'aménagement : il joue sur l\'humeur et la récupération.']]},
