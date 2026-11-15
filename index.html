@@ -294,7 +294,7 @@ body.free #hud,body.free #side,body.free #obj,body.free #nav,body.free #menuPop{
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.0</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.0.1</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -2614,7 +2614,7 @@ function tap(x,y){ndc.set(x/innerWidth*2-1,-(y/innerHeight)*2+1);ray.setFromCame
 {const mp=$('#menuPop');$('#menuBtn').onclick=e=>{e.stopPropagation();mp.classList.toggle('show')};mp.querySelectorAll('[data-m]').forEach(b=>b.onclick=e=>{e.stopPropagation();mp.classList.remove('show');if(b.dataset.m==='tax'){comTab='tax';setView('commerce');return}$('#'+b.dataset.m).click()});addEventListener('pointerdown',e=>{if(!e.target.closest('#menuPop,#menuBtn'))mp.classList.remove('show')},true)}
 
 /* ================== BOUCLE ================== */
-const clock=new THREE.Clock();const perf=[];let pr=DPR,qStep=0;let acc=0,uiT=0,tAll=0;const sunDir=new THREE.Vector3();
+const clock=new THREE.Clock();const perf=[];let pr=DPR,qStep=0,slowN=0;let acc=0,uiT=0,tAll=0;const sunDir=new THREE.Vector3();
 function updateSky(){
   sunVec(sunDir,S.hour+hourFrac);GROUND_SUN.value.copy(sunDir);
   sun.target.position.set(0,0,0);
@@ -2694,11 +2694,11 @@ window.__f=0;function animate(){window.__f++;requestAnimationFrame(animate);let 
   {const sp=(mode==='orbit'?oSunSprite:sunSprite).position.clone().project(camera);const on=sp.z<1&&Math.abs(sp.x)<1.25&&Math.abs(sp.y)<1.25;
    grade.uniforms.uSun.value.set(sp.x*.5+.5,sp.y*.5+.5);grade.uniforms.uVis.value=lerp(grade.uniforms.uVis.value,on&&(mode==='orbit'||sunDir.y>.03)?sstep(1.25,.6,Math.max(Math.abs(sp.x),Math.abs(sp.y))):0,.1);
    grade.uniforms.uT.value=tAll%10;grade.uniforms.uAsp.value=camera.aspect}
+  perf.push(dt);if(perf.length>90){const avg=perf.reduce((a,b)=>a+b)/perf.length;perf.length=0;slowN=avg>.03&&tAll>10&&!document.hidden?slowN+1:0;if(slowN>=2&&qStep<3){slowN=0;qStep++;if(qStep===1){gtao.enabled=false}else{pr=Math.max(1.5,pr-.25);renderer.setPixelRatio(pr);composer.setPixelRatio(pr);resize();shadowDirty=true}}}
   // rendu adaptatif : 10 i/s sous un menu plein écran, 30 i/s au repos, ombres ~15 i/s
   frameN++;{const cover=!!document.querySelector('.sheet.open');const busy=onSplash||(introOn&&intro<1)||camGo||placing||drag||shipState!=='idle'||growing||performance.now()-lastIn<4000;
    const every=cover?6:busy?1:2;if(frameN%every===0||shadowDirty){if(shadowDirty||growing||shipState!=='idle'||frameN%4<every){renderer.shadowMap.needsUpdate=true;shadowDirty=false}composer.render()}}
   if(snapNext&&mode==='base'&&!$('#splash').classList.contains('show-dim')){snapNext=false;lastSnap=Date.now();try{const c=document.createElement('canvas');c.width=c.height=128;const w=canvas.width,h=canvas.height,m=Math.min(w,h)*.62;c.getContext('2d').drawImage(canvas,(w-m)/2,Math.min(h-m,h*.6-m/2),m,m,0,0,128,128);localStorage.setItem('ap_thumb',c.toDataURL('image/jpeg',.7))}catch(_){}}
-  perf.push(dt);if(perf.length>90){const avg=perf.reduce((a,b)=>a+b)/perf.length;perf.length=0;if(avg>.03&&tAll>6&&qStep<3){qStep++;if(qStep===1){gtao.enabled=false;sun.shadow.mapSize.set(1024,1024);sun.shadow.map&&sun.shadow.map.dispose();sun.shadow.map=null}else{pr=Math.max(1.5,pr-.25);renderer.setPixelRatio(pr);composer.setPixelRatio(pr);resize()}}}
   uiT-=dt;if(uiT<=0){uiT=.25;computeRates();renderHUD();const rk=RESEARCH.map(r=>S.sci>=r.cost?1:0).join('')+S.tech.length;if(view==='research'&&rk!==lastRK)renderResearch();lastRK=rk;if(view==='commerce'){const kk=Math.floor(S.cr)+'|'+S.sol+'|'+S.contracts.length+S.orders.length+S.recruits.length+Math.floor(S.rego/50)+Math.floor(S.rare)+Math.floor(S.sci)+Math.floor(S.water/25)+Math.floor(S.he3);if(kk!==lastCom){lastCom=kk;renderCommerce()}}
   const ck=crewTab+(S.exp?S.exp.t:'-')+S.people.length+S.rover.dmg+S.people.map(p=>(p.hurt>0?1:0)+(p.sick>0?2:0)+(p.rest>0?4:0)+Math.round((p.fat||0)/10)).join('')+(S.strike>0);if(view==='crew'&&ck!==lastCK&&pickFor===null&&expPick===null)renderCrew();lastCK=ck;const bk=Object.values(DEFS).map(d=>S.rego>=d.cost?1:0).join('')+S.tech.length;if(view==='build'&&bk!==lastBK)renderBuild();lastBK=bk}
 }
@@ -2722,8 +2722,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='4.0';
+const APP_VER='4.0.1';
 const CHANGELOG=[
+  {v:'4.0.1',d:'15 nov.',n:[['🖤','Écran noir corrigé','Plus de flash noir quand le jeu ajuste sa qualité ; ajustement plus progressif.']]},
   {v:'4.0',d:'15 nov.',n:[['🏛️','Taxe des habitants','4 niveaux (Aucune, Légère, Normale, Forte), prélevée chaque sol à 07:00. Réglage : ☰ → Taxe ou Commerce.'],['✊','Grève fiscale','Taxe forte et moral bas : des colons refusent de payer, voire repartent.'],['🌳','Contreparties','Parc et Hôpital adoucissent la taxe ; recherche Administration : +20 % de recettes.']]},
   {v:'3.9.2',d:'15 nov.',n:[['⚡','Générateur','Sa carte affiche la production (+18) et la consommation d\'eau.']]},
   {v:'3.9.1',d:'15 nov.',n:[['🔌','Miniature 3D','Le générateur de secours a sa miniature 3D dans Construire et sa fiche.'],['⚡','Miniatures plus rapides','La catégorie ouverte est générée en priorité.']]},
