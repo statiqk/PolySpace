@@ -1,9 +1,9 @@
 {
- "version": "3.9.2",
+ "version": "4.0",
  "date": "2026-11-15",
  "notes": [
-  "Générateur de secours",
-  "Délestage automatique et priorités",
-  "Recherches Piles à combustible et Micro-réseau"
+  "Taxe des habitants (4 niveaux)",
+  "Grève fiscale",
+  "Recherche Administration"
  ]
 }

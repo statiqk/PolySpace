@@ -266,7 +266,7 @@ body.free #hud,body.free #side,body.free #obj,body.free #nav,body.free #menuPop{
   <div id="hbox"><div id="res"></div><div id="chips"></div><div id="loc">SOL 1</div></div><div id="name">Base Séléné</div>
 </div>
 <div id="side"><div id="speed" class="glass sb">▶×1</div><div id="recenter" class="glass sb">🎯</div><div id="bell" class="glass sb">🔔<span id="bellN">0</span></div><div id="menuBtn" class="glass sb">☰</div><div id="comBtn" class="glass sb">💰</div><div id="jbtn" class="glass sb">📋</div></div>
-<div id="alert"></div><div id="menuPop" class="glass"><button data-m="comBtn">💰 Commerce</button><button data-m="jbtn">📋 Journal</button><button data-m="recenter">🎯 Recentrer la vue</button></div>
+<div id="alert"></div><div id="menuPop" class="glass"><button data-m="comBtn">💰 Commerce</button><button data-m="tax">🏛️ Taxe</button><button data-m="jbtn">📋 Journal</button><button data-m="recenter">🎯 Recentrer la vue</button></div>
 <div id="toasts"></div>
 <div id="obj" class="glass"></div>
 <div id="info" class="glass"></div><div id="selTag"></div>
@@ -294,7 +294,7 @@ body.free #hud,body.free #side,body.free #obj,body.free #nav,body.free #menuPop{
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v3.9.2</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.0</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -1459,6 +1459,7 @@ const RESEARCH=[
  {id:'inge',name:'Ingénierie avancée',icon:'🛠️',cost:50,desc:'Permet d\'améliorer les modules au niveau 3.'},
  {id:'secours',name:'Piles à combustible',icon:'🔌',cost:40,desc:'Débloque le Générateur de secours.'},
  {id:'microgrid',name:'Micro-réseau',icon:'🔗',cost:70,desc:'Générateurs de secours +25 % et délestage plus fin.'},
+ {id:'admin',name:'Administration',icon:'🏛️',cost:45,desc:'Recettes des taxes +20 %.'},
  {id:'navette',name:'Navette lourde',icon:'🚀',cost:90,desc:'Ravitaillements plus fréquents et plus gros.'},
 ];
 const OBJ=[
@@ -1733,7 +1734,7 @@ let rates={};
 function computeRates(){
   const day=sstep(-.02,.3,sunVec(_sv,S.hour+hourFrac).y);
   let prod=0,use=0,cap=0,store=100,o2=0,food=0,rego=0,sci=0,moral=0,water=0,wuse=0,rare=0;
-  const eff=S.shelter>0?0:(.55+.45*S.moral/100);
+  const eff=S.shelter>0?0:(.55+.45*S.moral/100)*(1-(TAXL[taxLv()].w||0));
   for(const b of S.b){const d=DEFS[b.t],e=bEff(b);
     cap+=e.cap;store+=e.store;prod+=e.solar*day+e.prod;use+=e.use;o2+=e.o2;food+=e.food;rego+=e.rego*eff;sci+=e.sci*eff;moral+=e.moral;water+=e.water;wuse+=e.wuse;rare+=e.rare*eff;
     if(LUNAR&&PRESS.includes(b.t)&&!b.dmg&&b.pwr!==false&&!b.shed)use+=1.5}
@@ -1774,7 +1775,7 @@ function tickHour(){
   S.water=clamp(S.water+r.water,0,150+count('extracteur')*120+S.colons*6);S.rare+=r.rare;
   S.rego+=r.rego;S.sci+=r.sci;
   // moral
-  let target=60+r.moralBonus-(S.grief>0?14:0)-(S.strike>0?6:0)-S.people.filter(p=>p.sick>0).length*1.5-Math.max(0,S.colons-10)*.5-(S.water<=0?20:0)+(r.cap>=S.colons?6:-15)-(S.o2<=0?40:0)-(S.food<=0?30:0)-(r.power<1?12:0);
+  let target=60+r.moralBonus+taxMoral()-(S.grief>0?14:0)-(S.strike>0?6:0)-S.people.filter(p=>p.sick>0).length*1.5-Math.max(0,S.colons-10)*.5-(S.water<=0?20:0)+(r.cap>=S.colons?6:-15)-(S.o2<=0?40:0)-(S.food<=0?30:0)-(r.power<1?12:0);
   target=clamp(target,0,100);S.moral=lerp(S.moral,target,.05);
   S.moral=clamp(S.moral,0,100);S.colons=Math.max(0,S.colons);
   if(S.shelter>0)S.shelter--;
@@ -1810,7 +1811,7 @@ function tickHour(){
   // événements
   S.nextEv-=1;if(S.nextEv<=0&&!modalOpen&&!placing){fireEvent();S.nextEv=42+Math.random()*30}
   // horloge
-  recHist();S.hour++;if(S.hour>=24){S.hour=0;S.sol++;logx('Début du sol '+S.sol+'.');dailyEco()}
+  recHist();S.hour++;if(S.hour>=24){S.hour=0;S.sol++;logx('Début du sol '+S.sol+'.');dailyEco()}if(S.hour===7)collectTax();
   for(const b of S.b)if(b.t==='helium3'&&!b.dmg&&!(b.off>0))S.he3+=.35*LV_K[lvOf(b)-1];
   // alertes
   for(const [k,lbl] of [['o2','Oxygène'],['food','Vivres'],['energy','Énergie'],['water','Eau']]){const low=S[k]<(k==='energy'?10:25);if(low&&!S.seen[k]){S.seen[k]=1;toast('⚠️ '+lbl+' bas','#ffb36b')}if(!low)S.seen[k]=0}
@@ -1937,7 +1938,7 @@ const WORKABLE=['extracteur','serre','recycleur','foreuse','labo','reacteur','pa
 const FIRST=['Léa','Kenji','Amara','Tom','Inès','Lucas','Sofia','Mateo','Chloé','Yanis','Nora','Hugo','Aïcha','Malik','Emma','Noah','Zoé','Rayan','Jade','Sacha','Lina','Gabriel','Maëlys','Ibrahim','Clara','Elias','Mila','Adam','Rose','Nathan','Yuki','Olga','Diego','Priya','Ana','Liam','Fatou','Oscar','Alba','Hamza','Iris','Jonas','Selma','Raphaël','Ayla','Victor'];
 const SKIN=['#f5d0b5','#e8b48f','#c98d63','#a86b43','#7a4a2c','#f1c7a0'],HAIR=['#2b1d14','#5a3a22','#a0622d','#e2c27a','#1a1a1a','#8c8c8c','#c4462d'];
 function newPerson(job){const id=(S.pid=(S.pid||0)+1);const used=new Set(S.people.map(p=>p.n));let n;do{n=FIRST[Math.floor(Math.random()*FIRST.length)]+' '+String.fromCharCode(65+Math.floor(Math.random()*26))+'.'}while(used.has(n));
-  const jobs=Object.keys(JOBS);return{id,n,j:job||jobs[Math.floor(Math.random()*jobs.length)],tr:Math.round(Math.random()*16-8),s:Math.floor(Math.random()*1e6),a:null,hurt:0}}
+  const jobs=Object.keys(JOBS);return{id,born:S.sol*24+S.hour,n,j:job||jobs[Math.floor(Math.random()*jobs.length)],tr:Math.round(Math.random()*16-8),s:Math.floor(Math.random()*1e6),a:null,hurt:0}}
 function avatar(p,size=44){const r=p.s;const sk=SKIN[r%SKIN.length],hr=HAIR[(r>>3)%HAIR.length],hs=(r>>6)%4,jc=JOBS[p.j].c;
   const hair=[`<path d="M12 21 Q12 9 22 9 Q32 9 32 21 Q30 14 22 14 Q14 14 12 21Z" fill="${hr}"/>`,`<path d="M11 24 Q10 8 22 8 Q34 8 33 24 L31 30 Q31 15 22 15 Q13 15 13 30Z" fill="${hr}"/>`,`<circle cx="22" cy="12" r="9" fill="${hr}"/><circle cx="22" cy="6" r="4" fill="${hr}"/>`,`<path d="M13 19 Q14 10 22 10 Q30 10 31 19 Q26 15 18 17Z" fill="${hr}"/>`][hs];
   return `<svg width="${size}" height="${size}" viewBox="0 0 44 44"><defs><radialGradient id="av${p.id}" cx=".5" cy=".3"><stop offset="0" stop-color="${jc}" stop-opacity=".55"/><stop offset="1" stop-color="#141a30"/></radialGradient></defs>
@@ -2165,6 +2166,16 @@ const CT_N=['Agence spatiale européenne','Lunar Mining Corp.','Université de K
 function newContract(){const ks=['rego','rare','sci','water','he3'].filter(k=>k!=='he3'||(S.b&&S.b.some(b=>b.t==='helium3')));const k=ks[Math.floor(Math.random()*ks.length)];const base={rego:400,rare:12,sci:30,water:200,he3:10}[k];
   const q=Math.round(base*(.7+Math.random()*.9+(S.prestige||0)/120));const days=3+Math.floor(Math.random()*4);const rew=Math.round(q*GOODS[k].p*(1.7+(S.prestige||0)/80));
   return{id:Math.random().toString(36).slice(2,8),k,q,days,rew,pr:Math.round(2+q*GOODS[k].p/150),by:CT_N[Math.floor(Math.random()*CT_N.length)],acc:false,left:null}}
+const TAXL=[{n:'Aucune',r:0,m:5},{n:'Légère',r:5,m:0},{n:'Normale',r:10,m:-9},{n:'Forte',r:20,m:-19,w:.05}];
+const taxLv=()=>S.tax??1;
+function taxRelief(){return (active('parc')?2:0)+(active('hopital')?2:0)}
+function taxMoral(){const m=TAXL[taxLv()].m;return m<0?Math.min(0,m+taxRelief()):m}
+function taxPayers(){return S.people.filter(p=>!(p.sick>0)&&!p.iso&&!(p.born>=S.sol*24+S.hour-24))}
+function taxRefuse(n){return taxLv()===3&&S.moral<40?Math.ceil(n/4):0}
+function taxEst(){const pay=taxPayers().length,ref=taxRefuse(pay);return{pay,ref,ex:S.people.length-pay,g:Math.round(TAXL[taxLv()].r*(pay-ref)*(has('admin')?1.2:1))}}
+function collectTax(){const L=taxLv();if(!TAXL[L].r){S.taxStrike=0;return}const e=taxEst();S.cr+=e.g;S.taxLast=e.g;S.taxStrike=e.ref;
+  toast(`💰 +${e.g} de taxes · ${e.pay-e.ref} colon${e.pay-e.ref>1?'s':''} ${e.pay-e.ref>1?'ont':'a'} payé`+(e.ref?` · ${e.ref} refus`:''),e.ref?'#ff9a7a':'#ffd36b');logx(`Taxes : +${e.g} cr (${TAXL[L].n.toLowerCase()})${e.ref?`, ${e.ref} refus`:''}.`);
+  if(L===3&&S.moral<25&&S.people.length>2&&Math.random()<.35)loseColon('est reparti·e (taxes trop lourdes)','💸')}
 function dailyEco(){
   // marché : marche aléatoire des prix
   for(const k in GOODS){S.mk[k]=clamp(S.mk[k]*(1+(Math.random()-.5)*.24),.5,2.1);(S.mkh[k]=S.mkh[k]||[]).push(+price(k).toFixed(2));if(S.mkh[k].length>12)S.mkh[k].shift()}
@@ -2190,11 +2201,24 @@ function buy(o){if(S.cr<o.c)return toast('💰 Pas assez de crédits','#ff8a7a')
 function deliverOrders(){if(S.orders.length){const t=S.orders.map(o=>{S[o.k]+=o.q;return `${SHOPN[o.k][0]} +${o.q}`}).join(' · ');toast('🛒 Commandes livrées : '+t,'#6dffb5');logx('Commandes livrées : '+t+'.');S.orders=[]}}
 function deliverRecruits(room){let n=0;while(S.recruits.length&&n<room){const j=S.recruits.shift();S.colons++;const p=newPerson(j);S.people.push(p);autoAssign(p);n++;toast(`🧑‍🚀 ${p.n} (${JOBS[j].n}) rejoint la base`,'#9fe0ff');logx(`Recrue : ${p.n} (${JOBS[j].n}).`)}return n}
 let comTab='market';
-function renderCommerce(){const H=$('#com');const tabs=`<div class="seg2">${[['market','📈 Marché'],['shop','🛒 Boutique'],['ct','📜 Contrats'],['bank','🏦 Banque']].map(([k,l])=>`<button class="${comTab===k?'on':''}" data-ct2="${k}">${l}</button>`).join('')}</div>`;
+function renderCommerce(){const H=$('#com');const tabs=`<div class="seg2">${[['market','📈 Marché'],['shop','🛒 Shop'],['ct','📜 Contrats'],['bank','🏦 Banque'],['tax','🏛️ Taxe']].map(([k,l])=>`<button class="${comTab===k?'on':''}" data-ct2="${k}">${l}</button>`).join('')}</div>`;
   $('#comBal').innerHTML=`<span style="color:#ffd36b">💰 ${fmtC(S.cr)}</span><span style="color:#ffcf6b">⭐ ${Math.round(S.prestige)}</span>`;
   let h='';const pad=S.b.some(b=>(b.t==='pad'||b.t==='spatioport')&&!b.dmg);
   if(S.embargo)h+=`<div class="card" style="background:rgba(255,60,60,.12);border-color:rgba(255,90,90,.5)"><b style="color:#ff9a8a">⛔ Embargo terrien</b><p>Plus de navettes ni de commerce tant que le prêt n'est pas remboursé.</p></div>`;
-  if(comTab==='market'){h+=(pad?'':`<div class="card" style="border-color:rgba(255,180,100,.4)"><b>🚀 Pas de pas de tir</b><p>Il faut un pas de tir pour exporter vers la Terre.</p></div>`)+(S.mkEv?`<div class="card" style="background:rgba(255,211,107,.1);border-color:rgba(255,211,107,.4)"><b>${S.mkEv.m>1?'📈':'📉'} ${GOODS[S.mkEv.k].n} ×${String(S.mkEv.m).replace('.',',')}</b><p>Encore ${S.mkEv.left} sol${S.mkEv.left>1?'s':''}.</p></div>`:'')+
+  if(comTab==='tax'){const L=taxLv(),T=TAXL[L],e=taxEst(),mo=taxMoral(),rl=taxRelief(),cols=['#6dffb5','#7fd3ff','#ffcf6b','#ff5a4d'];
+    const tile=(k,v,c,sub,bd)=>`<div class="card" style="margin:0;padding:9px 11px${bd?';border-color:rgba(255,90,77,.55)':''}"><div style="font-size:9.5px;font-weight:800;letter-spacing:1px;color:#8d97b5">${k}</div><b style="font-size:18px;display:block;margin-top:2px;color:${c}">${v}</b><p style="margin:2px 0 0;font-size:10.5px">${sub}</p></div>`;
+    h+=`<div class="row" style="margin-bottom:8px"><b style="font-size:17px">🏛️ Taxe des habitants</b><span style="font-size:11px;color:#8d97b5;font-weight:700">prélevée à 07:00</span></div>
+     <div class="seg2" id="taxSeg">${TAXL.map((t,i)=>`<button class="${i===L?'on':''}" data-tx="${i}" style="${i===L?`background:${cols[i]};color:${i===3?'#fff':'#0a0d1d'}`:''}">${t.n}</button>`).join('')}</div>
+     <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">${tile('RECETTES',T.r?`+${e.g} 💰`:'0 💰','#ffcf6b',T.r?`par sol · ${T.r} × ${e.pay-e.ref} colon${e.pay-e.ref>1?'s':''}${has('admin')?' · +20 %':''}`:'aucun prélèvement')}
+      ${tile('MORAL',`${mo>0?'+':mo<0?'−':''}${Math.abs(mo)} 🙂`,mo>0?'#6dffb5':mo<0?'#ff9a8a':'#fff',T.m<0&&rl?`${T.m} brut · Parc/Hôpital +${rl}`:T.w?'':'—')}
+      ${tile('PAYEURS',`${e.pay-e.ref} / ${e.pay}`,e.ref?'#ff8a7a':'#fff',e.ref?`${e.ref} refus · grève`:'0 refus',e.ref)}
+      ${L===3?tile('RISQUE',S.moral<25?'Départ':'Grogne','#ffcf6b',T.w?'travail −5 % · départ si moral < 25':''):tile('EXEMPTÉS',e.ex,'#fff','malades, isolés, arrivants')}</div>
+     <div class="card" style="margin-top:8px"><div class="row" style="font-size:13px"><span>🌳 Parc</span><b style="color:${active('parc')?'#6dffb5':'#8d97b5'}">${active('parc')?'−2 malus':'non construit'}</b></div>
+      <div class="row" style="font-size:13px;margin-top:6px"><span>🏥 Hôpital</span><b style="color:${active('hopital')?'#6dffb5':'#8d97b5'}">${active('hopital')?'−2 malus':'non construit'}</b></div>
+      <div class="row" style="font-size:13px;margin-top:6px;${has('admin')?'':'opacity:.6'}"><span>${has('admin')?'✅':'🔒'} Recherche Administration</span><b>+20 % recettes</b></div></div>
+     ${L===3?`<div class="card" style="background:rgba(255,90,77,.1);border-color:rgba(255,90,77,.4)"><p style="margin:0">⚠️ Sous 40 🙂 : 1 colon sur 4 refuse de payer.<br>🚀 Sous 25 🙂 : un colon peut repartir.</p>${S.taxStrike?`<button class="btn go" id="taxDown" style="width:100%;margin-top:8px">Revenir à Normale</button>`:''}</div>`:''}
+     <p class="iempty">Aucune +5 🙂 · Légère 5 💰 · Normale 10 💰 −9 🙂 · Forte 20 💰 −19 🙂 et −5 % travail (par colon et par sol).</p>`}
+  else if(comTab==='market'){h+=(pad?'':`<div class="card" style="border-color:rgba(255,180,100,.4)"><b>🚀 Pas de pas de tir</b><p>Il faut un pas de tir pour exporter vers la Terre.</p></div>`)+(S.mkEv?`<div class="card" style="background:rgba(255,211,107,.1);border-color:rgba(255,211,107,.4)"><b>${S.mkEv.m>1?'📈':'📉'} ${GOODS[S.mkEv.k].n} ×${String(S.mkEv.m).replace('.',',')}</b><p>Encore ${S.mkEv.left} sol${S.mkEv.left>1?'s':''}.</p></div>`:'')+
     Object.entries(GOODS).map(([k,g])=>{const p=price(k),hist=S.mkh[k]||[],prev=hist.length>1?hist[hist.length-2]:p,tr=p>=prev;const mx=Math.max(...hist,p),mn=Math.min(...hist,p);
       const sp=hist.length>1?`<svg width="64" height="24" viewBox="0 0 64 24"><polyline fill="none" stroke="${tr?'#6dffb5':'#ff8a7a'}" stroke-width="2" points="${hist.map((v,i)=>`${(i/(hist.length-1)*62+1).toFixed(1)},${(22-(v-mn)/Math.max(.001,mx-mn)*20).toFixed(1)}`).join(' ')}"/></svg>`:'';
       const have=Math.floor(S[k]||0);
@@ -2213,6 +2237,8 @@ function renderCommerce(){const H=$('#com');const tabs=`<div class="seg2">${[['m
       :`<div class="card"><b>🏦 Banque terrienne</b><p>Un coup de pouce en cas de crise, avec 2 % d'intérêts par sol. Non remboursé à temps : embargo sur les navettes.</p>${[[1000,8],[2500,12]].map(([a,d])=>`<button class="btn blue" data-loan="${a}:${d}" style="width:100%;margin-top:8px">Emprunter 💰 ${fmtC(a)} · ${d} sols</button>`).join('')}</div>`)}
   H.innerHTML=tabs+h;
   H.querySelectorAll('[data-ct2]').forEach(b=>b.onclick=()=>{comTab=b.dataset.ct2;renderCommerce()});
+  H.querySelectorAll('[data-tx]').forEach(b=>b.onclick=()=>{S.tax=+b.dataset.tx;if(S.tax<3)S.taxStrike=0;toast(`🏛️ Taxe ${TAXL[S.tax].n.toLowerCase()}`,'#ffd36b');save();renderCommerce();renderHUD&&renderHUD()});
+  {const td=$('#taxDown');if(td)td.onclick=()=>{S.tax=2;S.taxStrike=0;save();renderCommerce()}}
   H.querySelectorAll('[data-sell]').forEach(b=>b.onclick=()=>{const [k,q]=b.dataset.sell.split(':');sell(k,+q);renderCommerce()});
   H.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{buy(SHOP[+b.dataset.buy]);renderCommerce()});
   H.querySelectorAll('[data-rec]').forEach(b=>b.onclick=()=>{if(S.cr<320)return;if(!S.b.some(b=>b.t==='pad'))return toast('🚀 Il faut un pas de tir');S.cr-=320;S.recruits.push(b.dataset.rec);toast(`🧑‍🚀 ${JOBS[b.dataset.rec].n} recruté·e : arrive par la prochaine navette`,'#7fd3ff');save();renderCommerce()});
@@ -2264,6 +2290,7 @@ function focusB(b){const o=occ.get(key(b.i,b.j));if(!o)return;if(mode!=='base')s
 function getAlerts(){const r=rates,A=[];if(!r.store)return A;
   const res=[['o2','💨','Oxygène',r.o2],['water','💧','Eau',r.water],['food','🌱','Vivres',r.food],['energy','⚡','Énergie',r.net]];
   for(const [k,ic,n,rt] of res){if(rt>=0)continue;const h=S[k]/-rt;if(h<30){const sev=h<6?4:h<14?3:2;const sk=SUGGEST[k];A.push({sev,ic,t:`${n} épuisé${k==='water'||k==='energy'?'e':''}${k==='food'?'s':''} dans ${Math.max(0,Math.floor(h))} h`,sub:`Construire : ${DEFS[sk].name}`,btn:'Construire',col:'#3d8bff',fn:()=>tryBuild(sk)})}}
+  if(S.taxStrike&&taxLv()===3)A.push({sev:3,ic:'✊',t:'Grève fiscale',sub:`${S.taxStrike} colon${S.taxStrike>1?'s refusent':' refuse'} de payer · moral ${Math.round(S.moral)}`,btn:'Baisser',col:'#ff5a4d',fn:()=>{comTab='tax';setView('commerce')}});
   if(S.embargo)A.push({sev:4,ic:'⛔',t:'Embargo terrien',sub:'Rembourse le prêt pour rétablir les navettes',btn:'Banque',col:'#ff7a3d',fn:()=>{comTab='bank';setView('commerce')}});
   if(S.loan&&S.loan.left<=2&&!S.embargo)A.push({sev:3,ic:'🏦',t:`Prêt à rembourser dans ${S.loan.left} sol${S.loan.left>1?'s':''}`,sub:`💰 ${fmtC(S.loan.owe)}`,btn:'Banque',col:'#ff7a3d',fn:()=>{comTab='bank';setView('commerce')}});
   if(S.bilan&&S.bilan.unpaid)A.push({sev:3,ic:'💸',t:'Salaires impayés',sub:'Vends des ressources ou emprunte',btn:'Commerce',col:'#ff7a3d',fn:()=>{comTab='market';setView('commerce')}});
@@ -2298,7 +2325,7 @@ function gbar(k,ic,label,val,cap,rate,col){const G=S.glitch&&S.glitch.res===k;co
 function renderHUD(){const r=rates;if(!r.store)return;
   {const h=gbar('o2','💨','O₂',S.o2,o2Cap(),r.o2,'#5fe1ff')+gbar('water','💧','EAU',S.water,waterCap(),r.water,'#4fb8ff')+gbar('energy','⚡','ÉNERGIE',S.energy,r.store,r.net,'#ffd84a')+gbar('food','🌱','VIVRES',S.food,foodCap(),r.food,'#6dffb5');if(h!==renderHUD.r){$('#res').innerHTML=h;renderHUD.r=h}}
   const hh=String(S.hour).padStart(2,'0');{const t=mode==='orbit'?`SOL ${S.sol}<br>${hh}:00 · 🛰️`:`SOL ${S.sol}<br>${hh}:00 ${LUNAR?'🌑':r.day>0?'☀':'☾'}`;if(t!==renderHUD.l){$('#loc').innerHTML=t;renderHUD.l=t}}
-  {const h=`<span class="pl" id="crChip" style="color:#ffd36b;cursor:pointer">💰 ${fmtC(S.cr)}</span><span class="pl">⛏ ${fmt(S.rego)}<i style="color:${r.rego>0?'#6dffb5':'#9aa6c8'}">${r.rego>0?'▲':''}</i></span><span class="pl" style="color:#ffcf9a">🔩 ${fmt(S.rare)}</span><span class="pl" style="color:#d39bff">🔬 ${fmt(S.sci)}</span><span class="pl" id="crewChip">👩‍🚀 ${S.colons}/${r.cap} <span style="color:${S.moral>60?'#6dffb5':S.moral>30?'#ffd36b':'#ff8a7a'}">${moodIco(S.moral)}${Math.round(S.moral)}</span></span>`;if(h!==renderHUD.c){$('#chips').innerHTML=h;renderHUD.c=h}}
+  {const h=`<span class="pl" id="crChip" style="color:#ffd36b;cursor:pointer">💰 ${fmtC(S.cr)}${taxLv()?`<i style="font-style:normal;font-size:9.5px;margin-left:3px;color:${S.taxStrike?'#ff9a7a':'#6dffb5'}">+${taxEst().g}/sol</i>`:''}</span><span class="pl">⛏ ${fmt(S.rego)}<i style="color:${r.rego>0?'#6dffb5':'#9aa6c8'}">${r.rego>0?'▲':''}</i></span><span class="pl" style="color:#ffcf9a">🔩 ${fmt(S.rare)}</span><span class="pl" style="color:#d39bff">🔬 ${fmt(S.sci)}</span><span class="pl" id="crewChip">👩‍🚀 ${S.colons}/${r.cap} <span style="color:${S.moral>60?'#6dffb5':S.moral>30?'#ffd36b':'#ff8a7a'}">${moodIco(S.moral)}${Math.round(S.moral)}</span></span>`;if(h!==renderHUD.c){$('#chips').innerHTML=h;renderHUD.c=h}}
   // alerte principale + cloche
   curAlerts=getAlerts();const top=curAlerts.find(a=>a.sev>=1)||curAlerts[0];const n=curAlerts.filter(a=>a.sev>=1).length;
   $('#bellN').textContent=n;$('#bellN').style.display=n?'grid':'none';$('#bellN').style.background=SEVC[top?top.sev:0];
@@ -2522,7 +2549,7 @@ function updSelTag(){const t=document.getElementById('selTag');if(!t)return;cons
   t.style.display='block';t.style.transform=`translate(${(_tv.x*.5+.5)*innerWidth}px,${(-_tv.y*.5+.5)*innerHeight}px) translate(-50%,-100%)`;t.classList.toggle('bad',!!b.dmg)}
 
 /* ================== RECHERCHE : ARBRE ================== */
-const TREE={serreled:[0,0,null],forage:[1,0,null],parc:[0,1,'serreled'],inge:[1,1,'forage'],vaccin:[0,2,'parc'],panneaux:[1,2,'inge'],champ:[0,3,'vaccin'],fusion:[1,3,'panneaux'],he3:[0,4,'fusion'],navette:[1,4,'panneaux'],secours:[1,5,'panneaux'],microgrid:[0,5,'secours']};
+const TREE={serreled:[0,0,null],forage:[1,0,null],parc:[0,1,'serreled'],inge:[1,1,'forage'],vaccin:[0,2,'parc'],panneaux:[1,2,'inge'],champ:[0,3,'vaccin'],fusion:[1,3,'panneaux'],he3:[0,4,'fusion'],navette:[1,4,'panneaux'],secours:[1,5,'panneaux'],microgrid:[0,5,'secours'],admin:[1,6,'secours']};
 let resSel=null;
 function resState(r){if(has(r.id))return'done';const pre=TREE[r.id]&&TREE[r.id][2];if(pre&&!has(pre))return'lock';return'av'}
 function renderResearch(){const rs=rates.sci||0;const W=Math.min(520,innerWidth)-28,cw=(W-14)/2,RH=92;
@@ -2584,7 +2611,7 @@ function tap(x,y){ndc.set(x/innerWidth*2-1,-(y/innerHeight)*2+1);ray.setFromCame
   const hits=ray.intersectObjects(bGroup.children,true);if(hits.length){let o=hits[0].object;while(o&&!o.userData.b)o=o.parent;if(o){if(view!=='base')setView('base');showInfo(o,{tap:1});return}}
   if(selected){hideInfo();return}
   const t=performance.now();if(t-(tap.lt||0)<380){tap.lt=0;const on=document.body.classList.toggle('free');if(on)toast('👆👆 Double-tap pour revenir','#9aa6c8')}else tap.lt=t}
-{const mp=$('#menuPop');$('#menuBtn').onclick=e=>{e.stopPropagation();mp.classList.toggle('show')};mp.querySelectorAll('[data-m]').forEach(b=>b.onclick=e=>{e.stopPropagation();mp.classList.remove('show');$('#'+b.dataset.m).click()});addEventListener('pointerdown',e=>{if(!e.target.closest('#menuPop,#menuBtn'))mp.classList.remove('show')},true)}
+{const mp=$('#menuPop');$('#menuBtn').onclick=e=>{e.stopPropagation();mp.classList.toggle('show')};mp.querySelectorAll('[data-m]').forEach(b=>b.onclick=e=>{e.stopPropagation();mp.classList.remove('show');if(b.dataset.m==='tax'){comTab='tax';setView('commerce');return}$('#'+b.dataset.m).click()});addEventListener('pointerdown',e=>{if(!e.target.closest('#menuPop,#menuBtn'))mp.classList.remove('show')},true)}
 
 /* ================== BOUCLE ================== */
 const clock=new THREE.Clock();const perf=[];let pr=DPR,qStep=0;let acc=0,uiT=0,tAll=0;const sunDir=new THREE.Vector3();
@@ -2695,8 +2722,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='3.9.2';
+const APP_VER='4.0';
 const CHANGELOG=[
+  {v:'4.0',d:'15 nov.',n:[['🏛️','Taxe des habitants','4 niveaux (Aucune, Légère, Normale, Forte), prélevée chaque sol à 07:00. Réglage : ☰ → Taxe ou Commerce.'],['✊','Grève fiscale','Taxe forte et moral bas : des colons refusent de payer, voire repartent.'],['🌳','Contreparties','Parc et Hôpital adoucissent la taxe ; recherche Administration : +20 % de recettes.']]},
   {v:'3.9.2',d:'15 nov.',n:[['⚡','Générateur','Sa carte affiche la production (+18) et la consommation d\'eau.']]},
   {v:'3.9.1',d:'15 nov.',n:[['🔌','Miniature 3D','Le générateur de secours a sa miniature 3D dans Construire et sa fiche.'],['⚡','Miniatures plus rapides','La catégorie ouverte est générée en priorité.']]},
  {v:'3.9',d:'Générateur de secours',n:[['🔌','Générateur de secours','Pile à combustible : démarre seule quand l\'énergie baisse, consomme de l\'eau en marche. Plusieurs s\'additionnent.'],['⚖️','Délestage','En cas de manque, la base coupe d\'abord le confort puis la production, jamais le vital. Priorité réglable dans chaque fiche.'],['🔗','Recherches','Piles à combustible et Micro-réseau (+25 %).']]},
