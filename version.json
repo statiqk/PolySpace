@@ -1,10 +1,9 @@
 {
- "version": "3.8",
+ "version": "3.9",
  "date": "2026-11-15",
  "notes": [
-  "Rendu ~4× plus léger sur les grandes bases",
-  "Interface compacte",
-  "Vue libre (double-tap)",
-  "Démarrage plus rapide"
+  "Générateur de secours",
+  "Délestage automatique et priorités",
+  "Recherches Piles à combustible et Micro-réseau"
  ]
 }

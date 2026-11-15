@@ -253,6 +253,9 @@ html,body{height:100%;overflow:hidden;background:#000;color:#eef2ff;font-family:
 #menuPop{position:fixed;right:62px;top:calc(env(safe-area-inset-top) + 194px);z-index:31;border-radius:16px;padding:6px;display:none;flex-direction:column;gap:2px;background:rgba(14,18,32,.94)!important}
 #menuPop.show{display:flex}#menuPop button{background:none;border:0;color:#eef2ff;font:inherit;font-size:14px;font-weight:700;text-align:left;padding:10px 14px;border-radius:11px;cursor:pointer;white-space:nowrap}#menuPop button:active{background:rgba(255,255,255,.08)}
 body.free #hud,body.free #side,body.free #obj,body.free #nav,body.free #menuPop{display:none!important}
+
+.igm{display:flex;background:rgba(255,255,255,.06);border-radius:12px;padding:3px;margin-bottom:8px}.igm button{flex:1;border:0;background:none;color:#9aa6c8;font:inherit;font-size:12px;font-weight:800;padding:8px 0;border-radius:9px;cursor:pointer}.igm button.on{background:#2fd38a;color:#05200f}
+.iprio{display:flex;gap:3px}.iprio button{border:0;background:rgba(255,255,255,.07);color:#9aa6c8;font:inherit;font-size:10.5px;font-weight:800;padding:5px 7px;border-radius:8px;cursor:pointer}.iprio button.on.p0{background:#ff5a4d;color:#fff}.iprio button.on.p1{background:#3d8bff;color:#fff}.iprio button.on.p2{background:#8a94b8;color:#fff}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
 </head>
@@ -291,7 +294,7 @@ body.free #hud,body.free #side,body.free #obj,body.free #nav,body.free #menuPop{
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v3.8</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v3.9</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -1003,6 +1006,34 @@ N.hopital=lv=>{const g=new THREE.Group();plinth(g);const RED=new THREE.MeshStand
   if(lv>=3){box(1.1,.7,1.1,M.white,-1.1,2.75,-.9,g);box(.9,.12,.04,M.winB,-1.1,2.8,-.33,g).castShadow=false}
   return g};
 Object.assign(MODELS,N)}
+/* ===== générateur de secours (v3.9) ===== */
+{
+const box=(w,h,d,mat,x,y,z,p)=>mesh(new THREE.BoxGeometry(w,h,d),mat,x,y,z,p);
+const cyl=(rt,rb,h,mat,x,y,z,p,seg=24)=>mesh(new THREE.CylinderGeometry(rt,rb,h,seg),mat,x,y,z,p);
+const sph=(r,mat,x,y,z,p)=>mesh(new THREE.SphereGeometry(r,20,12),mat,x,y,z,p);
+const glow=m=>{m.castShadow=false;return m};
+const pipe=(a,b,r,mat,p)=>{const A=new THREE.Vector3(...a),B=new THREE.Vector3(...b);const m=mesh(new THREE.CylinderGeometry(r,r,A.distanceTo(B),10),mat,(A.x+B.x)/2,(A.y+B.y)/2,(A.z+B.z)/2,p);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),B.clone().sub(A).normalize());return m};
+const Y=.33;const AMB=new THREE.MeshStandardMaterial({color:0x331a00,emissive:0xffa62a,emissiveIntensity:2.2});
+MODELS.generateur=lv=>{const g=new THREE.Group();plinth(g);
+  // groupe électrogène (pile à combustible)
+  box(1.9,1.05,1.3,M.white,-.25,Y+.53,.35,g);box(1.94,.1,1.34,M.orange,-.25,Y+1.08,.35,g);for(const s of [-1,1])box(1.92,.08,.06,M.dark,-.25,Y+.12,.35+s*.66,g);
+  for(let k=0;k<7;k++)box(.05,.55,.04,M.dark,-1.05+k*.13,Y+.6,1.02,g);box(.95,.62,.04,M.panelW,-.73,Y+.6,1.01,g).position.z=1.0;
+  box(.55,.4,.05,M.dark,.35,Y+.68,1.02,g);glow(box(.42,.14,.02,AMB,.35,Y+.78,1.05,g));for(let k=0;k<3;k++)glow(sph(.035,[M.amber,M.cyan,M.red][k],.2+k*.15,Y+.58,1.05,g));
+  // pot d'échappement + vapeur
+  cyl(.1,.12,1.1,M.grey,.45,Y+1.6,-.05,g,12);cyl(.14,.14,.08,M.dark,.45,Y+2.15,-.05,g,12);
+  // radiateurs
+  for(const s of [-1,1])for(let k=0;k<5;k++)box(.04,.7,.5,M.panelW,-.25+s*1.03,Y+.55,.15+k*.0,g).position.x=-.25+s*(.99+k*.0);
+  for(let k=0;k<4;k++)box(.9,.03,.9,M.grey,-.6,Y+1.18+k*.08,.35,g);
+  // réservoirs H2 (blanc) / O2 (cyan)
+  const tanks=lv>=2?[[-1.15,-.95,M.white],[-.55,-.95,M.cyan],[.05,-.95,M.white],[.65,-.95,M.cyan]]:[[-.85,-.95,M.white],[-.2,-.95,M.cyan]];
+  for(const [x,z,m] of tanks){const c=cyl(.26,.26,1.1,M.white,x,Y+.5,z,g,20);c.rotation.x=0;mesh(new THREE.SphereGeometry(.26,20,10,0,Math.PI*2,0,Math.PI/2),M.white,x,Y+1.05,z,g);cyl(.27,.27,.12,m===M.cyan?M.cyan:M.orange,x,Y+.75,z,g,20);pipe([x,Y+1.25,z],[x,Y+1.25,-.2],.035,M.copper,g)}
+  pipe([-1.2,Y+1.25,-.2],[.7,Y+1.25,-.2],.04,M.copper,g);
+  // câble vers le réseau
+  pipe([.7,Y+.2,.35],[1.6,Y+.05,.35],.06,M.dark,g);box(.3,.45,.3,M.panelW,1.35,Y+.23,-.9,g);glow(box(.2,.06,.02,M.amber,1.35,Y+.35,-.74,g));
+  if(lv>=2){cyl(.32,.32,.9,M.panelW,1.2,Y+.45,.45,g,20);glow(cyl(.33,.33,.08,AMB,1.2,Y+.75,.45,g,20));cyl(.34,.34,.06,M.grey,1.2,Y+.92,.45,g,20)}
+  if(lv>=3){for(let k=0;k<4;k++)box(.05,1.3,.9,M.panelW,-1.35+k*.0,Y+1.85,.35,g).position.set(-1.0+k*.28,Y+1.75,.35);box(1.1,.06,1,M.grey,-.58,Y+1.12,.35,g);glow(sph(.07,M.red,-1.0,Y+2.45,.35,g))}
+  g.userData.vent=null;return g};
+}
 /* ===== 9 bâtiments détaillés (v3.5) ===== */
 {
 const box=(w,h,d,mat,x,y,z,p)=>mesh(new THREE.BoxGeometry(w,h,d),mat,x,y,z,p);
@@ -1402,6 +1433,7 @@ const DEFS={
  parc:{name:'Dôme parc',cat:'vie',icon:'🌳',cost:650,rare:5,en:-3,moral:10,desc:'Un coin de verdure. Moral +10.',bg:'#2f6a2a',req:'parc'},
  solaire:{name:'Panneaux solaires',cat:'energie',icon:'☀️',cost:150,solar:11,desc:'Énergie le jour seulement.',bg:'#1a2f6e'},
  batterie:{name:'Batterie',cat:'energie',icon:'🔋',cost:220,store:150,desc:"Stocke l'énergie pour la nuit.",bg:'#0f4a55'},
+ generateur:{name:'Générateur de secours',cat:'energie',icon:'🔌',cost:350,rare:2,desc:'Pile à combustible : en veille sans rien consommer, démarre seule quand l\'énergie passe sous 15 % (20 % au niv. 2). En marche : +18 ⚡/h mais −2,5 💧/h. Plusieurs générateurs s\'additionnent.',bg:'#5a3a10',req:'secours'},
  reacteur:{name:'Réacteur à fusion',cat:'energie',icon:'⚛️',cost:1300,rare:14,en:36,desc:'Énergie jour et nuit.',bg:'#0b4f63',req:'fusion'},
  foreuse:{name:'Foreuse',cat:'industrie',icon:'⛏️',cost:260,en:-5,rego:8,desc:'Extrait le régolithe.',bg:'#6a4a20'},
  pad:{name:'Pas de tir',cat:'industrie',icon:'🚀',cost:700,rare:6,en:-2,unique:true,desc:'Accueille les navettes : nouveaux colons et cargaisons.',bg:'#5a2a20'},
@@ -1425,6 +1457,8 @@ const RESEARCH=[
  {id:'champ',name:'Champs de force',icon:'🛡️',cost:75,desc:'Débloque le Bouclier antimétéorites.'},
  {id:'vaccin',name:'Vaccins et antiviraux',icon:'💉',cost:55,desc:'Contagion −70 % pendant les épidémies.'},
  {id:'inge',name:'Ingénierie avancée',icon:'🛠️',cost:50,desc:'Permet d\'améliorer les modules au niveau 3.'},
+ {id:'secours',name:'Piles à combustible',icon:'🔌',cost:40,desc:'Débloque le Générateur de secours.'},
+ {id:'microgrid',name:'Micro-réseau',icon:'🔗',cost:70,desc:'Générateurs de secours +25 % et délestage plus fin.'},
  {id:'navette',name:'Navette lourde',icon:'🚀',cost:90,desc:'Ravitaillements plus fréquents et plus gros.'},
 ];
 const OBJ=[
@@ -1540,7 +1574,7 @@ function spawnCrane(b){if(veh.cranes.length>=2)return;let pos=null;for(const [di
 const LEDM={ok:0x3dff9a,warn:0xffa62a,dmg:0xff3a3a,quar:0xffd23a,off:0x5b6380};for(const k in LEDM){const c=LEDM[k];LEDM[k]=new THREE.MeshStandardMaterial({color:c,emissive:c,emissiveIntensity:k==='off'?.15:1.3,roughness:.5})}
 const ledGeo={};function ledGeom(s){if(ledGeo[s])return ledGeo[s];const th=.045,G=[];for(const [x,z,w,d] of [[0,s/2,s,th],[0,-s/2,s,th],[s/2,0,th,s],[-s/2,0,th,s]])G.push(new THREE.BoxGeometry(w,.06,d).translate(x,.31,z));G.push(new THREE.SphereGeometry(.12,12,8).translate(s/2-.1,.48,s/2-.1));
   return ledGeo[s]=mergeGeometries(G.map(g=>g.toNonIndexed()))}
-function ledState(b){return b.dmg?'dmg':b.pwr===false||b.off>0?'off':b.quar>0?'quar':wearOf(b)<35?'warn':'ok'}
+function ledState(b){return b.dmg?'dmg':b.pwr===false||b.off>0||b.shed?'off':b.quar>0?'quar':wearOf(b)<35?'warn':'ok'}
 
 /* ===== véhicules remodélisés (v3.7) ===== */
 {
@@ -1676,24 +1710,25 @@ function burst(x,y,z,n){for(let k=0;k<n;k++){const a=Math.random()*Math.PI*2,s=1
 const has=t=>S.tech.includes(t);
 const LV_K=[1,1.6,2.3],LV_U=[1,1.3,1.6];const lvOf=b=>b.lv||1;
 function bEff(b,lv=lvOf(b)){const d=DEFS[b.t],u=LV_U[lv-1],wk=S.people?workersOf(b):[],w=(1+(S.people?workBonus(b):0))*(.55+.45*wearOf(b)/100),k=LV_K[lv-1]*w,kb=LV_K[lv-1];
+  if(b.shed&&lv===lvOf(b))return{cap:d.cap?Math.round(d.cap*kb):0,store:d.store?Math.round(d.store*kb):0,solar:0,prod:0,use:0,o2:0,food:0,rego:0,sci:0,moral:0,water:0,rare:0,wuse:0};
   if(b.pwr===false&&lv===lvOf(b))return{cap:0,store:d.store?Math.round(d.store*kb):0,solar:0,prod:0,use:0,o2:0,food:0,rego:0,sci:0,moral:0,water:0,rare:0,wuse:0};
   if((b.off>0||b.quar>0)&&lv===lvOf(b))return{cap:d.cap?Math.round(d.cap*kb):0,store:d.store?Math.round(d.store*kb):0,solar:0,prod:0,use:0,o2:0,food:0,rego:0,sci:0,moral:0,water:0,rare:0,wuse:0};if(b.dmg&&lv===lvOf(b))return{cap:d.cap?Math.round(d.cap*k*.5):0,store:d.store?Math.round(d.store*k*.5):0,solar:0,prod:0,use:0,o2:0,food:0,rego:0,sci:0,moral:0,water:0,rare:0,wuse:0};return{
   cap:d.cap?Math.round(d.cap*kb):0,store:d.store?Math.round(d.store*kb):0,solar:d.solar?d.solar*kb*(has('panneaux')?1.4:1)*(.55+.45*wearOf(b)/100):0,
-  prod:d.en>0?d.en*k:0,use:d.en<0?-d.en*u:0,o2:(d.o2||0)*k,water:(d.water||0)*k,rare:b.t==='mine'?.25*k:0,wuse:(b.t==='recycleur'?.6:b.t==='serre'?.5:0)*kb,food:(d.food||0)*k*(has('serreled')?1.5:1),rego:(d.rego||0)*k*(has('forage')?1.5:1),sci:(d.sci||0)*k,moral:Math.round((d.moral||0)*kb)+wk.filter(p=>p.j==='med').length*3+(b.t==='parc'?wk.length*2:0)}}
+  prod:b.t==='generateur'?(b.run?18*k*(has('microgrid')?1.25:1):0):d.en>0?d.en*k:0,use:d.en<0?-d.en*u:0,o2:(d.o2||0)*k,water:(d.water||0)*k,rare:b.t==='mine'?.25*k:0,wuse:(b.t==='recycleur'?.6:b.t==='serre'?.5:b.t==='generateur'&&b.run?2.5*(lv>=3?.8:1):0)*kb,food:(d.food||0)*k*(has('serreled')?1.5:1),rego:(d.rego||0)*k*(has('forage')?1.5:1),sci:(d.sci||0)*k,moral:Math.round((d.moral||0)*kb)+wk.filter(p=>p.j==='med').length*3+(b.t==='parc'?wk.length*2:0)}}
 const nOf=t=>S.b.filter(b=>b.t===t).length;
 function bCost(k){const d=DEFS[k],f=Math.pow(1.15,nOf(k));return{rego:Math.round(d.cost*f),rare:d.rare?Math.round(d.rare*f):0}}
 const costTxt=c=>'⛏ '+fmt(c.rego)+(c.rare?' · 🔩 '+c.rare:'');const canPay=c=>S.rego>=c.rego&&S.rare>=(c.rare||0);const pay=c=>{S.rego-=c.rego;S.rare-=(c.rare||0)};
 const upRare=b=>lvOf(b)===2?Math.ceil(DEFS[b.t].cost/90):(DEFS[b.t].rare?Math.ceil(DEFS[b.t].rare/2):0);
 const active=t=>S.b.some(b=>b.t===t&&!b.dmg&&!(b.off>0)&&b.pwr!==false);
 const stOn=t=>S.st.built&&!(S.st.down>0)&&S.st.m.some(m=>m.t===t);
-const WEAR_RATE={extracteur:.5,recycleur:.62,serre:.4,foreuse:.45,mine:.5,reacteur:.4,helium3:.4,solaire:.18,batterie:.22,pad:.3,spatioport:.3};
+const WEAR_RATE={generateur:.1,extracteur:.5,recycleur:.62,serre:.4,foreuse:.45,mine:.5,reacteur:.4,helium3:.4,solaire:.18,batterie:.22,pad:.3,spatioport:.3};
 const wearOf=b=>b.wear===undefined?100:b.wear;
 const upCost=b=>Math.round(DEFS[b.t].cost*(lvOf(b)===1?1.2:2.2)*(active('imprimante')?.85:1));
 function effList(b,lv){const e=bEff(b,lv),L=[];const f=v=>(Math.round(v*10)/10).toString().replace('.',',');
   if(e.cap)L.push(['👩‍🚀','+'+e.cap+' places']);if(e.solar)L.push(['☀️','+'+f(e.solar)+' le jour']);if(e.prod)L.push(['⚡','+'+f(e.prod)+'/h']);if(e.use)L.push(['⚡','−'+f(e.use)+'/h']);if(e.store)L.push(['🔋','+'+e.store]);
   if(e.o2)L.push(['💨','+'+f(e.o2)+'/h']);if(e.water)L.push(['💧','+'+f(e.water)+'/h']);if(e.wuse)L.push(['💧','−'+f(e.wuse)+'/h']);if(e.rare)L.push(['🔩','+'+f(e.rare)+'/h']);if(e.food)L.push(['🌱','+'+f(e.food)+'/h']);if(e.rego)L.push(['⛏','+'+f(e.rego)+'/h']);if(e.sci)L.push(['🔬','+'+f(e.sci)+'/h']);if(e.moral)L.push(['🙂','+'+e.moral]);
   if(b.t==='pad')L.push(['🚀',['toutes les 36 h','toutes les 26 h','toutes les 20 h'][lv-1]]);
-  const SP={frigo:['🧊','vivres conservés'],imprimante:['🛠️','réparations −50 %'],spatioport:['🛸','navettes −35 % · +2 colons'],bouclier:['🛡️','base protégée'],hopital:['🏥','soins ×2 · isolement'],observatoire:['🧭','expéditions −20 % risque']};if(SP[b.t])L.push(SP[b.t]);return L}
+  const SP={frigo:['🧊','vivres conservés'],imprimante:['🛠️','réparations −50 %'],spatioport:['🛸','navettes −35 % · +2 colons'],bouclier:['🛡️','base protégée'],hopital:['🏥','soins ×2 · isolement'],generateur:['🔌','secours automatique'],observatoire:['🧭','expéditions −20 % risque']};if(SP[b.t])L.push(SP[b.t]);return L}
 let rates={};
 function computeRates(){
   const day=sstep(-.02,.3,sunVec(_sv,S.hour+hourFrac).y);
@@ -1701,12 +1736,12 @@ function computeRates(){
   const eff=S.shelter>0?0:(.55+.45*S.moral/100);
   for(const b of S.b){const d=DEFS[b.t],e=bEff(b);
     cap+=e.cap;store+=e.store;prod+=e.solar*day+e.prod;use+=e.use;o2+=e.o2;food+=e.food;rego+=e.rego*eff;sci+=e.sci*eff;moral+=e.moral;water+=e.water;wuse+=e.wuse;rare+=e.rare*eff;
-    if(LUNAR&&PRESS.includes(b.t)&&!b.dmg&&b.pwr!==false)use+=1.5}
+    if(LUNAR&&PRESS.includes(b.t)&&!b.dmg&&b.pwr!==false&&!b.shed)use+=1.5}
   for(const m of S.st.built&&!(S.st.down>0)?S.st.m:[]){const d=SDEFS[m.t];if(d.en)prod+=d.en;if(d.sci)sci+=d.sci;if(d.cap)cap+=d.cap;if(d.food)food+=d.food;if(d.moral)moral+=d.moral}
   if(botOn())use+=1;
   const net=prod-use;let power=1;if(S.energy<=0&&net<0)power=clamp(prod/use,0,1);
   const need=1+Math.max(0,S.colons-8)*.03;const wneed=wuse+S.colons*.22*need;const wok=S.water>1?1:clamp(water/Math.max(.01,wneed),0,1);
-  const heat=LUNAR?S.b.filter(b=>PRESS.includes(b.t)&&!b.dmg&&b.pwr!==false).length*1.5:0;
+  const heat=LUNAR?S.b.filter(b=>PRESS.includes(b.t)&&!b.dmg&&b.pwr!==false&&!b.shed).length*1.5:0;
   const soc=(S.strike>0?.3:1)*(S.conflict>0?.9:1);
   rates={prod,use,net,cap,store,day,power,heat,soc,
     need,wok,water:water*power*soc-wuse*power-S.colons*.22*need,rare:rare*power*soc,
@@ -1714,8 +1749,25 @@ function computeRates(){
   const leak=S.b.filter(b=>PRESS.includes(b.t)&&!b.dmg).reduce((a,b)=>a+.1*(1.6-wearOf(b)/100),0);const spoil=S.food*(active('frigo')?.001:.004);const dis=day<.05?S.energy*.01:0;
   rates.o2-=leak;rates.food-=spoil;rates.net-=dis;rates.leak=leak;rates.spoil=spoil;rates.dis=dis;
   return rates}
+const TIER={habitat:0,recycleur:0,extracteur:0,hopital:0,frigo:0,serre:1,foreuse:1,mine:1,pad:1,spatioport:1,bouclier:1,parc:2,labo:2,imprimante:2,observatoire:2};
+const prioOf=b=>b.prio??TIER[b.t]??1;const PRIOLAB=['Vital','Production','Confort'];
+function powerManage(){const r0=computeRates();const frac=S.energy/Math.max(1,r0.store);let st=0,sp=0;
+  for(const g of S.b){if(g.t!=='generateur')continue;const m=g.gm||'auto',was=!!g.run;let run=was;
+    if(g.dmg||g.pwr===false||S.water<=1||m==='off')run=false;else if(m==='on')run=true;else{const th=lvOf(g)>=2?.2:.15;if(frac<th)run=true;else if(frac>.4)run=false}
+    g.run=run;if(run&&!was)st++;if(!run&&was)sp++}
+  if(st){toast(`⚡ ${st>1?st+' générateurs de secours démarrés':'Générateur de secours démarré'}`,'#ffb347',1);logx('Générateur(s) de secours démarré(s).')}
+  if(sp){toast(`🟢 ${sp>1?sp+' générateurs de secours arrêtés':'Générateur de secours arrêté'}`,'#6dffb5');logx('Générateur(s) de secours arrêté(s).')}
+  // délestage : coupe d'abord le confort, puis la production, jamais le vital
+  const was=S.b.filter(b=>b.shed).length;
+  if(S.energy<=1||(was&&frac<(has('microgrid')?.35:.5))){for(const b of S.b)b.shed=false;const r=computeRates();let def=r.use-r.prod;let n=0;
+    if(def>0){const C=S.b.filter(b=>!b.dmg&&b.pwr!==false&&prioOf(b)>0&&bEff(b).use>0).sort((a,c)=>prioOf(c)-prioOf(a)||bEff(c).use-bEff(a).use);for(const b of C){if(def<=0)break;def-=bEff(b).use;b.shed=true;n++}}
+    if(n&&!was){toast(`🔌 Délestage : ${n} module${n>1?'s':''} coupé${n>1?'s':''} pour garder le vital`,'#ffb347',1);logx('Délestage : '+n+' module(s) coupé(s).')}
+    if(n!==was)batchDirty=true}
+  else if(was){for(const b of S.b)b.shed=false;batchDirty=true;toast('🔌 Délestage terminé : tous les modules sont rallumés','#6dffb5');logx('Fin du délestage.')}}
+function genCover(){const G=S.b.filter(b=>b.t==='generateur'&&!b.dmg&&b.pwr!==false&&(b.gm||'auto')!=='off').reduce((a,b)=>a+nomOf(b).prod,0);
+  let use=0,vital=0;for(const b of S.b){const u=nomOf(b).use;if(!u)continue;use+=u;if(prioOf(b)===0)vital+=u}if(LUNAR)use+=rates.heat||0;return{G,use,vital}}
 function tickHour(){
-  const r=computeRates();
+  powerManage();const r=computeRates();
   S.energy=clamp(S.energy+r.net,0,r.store);
   S.o2=clamp(S.o2+r.o2,0,120+count('recycleur')*80+S.colons*8);
   S.food=clamp(S.food+r.food,0,120+count('serre')*80+S.colons*8);
@@ -1731,12 +1783,12 @@ function tickHour(){
   else{L.next--;if(L.next===24){toast('🌑 Nuit lunaire dans 24 h : stocke de l\'énergie !','#b9a6ff');logx('Alerte : nuit lunaire dans 24 h.')}
     if(L.next<=0&&S.hour===21){L.left=32;LUNAR=true;toast('🌑 Nuit lunaire : 32 h sans soleil, chauffage en marche','#b9a6ff');logx('Début de la nuit lunaire (32 h).')}}
   // court-circuit si la base manque d'énergie
-  if(S.energy<=0&&r.net<0&&Math.random()<.07){const c=S.b.filter(b=>!b.dmg&&DEFS[b.t].en<0&&b.t!=='habitat');if(c.length)damage(c[Math.floor(Math.random()*c.length)],'court-circuit')}
+  if(S.energy<=0&&r.net<0&&Math.random()<.07){const c=S.b.filter(b=>!b.dmg&&!b.shed&&DEFS[b.t].en<0&&b.t!=='habitat');if(c.length)damage(c[Math.floor(Math.random()*c.length)],'court-circuit')}
   // pertes
   if((S.o2<=0||S.food<=0)&&Math.random()<.18){loseColon('a quitté la base (manque de '+(S.o2<=0?'oxygène':'vivres')+')','😢')}
   else if(S.moral<15&&Math.random()<.06){loseColon('est reparti·e, démoralisé·e','😞')}
   // usure, arrêts, maintenance automatique
-  for(const b of S.b){if(b.dmg||b.pwr===false)continue;if(b.off>0)b.off--;b.wear=Math.max(0,wearOf(b)-(WEAR_RATE[b.t]||.3)*(LUNAR?1.3:1));
+  for(const b of S.b){if(b.dmg||b.pwr===false)continue;if(b.off>0)b.off--;b.wear=Math.max(0,wearOf(b)-(WEAR_RATE[b.t]||.3)*(LUNAR?1.3:1)*(b.run?3:1));
     if(b.wear<25&&Math.random()<.025*(1-b.wear/25)+.004)damage(b,b.t==='recycleur'?'filtre colmaté':'usure')}
   if(veh.bot&&veh.bot.st==='work'&&veh.bot.tgt&&S.b.includes(veh.bot.tgt)&&!veh.bot.tgt.dmg)veh.bot.tgt.wear=Math.min(100,wearOf(veh.bot.tgt)+1.6);
   const techs=S.people?S.people.filter(p=>p.j==='tec'&&!onExp(p)&&!(p.hurt>0)):[];
@@ -2222,6 +2274,8 @@ function getAlerts(){const r=rates,A=[];if(!r.store)return A;
     A.push({sev:3,ic:'🦠',t:`${sick.length} malade${sick.length>1?'s':''}`,sub:mb?(mb.quar>0?`${DEFS[mb.t].name} en quarantaine`:`Foyer : ${DEFS[mb.t].name}`):'Contagion possible',btn:mb&&!(mb.quar>0)?'Isoler':null,col:'#56b84a',fn:()=>{mb.quar=48;toast('🚧 '+DEFS[mb.t].name+' en quarantaine 48 h','#ffd36b');computeRates();save()},go:()=>openCrew('team')})}
   if(S.orbW>0){const pd=S.b.find(b=>b.t==='pad');A.push({sev:3,ic:'🛰️',t:`Navette en orbite · repart dans ${S.orbW} h`,sub:pd&&pd.dmg?'Répare le pas de tir pour qu\'elle se pose':'Rallume le pas de tir pour qu\'elle se pose',btn:pd&&pd.pwr===false&&!pd.dmg?'Rallumer':'Voir',col:'#ff9a3d',fn:()=>{if(pd&&pd.pwr===false&&!pd.dmg){pd.pwr=undefined;pd.off=0;removeBuilding(pd);addBuilding(pd,false);toast('⏻ Pas de tir rallumé','#6dffb5');computeRates();save()}else if(pd)focusB(pd)},go:()=>pd&&focusB(pd)})}
   if(S.veh&&S.veh.hd>0)A.push({sev:1,ic:'🚚',t:`Benne en panne · ${S.veh.hd} h`,sub:'Régolithe −15 % · réparation auto',btn:'Réparer ⛏ 60',col:'#ff9a3d',fn:()=>{if(S.rego<60)return toast('⛏ Pas assez de régolithe','#ff8a7a');S.rego-=60;S.veh.hd=0;toast('🚚 Benne réparée','#6dffb5');computeRates();save()}});
+  {const sh=S.b.filter(b=>b.shed).length;if(sh)A.push({sev:2,ic:'🔌',t:`Délestage · ${sh} module${sh>1?'s':''} coupé${sh>1?'s':''}`,sub:'Énergie insuffisante : le vital est gardé',btn:'Construire',col:'#ff9a3d',fn:()=>setView('build')})}
+  {const gr=S.b.filter(b=>b.t==='generateur'&&b.run);if(gr.length){const wu=gr.reduce((a,b)=>a+bEff(b).wuse,0);const h=wu>0?Math.floor(S.water/wu):99;A.push({sev:1,ic:'⚡',t:`Générateur${gr.length>1?'s':''} de secours en marche`,sub:`💧 −${nf(wu)}/h · tient ~${h>99?'99+':h} h`,btn:'Voir',col:'#ffb347',fn:()=>focusB(gr[0])})}}
   if(LUNAR)A.push({sev:2,ic:'🌑',t:`Nuit lunaire · ${S.ln.left} h`,sub:`Chauffage −${(r.heat||0).toFixed(0)} ⚡/h`});else if(S.ln.next<=24)A.push({sev:S.ln.next<=10?3:2,ic:'🌑',t:`Nuit lunaire dans ${Math.max(1,S.ln.next)} h`,sub:'32 h sans soleil : stocke de l\'énergie',btn:'Batterie',col:'#7a5cff',fn:()=>tryBuild('batterie')});
   if(S.req){const R=REQS[S.req.k];const map={parc:'parc',hopital:'hopital',vivres:'serre',eau:'extracteur',place:'habitat'};const bk=map[S.req.k];A.push({sev:2,ic:'💬',t:`Demande : ${R.t}`,sub:`${S.req.by.split(' ')[0]} · ${S.req.left} h restantes`,btn:bk?'Construire':'Équipe',col:'#3d8bff',fn:()=>bk?tryBuild(bk):openCrew('team')})}
   if(r.cap<=S.colons&&count('pad'))A.push({sev:2,ic:'🏠',t:'Habitats pleins',sub:'Les navettes ne peuvent plus amener de colons',btn:'Habitat',col:'#3d8bff',fn:()=>tryBuild('habitat')});
@@ -2341,7 +2395,7 @@ const FLD=[['cap','👩‍🚀','Capacité','places','#ffffff'],['solar','☀️
 const SPX={frigo:['🧊','vivres conservés'],imprimante:['🛠️','réparations −50 %'],spatioport:['🛸','navettes −35 % · +2 colons'],bouclier:['🛡️','base protégée'],hopital:['🏥','soins ×2 · isolement'],observatoire:['🧭','expéditions −20 % risque']};
 const PADT=['toutes les 36 h','toutes les 26 h','toutes les 20 h'];
 const nf=v=>(Math.round(v*10)/10).toString().replace('.',',');
-const nomOf=(b,lv=lvOf(b))=>bEff({...b,pwr:undefined,off:0,quar:0,dmg:false},lv);
+const nomOf=(b,lv=lvOf(b))=>bEff({...b,pwr:undefined,off:0,quar:0,dmg:false,shed:false,run:true},lv);
 function baseTot(f){let t=0;for(const x of S.b)t+=bEff(x)[f]||0;return t}
 function mainF(b){const e=nomOf(b);for(const f of ['o2','water','food','rego','sci','rare','solar','prod','use'])if(e[f]>0)return f;return null}
 function liveVal(b,f){if(!f)return 0;const e=bEff(b);let v=e[f]||0;if(f==='solar')v*=rates.day||0;else if(f==='use'){if(LUNAR&&PRESS.includes(b.t)&&!b.dmg&&b.pwr!==false)v+=1.5}else if(f!=='prod')v*=rates.power??1;return Math.round(v*10)/10}
@@ -2371,10 +2425,19 @@ function consequence(b,del){const e=nomOf(b),L=[];if(b.pwr===false&&!del)return 
   return L.length?['w',L.join(' · ')]:null}
 function sameType(b){return S.b.filter(x=>x.t===b.t).sort((a,c)=>a.i-c.i||a.j-c.j)}
 function navInfo(dir){if(!selected)return;const b=selected.userData.b,L=sameType(b);if(L.length<2)return;const n=L[(L.indexOf(b)+dir+L.length)%L.length];const o=occ.get(key(n.i,n.j));if(!o)return;const keep=infoMini,tab=infoTab;showInfo(o);infoMini=keep;infoTab=tab;showInfo(o);camGo={p:camera.position.clone(),t:controls.target.clone(),k:0,to:o.position.clone()}}
+function genTiles(b){const n=nomOf(b),lv=lvOf(b),wu=2.5*(lv>=3?.8:1)*LV_K[lv-1],h=Math.floor(S.water/Math.max(.1,wu));const th=lv>=2?20:15;
+  return[`<div class="itile"><small>PRODUCTION</small><b style="color:#ffd84a">⚡ +${nf(n.prod)}<i>/h</i></b><em>${b.run?'en marche':'seulement en marche'}</em></div>`,
+   `<div class="itile"><small>CONSOMMATION</small><b style="color:#4fb8ff">💧 −${nf(wu)}<i>/h</i></b><em>eau → hydrogène + O₂</em></div>`,
+   `<div class="itile"><small>AUTONOMIE</small><b>⏱ ${h>99?'99+':h} h</b><em>avec ton stock d'eau</em></div>`,
+   `<div class="itile"><small>DÉMARRAGE AUTO</small><b style="color:#6dffb5">🔋 &lt; ${th} %</b><em>arrêt au-dessus de 40 %</em></div>`]}
+function genTip(b){const {G,use,vital}=genCover();const one=nomOf(b).prod||1;const pct=Math.min(100,Math.round(G/Math.max(1,use)*100));
+  if(G>=use)return`<div class="itip g"><span>✅</span><div><b>Toute la base est couverte</b> par tes générateurs (${Math.round(G)} / ${Math.round(use)} ⚡/h).</div></div>`;
+  const nAll=Math.ceil((use-G)/one);if(G>=vital)return`<div class="itip g"><span>💡</span><div><b>Le vital est couvert</b> (${pct} % de la base). Il faudrait <b>${nAll}</b> générateur${nAll>1?'s':''} de plus pour tout couvrir ; sinon le délestage coupe le confort.</div></div>`;
+  const nV=Math.ceil((vital-G)/one);return`<div class="itip w"><span>⚠️</span><div><b>Le vital n'est pas couvert</b> (${pct} % de la base). Construis encore <b>${nV}</b> générateur${nV>1?'s':''} pour garder O₂, eau et habitats en cas de coupure.</div></div>`}
 function showInfo(o,opt){if(!o)return;const b=o.userData.b,d=DEFS[b.t],lv=lvOf(b);if(selected!==o){infoTab='prod';infoMini=!!(opt&&opt.tap);infoConf=null;try{tagY=new THREE.Box3().setFromObject(o).max.y+1.2}catch(_){tagY=6}}selected=o;selRing.visible=true;selRing.position.set(o.position.x,.12,o.position.z);
   const sl=slotsOf(b),wk=workersOf(b),wv=Math.round(wearOf(b)),refund=Math.round((b.inv||d.cost)/2),nIn=S.people.filter(p=>p.a===bkey(b)).length;
   const mc=Math.max(20,Math.round((b.inv||d.cost)*.1*(active('imprimante')?.5:1)));const sickHere=S.people.filter(p=>p.a===bkey(b)&&p.sick>0).length;
-  const st=b.dmg?['#ff8a7a','⚠ En panne']:b.pwr===false?['#c9d0e8','⏻ Éteint']:b.quar>0?['#ffd36b',`🚧 Quarantaine ${b.quar} h`]:b.off>0?['#ffcf9a',`⏸ Arrêté ${b.off} h`]:['#6dffb5','<i class="idot"></i>En marche'];
+  const st=b.dmg?['#ff8a7a','⚠ En panne']:b.shed?['#ffb347','🔌 Délesté']:b.t==='generateur'?(b.run?['#ffb347','⚡ En marche']:(b.gm||'auto')==='off'?['#c9d0e8','⏹ Arrêté']:['#6dffb5','<i class="idot"></i>En veille']):b.pwr===false?['#c9d0e8','⏻ Éteint']:b.quar>0?['#ffd36b',`🚧 Quarantaine ${b.quar} h`]:b.off>0?['#ffcf9a',`⏸ Arrêté ${b.off} h`]:['#6dffb5','<i class="idot"></i>En marche'];
   const L=sameType(b),idx=L.indexOf(b)+1;
   const nav=L.length>1?`<div class="inav"><button data-nv="-1">‹</button><small>${idx}/${L.length}</small><button data-nv="1">›</button></div>`:'';
   const stale=b.dmg||b.pwr===false||b.off>0||b.quar>0;const e=stale?nomOf(b):bEff(b);
@@ -2390,15 +2453,16 @@ function showInfo(o,opt){if(!o)return;const b=o.userData.b,d=DEFS[b.t],lv=lvOf(b
   else{
   let body='';
   if(infoTab==='prod'){
-    const tiles=FLD.filter(f=>e[f[0]]>0).map(([k,ic,lab,u,c,neg])=>{const v=e[k],tot=k==='store'?(rates.store||v):(baseTot(k)||v);const pct=Math.round(v/Math.max(.001,stale?tot+v:tot)*100);
+    const tiles=b.t==='generateur'?genTiles(b):FLD.filter(f=>e[f[0]]>0).map(([k,ic,lab,u,c,neg])=>{const v=e[k],tot=k==='store'?(rates.store||v):(baseTot(k)||v);const pct=Math.round(v/Math.max(.001,stale?tot+v:tot)*100);
       const cap=k==='cap'?`${v} / ${rates.cap} places · ${S.colons} colons`:k==='use'?`${pct} % de ta consommation`:k==='wuse'?`${pct} % de la conso d'eau`:k==='moral'?'bonus de moral':`${pct} % de la base`;
       return `<div class="itile${stale?' dim':''}"><small>${lab.toUpperCase()}${neg?' · CONSO':''}</small><b style="color:${k==='cap'?'#fff':c}">${ic} ${neg?'−':'+'}${k==='cap'||k==='store'||k==='moral'?v:nf(v)}<i>${u==='/h'?'/h':' '+u}</i></b>${k==='moral'?'':`<div class="ibar"><span style="width:${Math.min(100,k==='cap'?v/Math.max(1,rates.cap)*100:pct)}%;background:${c}"></span></div>`}<em>${cap}</em></div>`});
     if(b.t==='pad')tiles.push(`<div class="itile"><small>NAVETTES</small><b>🚀 ${PADT[lv-1]}</b></div>`);if(SPX[b.t])tiles.push(`<div class="itile"><small>EFFET SPÉCIAL</small><b>${SPX[b.t][0]} ${SPX[b.t][1]}</b></div>`);
     if(b.t==='helium3')tiles.push(`<div class="itile${stale?' dim':''}"><small>HÉLIUM-3</small><b style="color:#d39bff">🟣 +${nf(.35*LV_K[lv-1])}<i>/h</i></b><em>à vendre au Commerce</em></div>`);
     if(b.t==='batterie')tiles.push(`<div class="itile"><small>PERTE LA NUIT</small><b style="color:#9aa6c8">−1 %<i>/h</i></b><em>du stock, sans soleil (−${nf(S.energy*.01)}/h)</em></div>`);
-    const adv=adviceFor(b);
-    body=(b.pwr===false?`<div class="itip w"><span>⏻</span><div>Module éteint : il ne produit ni ne consomme. Valeurs affichées : en marche.</div></div>`:'')+(b.dmg?`<div class="itip r"><span>⚠</span><div>En panne : production arrêtée. Valeurs affichées : une fois réparé.</div></div>`:'')+
-      `<div class="itiles">${tiles.join('')||'<p class="iempty">Aucune production directe.</p>'}</div>`+
+    const adv=adviceFor(b);const gmode=b.t==='generateur'?`<div class="igm">${[['off','Arrêt'],['auto','Auto'],['on','Marche forcée']].map(([k,l])=>`<button data-gm="${k}" class="${(b.gm||'auto')===k?'on':''}">${l}</button>`).join('')}</div>`:'';
+    const prio=nomOf(b).use>0?`<div class="irow"><span>Priorité en cas de coupure</span><span class="iprio">${PRIOLAB.map((l,i)=>`<button data-pr="${i}" class="${prioOf(b)===i?'on p'+i:''}">${l}</button>`).join('')}</span></div>`:'';
+    body=gmode+(b.pwr===false?`<div class="itip w"><span>⏻</span><div>Module éteint : il ne produit ni ne consomme. Valeurs affichées : en marche.</div></div>`:'')+(b.dmg?`<div class="itip r"><span>⚠</span><div>En panne : production arrêtée. Valeurs affichées : une fois réparé.</div></div>`:'')+
+      `<div class="itiles">${tiles.join('')||'<p class="iempty">Aucune production directe.</p>'}</div>`+prio+(b.t==='generateur'?genTip(b):'')+
       (sl?`<div class="irow"><span>Bonus équipe · ${wk.length?wk.map(p=>p.n.split(' ')[0]+(JOBS[p.j].fit.includes(b.t)?' ★':'')).join(' + '):'personne'}</span><b style="color:#7fd3ff">+${Math.round(workBonus(b)*100)} %</b></div>`:'')+
       (adv?`<div class="itip ${adv[0]}"><span>${adv[1]}</span><div>${adv[2]}</div></div>`:'');
     if(!b.dmg&&lv<3){const a=nomOf(b),n=nomOf(b,lv+1),c=upCost(b),cr=upRare(b),lock=lv===2&&!has('inge');
@@ -2430,6 +2494,8 @@ function showInfo(o,opt){if(!o)return;const b=o.userData.b,d=DEFS[b.t],lv=lvOf(b
   I.classList.add('show');$('#obj').style.opacity=0;
   // interactions
   $('#iClose').onclick=hideInfo;I.querySelectorAll('[data-it]').forEach(x=>x.onclick=()=>{infoTab=x.dataset.it;infoConf=null;showInfo(o)});
+  I.querySelectorAll('[data-gm]').forEach(x=>x.onclick=()=>{b.gm=x.dataset.gm;if(b.gm==='on'&&!b.dmg&&S.water>1)b.run=true;if(b.gm==='off')b.run=false;computeRates();save();renderHUD();showInfo(o)});
+  I.querySelectorAll('[data-pr]').forEach(x=>x.onclick=()=>{const v=+x.dataset.pr;b.prio=v===(TIER[b.t]??1)?undefined:v;save();showInfo(o)});
   I.querySelectorAll('[data-nv]').forEach(x=>x.onclick=ev=>{ev.stopPropagation();navInfo(+x.dataset.nv)});
   const ex=$('#iExp');if(ex)ex.onclick=()=>{infoMini=false;showInfo(o)};$('#iHdl').onclick=()=>{infoMini=!infoMini;showInfo(o)};
   $('#iMain').onclick=()=>{if(b.dmg){const c=repCost(b);if(S.rego<c)return;S.rego-=c;b.dmg=false;b.wear=100;removeBuilding(b);addBuilding(b,'up');toast('🔧 '+d.name+' réparé','#6dffb5');logx(d.name+' réparé.');computeRates();save();showInfo(occ.get(key(b.i,b.j)));return}
@@ -2456,19 +2522,19 @@ function updSelTag(){const t=document.getElementById('selTag');if(!t)return;cons
   t.style.display='block';t.style.transform=`translate(${(_tv.x*.5+.5)*innerWidth}px,${(-_tv.y*.5+.5)*innerHeight}px) translate(-50%,-100%)`;t.classList.toggle('bad',!!b.dmg)}
 
 /* ================== RECHERCHE : ARBRE ================== */
-const TREE={serreled:[0,0,null],forage:[1,0,null],parc:[0,1,'serreled'],inge:[1,1,'forage'],vaccin:[0,2,'parc'],panneaux:[1,2,'inge'],champ:[0,3,'vaccin'],fusion:[1,3,'panneaux'],he3:[0,4,'fusion'],navette:[1,4,'panneaux']};
+const TREE={serreled:[0,0,null],forage:[1,0,null],parc:[0,1,'serreled'],inge:[1,1,'forage'],vaccin:[0,2,'parc'],panneaux:[1,2,'inge'],champ:[0,3,'vaccin'],fusion:[1,3,'panneaux'],he3:[0,4,'fusion'],navette:[1,4,'panneaux'],secours:[1,5,'panneaux'],microgrid:[0,5,'secours']};
 let resSel=null;
 function resState(r){if(has(r.id))return'done';const pre=TREE[r.id]&&TREE[r.id][2];if(pre&&!has(pre))return'lock';return'av'}
 function renderResearch(){const rs=rates.sci||0;const W=Math.min(520,innerWidth)-28,cw=(W-14)/2,RH=92;
   if(!resSel||resState(RESEARCH.find(r=>r.id===resSel))!=='av'){const av=RESEARCH.filter(r=>resState(r)==='av').sort((a,b)=>a.cost-b.cost)[0];resSel=av?av.id:null}
   const pos=id=>{const [c,r]=TREE[id];return{x:c*(cw+14)+cw/2,y:r*RH+38}};
-  let svg=`<svg width="${W}" height="${5*RH}" style="position:absolute;left:0;top:0">`;for(const [id,[c,r,pre]] of Object.entries(TREE)){if(!pre)continue;const a=pos(pre),b=pos(id);const on=has(pre);
+  let svg=`<svg width="${W}" height="${(Math.max(...Object.values(TREE).map(t=>t[1]))+1)*RH+90}" style="position:absolute;left:0;top:0">`;for(const [id,[c,r,pre]] of Object.entries(TREE)){if(!pre)continue;const a=pos(pre),b=pos(id);const on=has(pre);
     svg+=`<path d="M${a.x} ${a.y+28} C${a.x} ${a.y+RH/2+10},${b.x} ${b.y-RH/2-10},${b.x} ${b.y-30}" fill="none" stroke="${on?'rgba(127,211,255,.55)':'rgba(255,255,255,.12)'}" stroke-width="2"${on?'':' stroke-dasharray="4 5"'}/>`}svg+='</svg>';
   const nodes=RESEARCH.filter(r=>TREE[r.id]).map(r=>{const [c,row,pre]=TREE[r.id];const s=resState(r);const left=c*(cw+14),top=row*RH+6;const p=Math.min(1,S.sci/r.cost);const eta=s==='av'&&S.sci<r.cost?(rs>0?`prêt dans ${Math.ceil((r.cost-S.sci)/rs)} h`:'labo requis'):'';
     return `<div class="rnode ${s}${resSel===r.id?' sel':''}" data-r="${r.id}" style="left:${left}px;top:${top}px;width:${cw}px"><b>${r.icon} ${r.name}</b><small>${s==='done'?'✓ Acquis':s==='lock'?'🔒 après '+RESEARCH.find(x=>x.id===pre).name:`🔬 ${r.cost}${eta?' · '+eta:' · disponible'}`}</small>${s==='av'?`<div class="rbar"><span style="width:${p*100}%"></span></div>`:''}</div>`}).join('');
   const sel=resSel&&RESEARCH.find(r=>r.id===resSel);
   $('#resBal').innerHTML=`<span style="color:#d39bff">🔬 ${fmt(S.sci)}${rs>0?' · +'+rs.toFixed(1).replace('.',',')+'/h':''}</span>`;
-  $('#resl').innerHTML=`<div class="rtree" style="height:${5*RH}px;width:${W}px">${svg}${nodes}</div>`+(sel?`<div class="rsel"><b>${sel.icon} ${sel.name}</b><p>${sel.desc}</p><div style="display:flex;gap:6px;margin-top:8px"><button class="btn ${S.sci>=sel.cost?'blue':'ghost'}" id="resGo" ${S.sci>=sel.cost?'':'disabled'} style="flex:1">${S.sci>=sel.cost?'🔬 Lancer · '+sel.cost:`🔬 ${fmt(S.sci)} / ${sel.cost}`}</button>${S.sci<sel.cost?`<button class="btn ${S.cr>=Math.ceil(sel.cost-S.sci)*9?'go':'ghost'}" id="resPay" ${S.cr>=Math.ceil(sel.cost-S.sci)*9?'':'disabled'} style="white-space:nowrap">💰 ${fmtC(Math.ceil(sel.cost-S.sci)*9)}</button>`:''}</div></div>`:`<div class="rsel"><b>${count('labo')?'Tout ce qui est disponible est acquis':'Construis un laboratoire'}</b><p>${count('labo')?'':'Le laboratoire et l\'observatoire produisent la science.'}</p></div>`);
+  $('#resl').innerHTML=`<div class="rtree" style="height:${(Math.max(...Object.values(TREE).map(t=>t[1]))+1)*RH+90}px;width:${W}px">${svg}${nodes}</div>`+(sel?`<div class="rsel"><b>${sel.icon} ${sel.name}</b><p>${sel.desc}</p><div style="display:flex;gap:6px;margin-top:8px"><button class="btn ${S.sci>=sel.cost?'blue':'ghost'}" id="resGo" ${S.sci>=sel.cost?'':'disabled'} style="flex:1">${S.sci>=sel.cost?'🔬 Lancer · '+sel.cost:`🔬 ${fmt(S.sci)} / ${sel.cost}`}</button>${S.sci<sel.cost?`<button class="btn ${S.cr>=Math.ceil(sel.cost-S.sci)*9?'go':'ghost'}" id="resPay" ${S.cr>=Math.ceil(sel.cost-S.sci)*9?'':'disabled'} style="white-space:nowrap">💰 ${fmtC(Math.ceil(sel.cost-S.sci)*9)}</button>`:''}</div></div>`:`<div class="rsel"><b>${count('labo')?'Tout ce qui est disponible est acquis':'Construis un laboratoire'}</b><p>${count('labo')?'':'Le laboratoire et l\'observatoire produisent la science.'}</p></div>`);
   $('#resl').querySelectorAll('[data-r]').forEach(n=>n.onclick=()=>{const r=RESEARCH.find(x=>x.id===n.dataset.r);if(resState(r)==='av'){resSel=r.id;renderResearch()}else if(resState(r)==='lock')toast('🔒 Termine d\'abord : '+RESEARCH.find(x=>x.id===TREE[r.id][2]).name);});
   const rp=$('#resPay');if(rp)rp.onclick=()=>{const c=Math.ceil(sel.cost-S.sci)*9;if(S.cr<c)return;S.cr-=c;S.sci=sel.cost;toast('💰 Recherche financée','#ffd36b');renderResearch()};
   const g=$('#resGo');if(g)g.onclick=()=>{const r=sel;if(S.sci<r.cost||resState(r)!=='av')return;S.sci-=r.cost;S.tech.push(r.id);toast('🔬 '+r.name+' acquis !','#d39bff');logx('Recherche : '+r.name+'.');resSel=null;checkObj();save();renderResearch()}}
@@ -2562,6 +2628,7 @@ window.__f=0;function animate(){window.__f++;requestAnimationFrame(animate);let 
     if(u.grow!==undefined){growing=true;u.grow+=dt*1.6;const g=Math.min(1,u.grow);const e=1+2.70158*Math.pow(g-1,3)+1.70158*Math.pow(g-1,2);o.scale.setScalar(e);if(g>=1){delete u.grow;batchDirty=true}}
     const run=(S.shelter||o.userData.b.pwr===false?0:1)*(rates.power||1);if(u.spin)u.spin.rotation.y+=dt*3*run;if(u.rings)u.rings.forEach((r,i)=>r.rotation.z+=dt*(1.1+i*.6)*(i%2?-1:1)*run);if(u.dishes)u.dishes.forEach((d,i)=>d.rotation.y+=dt*(.3+i*.2)*run);
     if(u.pulse){const s=1+Math.sin(tAll*3)*.08;u.pulse.scale.setScalar(s)}
+    if(u.b&&u.b.t==='generateur'&&u.b.run&&Math.random()<dt*10){_tv.set(.45,2.6,-.05);o.localToWorld(_tv);dust.emit(_tv.x,_tv.y,_tv.z,(Math.random()-.5)*.3,1.2+Math.random()*.6,(Math.random()-.5)*.3,1.1,.9,.85,.88,.92,.6)}
     if(u.drill&&!S.shelter&&o.userData.b.pwr!==false){u.drill.rotation.y+=dt*6;u.drill.position.y=2.6+Math.sin(tAll*1.3)*.35;if(Math.random()<dt*14)dust.emit(o.position.x+(Math.random()-.5)*1.6,1.3,o.position.z+(Math.random()-.5)*1.6,(Math.random()-.5)*1.5,.6+Math.random(),(Math.random()-.5)*1.5,1.4,.55,.62,.6,.57,.9)}
     if(u.track){for(const tk of u.tracks||[u.track]){const a=Math.atan2(sunDir.x,sunDir.z);let da=a-tk.piv.rotation.y;da=Math.atan2(Math.sin(da),Math.cos(da));tk.piv.rotation.y+=da*.05;tk.tilt.rotation.x=lerp(tk.tilt.rotation.x,clamp(Math.PI/2-Math.max(sunDir.y,.15)-.0,0,1.2),.05)}}
     {const worn=!o.userData.b.dmg&&wearOf(o.userData.b)<25;if(worn&&!u.worn){const w=new THREE.Sprite(wornMat);w.scale.set(1.1,1.1,1);w.position.y=5;w.renderOrder=5;o.add(w);u.worn=w}if(u.worn){u.worn.visible=worn;u.worn.position.y=5+Math.sin(tAll*2.5)*.2}
@@ -2628,8 +2695,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='3.8';
+const APP_VER='3.9';
 const CHANGELOG=[
+ {v:'3.9',d:'Générateur de secours',n:[['🔌','Générateur de secours','Pile à combustible : démarre seule quand l\'énergie baisse, consomme de l\'eau en marche. Plusieurs s\'additionnent.'],['⚖️','Délestage','En cas de manque, la base coupe d\'abord le confort puis la production, jamais le vital. Priorité réglable dans chaque fiche.'],['🔗','Recherches','Piles à combustible et Micro-réseau (+25 %).']]},
  {v:'3.8',d:'Plus fluide, plus de place',n:[['🧱','Bâtiments regroupés','Les parties fixes des bâtiments sont dessinées ensemble : beaucoup moins de travail par image sur les grandes bases.'],['💡','Lumières','Les lumières de nuit ne sont plus calculées le jour ; moins de lumières au total.'],['💾','Démarrage','Les textures de la Terre et du ciel sont gardées après le premier lancement.'],['📏','Interface compacte','Jauges et ressources dans un seul bloc, menu ☰, demandes dans la cloche.'],['👆','Vue libre','Double-tap sur le sol pour masquer l\'interface.']]},
  {v:'3.7',d:'Véhicules remodélisés',n:[['🚙','Rover','Cabine pressurisée, roues en treillis, parabole, phares et bras de prélèvement.'],['🚚','Benne, robot, grue','Camion-benne à cabine vitrée, robot sur chenilles avec pince, grue en treillis.'],['🚀','Navette et drone','Navette avec boosters et cockpit, drone à rotors carénés qui tournent.']]},
  {v:'3.6.1',d:'Nuit plus nette',n:[['🔋','Batteries sobres','Bandes de charge fines et douces.'],['🪟','Fenêtres','Moins éblouissantes la nuit, lumières des modules adoucies.'],['✨','Halo maîtrisé','Fini la brume blanche sur les grandes bases.']]},
