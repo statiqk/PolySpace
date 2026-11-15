@@ -1,9 +1,7 @@
 {
- "version": "4.8",
+ "version": "4.8.1",
  "date": "2026-11-15",
  "notes": [
-  "Version ordinateur",
-  "Raccourcis clavier",
-  "Infobulles au survol"
+  "Version ordinateur retirée"
  ]
 }

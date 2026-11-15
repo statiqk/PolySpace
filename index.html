@@ -262,37 +262,6 @@ html,body{height:100%;overflow:hidden;background:#000;color:#eef2ff;font-family:
 .hpi{font-size:16px}.hpn{display:flex;justify-content:space-between;font-size:12px;font-weight:800}.hpg{font-size:10px;text-align:right;color:#9aa6c8;line-height:1.35}
 .hkg{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}.hkv{display:flex;justify-content:space-between;background:rgba(255,255,255,.05);border-radius:10px;padding:6px 9px;font-size:11.5px;color:#c9d0e8}.hkv b{font-size:12px}
 #hud.hopen~#side,#hud.hopen~#obj,#hud.hopen~#shipP{display:none!important}
-/* ===== v4.8 : version ordinateur ===== */
-#dres,#dspd,#htip,#nav .dk{display:none}
-body.desk #hud{padding:0!important;left:0;right:0;top:0}
-body.desk #hbox{border-radius:0;border:0;border-bottom:1px solid rgba(255,255,255,.1);height:64px;display:flex;align-items:center;gap:18px;padding:0 128px 0 18px;background:rgba(10,14,26,.9)}
-body.desk #res{flex:none;min-height:0;gap:16px!important;cursor:default}
-body.desk #hpan,body.desk .hcar{display:none!important}
-body.desk #chips{margin:0!important;padding:0!important;border:0!important;flex:1;gap:8px!important;align-items:center}
-body.desk #chips .pl{font-size:13.5px;padding:5px 10px!important}
-.dg{width:178px}.dg small{display:flex;justify-content:space-between;gap:6px;font-size:10.5px;font-weight:800;color:#9aa6c8;letter-spacing:.4px;white-space:nowrap}.dg small b{font-weight:800}.dg .gbr{margin-top:5px;height:5px}
-body.desk #dspd{display:flex;gap:3px;margin-left:auto}#dspd button{width:38px;height:32px;border-radius:9px;border:0;background:rgba(255,255,255,.07);color:#eef2ff;font:inherit;font-weight:800;font-size:12.5px;cursor:pointer}#dspd button.on{background:#3d8bff}
-body.desk .dclk{font-size:13px;font-weight:800;color:#c9d2ee;white-space:nowrap}
-body.desk #side{top:12px!important;right:14px!important;flex-direction:row!important;gap:6px}body.desk #side .sb{width:40px;height:40px}body.desk #speed{display:none!important}
-body.desk #nav{left:0!important;right:auto!important;top:64px!important;bottom:0!important;transform:none!important;width:80px;border-radius:0!important;flex-direction:column;justify-content:flex-start;align-items:center;gap:6px;padding:12px 0!important;background:rgba(10,14,26,.9)!important;border-right:1px solid rgba(255,255,255,.1)}
-body.desk #nav button{width:64px;padding:8px 0 6px;font-size:10px;position:relative}body.desk #nav .dk{display:flex}
-body.desk #nav button::after{content:attr(data-k);position:absolute;top:3px;right:6px;font-size:9px;color:#6b7593;font-weight:800}
-body.desk #nav .fabb{order:-1;margin:6px 0 4px}body.desk #nav .fabb .fab{margin:0!important;position:static!important;top:auto!important}body.desk #nav .fabb:not(.on) .fab{transform:none!important}body.desk #nav .fab{width:50px;height:50px;font-size:30px!important;border-radius:15px}
-body.desk .sheet{left:80px!important;right:auto!important;top:64px!important;bottom:0!important;width:470px!important;max-width:none!important;max-height:none!important;margin:0!important;border-radius:0!important;border-top:0;border-right:1px solid rgba(255,255,255,.12);transform:translateX(-110%);padding:14px 16px 24px!important;z-index:21}
-body.desk .sheet.open{transform:none}body.desk .sheet .grab{display:none}
-body.desk .mods{grid-template-columns:repeat(3,1fr)!important}
-body.desk #info{left:auto!important;right:0!important;top:64px!important;bottom:0!important;width:410px!important;max-width:none!important;max-height:none!important;margin:0!important;transform:none!important;border-radius:0!important;border-left:1px solid rgba(255,255,255,.12)}
-body.desk #dres{display:block;position:fixed;right:0;top:64px;bottom:0;width:410px;z-index:14;background:rgba(14,18,32,.9);border-left:1px solid rgba(255,255,255,.1);padding:14px 16px;overflow-y:auto}
-body.desk #info.show~#dres{display:none}
-body.desk #dres h3{font-size:18px;margin-bottom:6px}
-body.desk #obj{left:96px!important;right:auto!important;bottom:16px!important;width:400px!important;transform:none!important}
-body.desk #alert{left:auto!important;right:426px!important;bottom:16px!important;width:380px!important;top:auto!important}
-body.desk #shipP{top:76px!important;right:426px!important}
-body.desk #place{left:50%!important;right:auto!important;transform:translateX(-50%)!important;width:440px!important;bottom:20px!important}
-body.desk #htip{position:fixed;z-index:30;pointer-events:none;background:rgba(10,14,26,.92);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:8px 11px;font-size:12.5px;max-width:260px;line-height:1.45}
-body.desk #htip.on{display:block}#htip b{font-size:13.5px}#htip small{color:#8d97b5;display:block}
-body.desk #toasts{left:96px!important;right:426px!important}
-
 #shipP{position:fixed;right:62px;top:calc(env(safe-area-inset-top) + 104px);z-index:9;border-radius:99px;padding:5px 11px;font-size:11px;font-weight:800;color:#9fe0ff;background:rgba(12,16,30,.72)!important;pointer-events:none;white-space:nowrap}
 body.free #shipP{display:none!important}
 #obj{right:12px!important;max-width:none!important;border-radius:18px!important;padding:7px 12px 7px 7px!important}
@@ -319,22 +288,20 @@ body.free #hud,body.free #side,body.free #obj,body.free #nav,body.free #menuPop{
 <canvas id="c"></canvas>
 <div id="vign"></div><div id="flash"></div>
 <div id="hud">
-  <div id="hbox"><div id="res"></div><div id="hpan"></div><div id="chips"></div><div id="dspd"><button data-sp="0">❚❚</button><button data-sp="1">1×</button><button data-sp="2">2×</button><button data-sp="4">4×</button></div><span class="dclk" id="dclk"></span><div id="loc">SOL 1</div></div><div id="name">Base Séléné</div>
+  <div id="hbox"><div id="res"></div><div id="hpan"></div><div id="chips"></div><div id="loc">SOL 1</div></div><div id="name">Base Séléné</div>
 </div>
 <div id="side"><div id="speed" class="glass sb">▶×1</div><div id="recenter" class="glass sb">🎯</div><div id="bell" class="glass sb">🔔<span id="bellN">0</span></div><div id="menuBtn" class="glass sb">☰</div><div id="comBtn" class="glass sb">💰</div><div id="jbtn" class="glass sb">📋</div></div>
 <div id="alert"></div><div id="menuPop" class="glass"><button data-m="comBtn">💰 Commerce</button><button data-m="tax">👩‍🚀 Paie et taxe</button><button data-m="jbtn">📋 Journal</button><button data-m="recenter">🎯 Recentrer la vue</button></div>
 <div id="toasts"></div>
 <div id="obj" class="glass"></div><div id="shipP" class="glass" style="display:none"></div>
-<div id="info" class="glass"></div><div id="dres"></div><div id="htip"></div><div id="selTag"></div>
+<div id="info" class="glass"></div><div id="selTag"></div>
 <div id="place" class="glass"><div class="hint">Touche une case libre pour déplacer le module</div><div class="row"><button class="btn ghost" id="pCancel" style="flex:1">Annuler</button><button class="btn blue" id="pOk" style="flex:2">✓ Construire</button></div></div>
 <nav id="nav" class="glass">
-  <button data-v="base" class="on" data-k="H"><span>🏠</span>Base</button>
-  <button data-v="crew" data-k="E"><span>👩‍🚀</span>Équipage</button>
-  <button data-v="build" class="fabb" data-k="B"><span class="fab">+</span></button>
-  <button data-v="research" data-k="R"><span>🔬</span>Recherche</button>
-  <button data-v="orbit" data-k="O"><span>🛰️</span>Orbite</button>
-  <button data-v="commerce" class="dk" data-k="C"><span>💰</span>Commerce</button>
-  <button data-v="journal" class="dk" data-k="J"><span>📋</span>Journal</button>
+  <button data-v="base" class="on"><span>🏠</span>Base</button>
+  <button data-v="crew"><span>👩‍🚀</span>Équipage</button>
+  <button data-v="build" class="fabb"><span class="fab">+</span></button>
+  <button data-v="research"><span>🔬</span>Recherche</button>
+  <button data-v="orbit"><span>🛰️</span>Orbite</button>
 </nav>
 <div class="sheet" id="sBuild"><div class="grab"></div><div class="sh"><h2>Construire</h2><div style="display:flex;gap:6px;align-items:center"><div class="bal" id="bBal"></div><button class="x" data-close>✕</button></div></div><div class="seg2" id="cats"></div><div class="mods" id="mods"></div></div>
 <div class="sheet" id="sResearch"><div class="grab"></div><div class="sh"><h2>Recherche</h2><div style="display:flex;gap:6px;align-items:center"><div class="bal" id="resBal"></div><button class="x" data-close>✕</button></div></div><div id="resl"></div></div>
@@ -352,7 +319,7 @@ body.free #hud,body.free #side,body.free #obj,body.free #nav,body.free #menuPop{
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.8</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.8.1</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -2592,8 +2559,8 @@ const fR=v=>Math.abs(v)<10?v.toFixed(1).replace('.',','):String(Math.round(v));
 function resInfo(r){const cap={o2:o2Cap(),water:waterCap(),energy:r.store,food:foodCap()},rt={o2:r.o2,water:r.water,energy:r.net,food:r.food};
   return RESL.map(([k,ic,n,sn,col])=>{const v=S[k],cp=cap[k],f=clamp(v/Math.max(1,cap[k]),0,1),rate=rt[k],h=rate<0?v/-rate:Infinity,G=S.glitch&&S.glitch.res===k;
     const warn=G||h<8?'#ff4d5e':h<24?'#ffb347':h<48||f<.35?'#ffcf6b':null;return{k,ic,n,sn,col,f,rate,h,G,warn,v,cp}})}
-let hudOpen=false;let DESK=false;
-function hudRes(r){if(DESK){const I=resInfo(r);return I.map(x=>{const c=x.warn||x.col;return `<div class="dg"><small><span>${x.ic} ${x.sn.toUpperCase()}</span><b style="color:${c}">${x.G?'??':x.k==='energy'?fmtS(x.v)+'/'+fmtS(x.cp):fmtS(x.v)+'/'+fmtS(x.cp)} · ${x.rate<0?'▼ '+(x.h>99?'99+ h':Math.floor(x.h)+' h'):'+'+fR(x.rate)+'/h'}</b></small><div class="gbr"><span style="width:${(x.f*100).toFixed(1)}%;background:${c}"></span></div></div>`}).join('')}const I=resInfo(r),W=I.filter(x=>x.warn).sort((a,b)=>a.h-b.h);const bad=W.some(x=>x.warn!=='#ffcf6b');
+let hudOpen=false;
+function hudRes(r){const I=resInfo(r),W=I.filter(x=>x.warn).sort((a,b)=>a.h-b.h);const bad=W.some(x=>x.warn!=='#ffcf6b');
   const pc=Math.round(I.reduce((a,x)=>a+x.f,0)/4*100),rc=bad?W[0].warn:W.length?'#ffcf6b':'#2fd38a';
   const ring=`<div class="hring" style="background:conic-gradient(${rc} 0 ${pc}%,rgba(255,255,255,.1) 0)"><span>${bad?'!':W.length?'•':'✓'}</span></div>`;
   const tl=W.length?`<b>${bad?'Attention':'À surveiller'}</b><small>${W.length===1?I.filter(x=>!x.warn).map(x=>x.sn).join(' · ')+' OK':W.length+' ressources en baisse'}</small>`:`<b>Base stable</b><small>O₂ · eau · énergie · vivres OK</small>`;
@@ -2609,7 +2576,6 @@ function gbar(k,ic,label,val,cap,rate,col){const G=S.glitch&&S.glitch.res===k;co
   const sub=G?'???':rate>=0?'+'+(Math.abs(rate)<10?rate.toFixed(1).replace('.',','):Math.round(rate))+'/h':h>99?'99+ h':Math.floor(h)+' h';const c=warn||col;
   return `<div class="gb${warn?' gw':''}"><small>${ic} ${label}</small><b style="color:${c}">${G?`<span class="glitch">${['??','#E','0x'][Math.floor(tAll*3)%3]}</span>`:Math.round(f*100)+' %'}<em style="${warn?`color:${warn}`:''}">${sub}</em></b><div class="gbr"><span style="width:${(f*100).toFixed(1)}%;background:${c}"></span></div></div>`}
 function renderHUD(){const r=rates;if(!r.store)return;
-  if(DESK){if(!$('#info').classList.contains('show')){const p='<h3>📊 Ressources</h3>'+hudPanel(r);if(p!==renderHUD.dp){$('#dres').innerHTML=p;renderHUD.dp=p}}const hh=String(S.hour).padStart(2,'0'),t=`SOL ${S.sol} · ${hh}:00 ${mode==='orbit'?'🛰️':LUNAR?'🌑':r.day>0?'☀':'☾'}`;if(t!==renderHUD.dc){$('#dclk').textContent=t;renderHUD.dc=t}document.querySelectorAll('#dspd button').forEach(b=>b.classList.toggle('on',paused?b.dataset.sp==='0':+b.dataset.sp===speed))}
   {const h=hudRes(r);if(h!==renderHUD.r){$('#res').innerHTML=h;renderHUD.r=h}if(hudOpen){const p=hudPanel(r);if(p!==renderHUD.p){$('#hpan').innerHTML=p;renderHUD.p=p}}}
   const hh=String(S.hour).padStart(2,'0');{const t=mode==='orbit'?`SOL ${S.sol}<br>${hh}:00 · 🛰️`:`SOL ${S.sol}<br>${hh}:00 ${LUNAR?'🌑':r.day>0?'☀':'☾'}`;if(t!==renderHUD.l){$('#loc').innerHTML=t;renderHUD.l=t}}
   {const h=`<span class="pl" id="crChip" style="color:#ffd36b;cursor:pointer">💰 ${fmtS(S.cr)}${(n=>`<i style="font-style:normal;font-size:9.5px;margin-left:3px;color:${n>=0?'#6dffb5':'#ff9a8a'}">${n>=0?'+':'−'}${fmtS(Math.abs(n))}</i>`)(netSol())}</span><span class="pl">⛏ ${fmtS(S.rego)}<i style="color:${r.rego>0?'#6dffb5':'#9aa6c8'}">${r.rego>0?'▲':''}</i></span><span class="pl" style="color:#ffcf9a">🔩 ${fmtS(S.rare)}</span><span class="pl" style="color:#d39bff">🔬 ${fmtS(S.sci)}</span><span class="pl" id="crewChip" style="color:${S.moral>60?'#6dffb5':S.moral>30?'#ffd36b':'#ff8a7a'}">${moodIco(S.moral)} <span style="color:${S.colons>=r.cap?'#ffcf6b':'#fff'}">${S.colons}</span></span>`;if(h!==renderHUD.c){$('#chips').innerHTML=h;renderHUD.c=h}}
@@ -2662,27 +2628,7 @@ function setView(v){$('#sCrew').classList.remove('open');$('#sCom').classList.to
   $('#obj').style.opacity=(v==='base'||v==='orbit')?1:0;hideInfo();
   if(v==='build')renderBuild();if(v==='research')renderResearch();if(v==='journal')renderJournal()}
 document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>setView(b.dataset.v===view?'base':b.dataset.v));
-$('#hud').style.pointerEvents='none';$('#res').addEventListener('click',e=>{e.stopPropagation();if(DESK)return;hudOpen=!hudOpen;$('#hud').classList.toggle('hopen',hudOpen);renderHUD.r=renderHUD.p=null;renderHUD()});
-{const mq=matchMedia('(min-width:1100px)');const ap=()=>{DESK=mq.matches;document.body.classList.toggle('desk',DESK);renderHUD.r=renderHUD.dp=null;if(DESK){hudOpen=false;$('#hud').classList.remove('hopen')}};mq.addEventListener('change',ap);ap()}
-const setSpeed=v=>{if(v===0){paused=true}else{paused=false;speed=v}$('#speed').textContent=paused?'⏸':'▶×'+speed;renderHUD()};
-document.querySelectorAll('#dspd button').forEach(b=>b.onclick=e=>{e.stopPropagation();setSpeed(+b.dataset.sp)});
-$('#dres').addEventListener('click',e=>{const r=e.target.closest('[data-hr]');if(!r)return;cat=r.dataset.hr==='energy'?'energie':'vie';setView('build')});
-addEventListener('keydown',e=>{if(onSplash||e.target.closest&&e.target.closest('input,textarea,select'))return;if(e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toLowerCase();
-  if(modalOpen&&k!=='escape')return;
-  const tog=v=>setView(view===v?(mode==='orbit'?'orbit':'base'):v);
-  if(k===' '){e.preventDefault();setSpeed(paused?(speed||1):0);return}
-  if(k==='1'){setSpeed(1);return}if(k==='2'){setSpeed(2);return}if(k==='3'){setSpeed(4);return}
-  if(k==='b'){tog('build');return}if(k==='e'){tog('crew');return}if(k==='r'){tog('research');return}if(k==='o'){setView(mode==='orbit'?'base':'orbit');return}if(k==='c'){tog('commerce');return}if(k==='j'){tog('journal');return}if(k==='h'){setView('base');return}
-  if(k==='escape'){if(placing){endPlace();return}if(selected){hideInfo();return}setView(mode==='orbit'?'orbit':'base');return}
-  if(k==='tab'&&selected){e.preventDefault();navInfo(e.shiftKey?-1:1);return}
-  if(k==='u'&&selected){const m=$('#iMain');if(m&&!m.disabled)m.click();return}
-  const pan={arrowup:[0,1],z:[0,1],w:[0,1],arrowdown:[0,-1],s:[0,-1],arrowleft:[-1,0],q:[-1,0],a:[-1,0],arrowright:[1,0],d:[1,0]}[k];
-  if(pan&&mode==='base'){e.preventDefault();const f=new THREE.Vector3().subVectors(controls.target,camera.position);f.y=0;f.normalize();const rt=new THREE.Vector3(-f.z,0,f.x);const st=Math.max(.8,camera.position.distanceTo(controls.target)*.06);const mv=f.multiplyScalar(pan[1]*st).add(rt.multiplyScalar(pan[0]*st));controls.target.add(mv);camera.position.add(mv);controls.update();lastIn=performance.now()}});
-canvas.addEventListener('contextmenu',e=>{e.preventDefault();if(placing){endPlace();return}if(selected)hideInfo()});
-{let ht=0;canvas.addEventListener('pointermove',e=>{if(!DESK||e.buttons||placing||drag||mode!=='base')return $('#htip').classList.remove('on');const now=performance.now();if(now-ht<90)return;ht=now;const o=pickB(e.clientX,e.clientY);const T=$('#htip');if(!o){T.classList.remove('on');return}
-  const b=o.userData.b,d=DEFS[b.t],lv=lvOf(b),ef=b.dmg||b.pwr===false?nomOf(b):bEff(b);const fx=FLD.filter(f=>ef[f[0]]>0).slice(0,3).map(([k,ic,,u,c,neg])=>`<span style="color:${c}">${ic} ${neg?'−':'+'}${k==='cap'||k==='store'||k==='moral'?ef[k]:nf(ef[k])}${u==='/h'?'/h':''}</span>`).join(' · ');
-  const st=b.dmg?'<span style="color:#ff8a7a">⚠ En panne</span>':b.shed?'<span style="color:#ffb347">🔌 Délesté</span>':b.pwr===false?'<span style="color:#c9d0e8">⏻ Éteint</span>':wearOf(b)<45?`<span style="color:#ffcf6b">🧰 Usure ${Math.round(wearOf(b))} %</span>`:'<span style="color:#6dffb5">● En marche</span>';
-  T.innerHTML=`<b>${d.icon} ${d.name} · Nv ${lv}</b><div>${st}</div>${fx?`<div>${fx}</div>`:''}<small>Clic : fiche · clic droit : fermer</small>`;T.style.left=Math.min(innerWidth-270,e.clientX+16)+'px';T.style.top=(e.clientY+16)+'px';T.classList.add('on')});canvas.addEventListener('pointerleave',()=>$('#htip').classList.remove('on'))}
+$('#hud').style.pointerEvents='none';$('#res').addEventListener('click',e=>{e.stopPropagation();hudOpen=!hudOpen;$('#hud').classList.toggle('hopen',hudOpen);renderHUD.r=renderHUD.p=null;renderHUD()});
 $('#hpan').addEventListener('click',e=>{const r=e.target.closest('[data-hr]');if(!r)return;hudOpen=false;$('#hud').classList.remove('hopen');renderHUD.r=null;cat=r.dataset.hr==='energy'?'energie':'vie';setView('build')});$('#chips').style.pointerEvents='auto';$('#chips').addEventListener('click',e=>{if(e.target.closest('#crChip')){setView('commerce');return}if(e.target.closest('#crewChip')){openCrew('team');return}if(e.target.closest('#wearChip')){const b=S.b.filter(b=>!b.dmg&&wearOf(b)<35).sort((a,b)=>wearOf(a)-wearOf(b))[0];const o=occ.get(key(b.i,b.j));setView('base');showInfo(o);camGo={p:camera.position.clone(),t:controls.target.clone(),k:0,to:o.position.clone()};return}
   if(e.target.closest('#dmgChip')){const d=S.b.filter(b=>b.dmg);const b=d[(dmgIdx++)%d.length];const o=occ.get(key(b.i,b.j));if(mode!=='base')setMode('base');setView('base');showInfo(o);camGo={p:camera.position.clone(),t:controls.target.clone(),k:0,to:o.position.clone()}}});let dmgIdx=0;
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>setView(mode==='orbit'?'orbit':'base'));$('#sOrbClose').onclick=()=>setView('orbit');
@@ -2793,7 +2739,7 @@ function houseBlock(b){homeAssign();const R=residents(b),cap=houseCap(b),c=comfo
    ${tile('LOYER',`+${lg} 💰`,'#ffd36b',LODGE[lodgeLv()].r?`${R.length} × ${LODGE[lodgeLv()].r}${(DEFS[b.t].lodge??1)!==1?' × '+String(DEFS[b.t].lodge).replace('.',','):''} / sol`:'loyer gratuit')}${tile('REPOS',`×${rk.toFixed(2).replace('.',',').replace(/0$/,'')}`,'#9fe0ff','récupération fatigue')}</div>
    <div class="ires"><div class="iresh">RÉSIDENTS <span>humeur ${c>=70?'+':''}${Math.round((c-70)/8)} 🙂</span></div>${R.map(p=>`<div class="irs">${avatar(p,30)}<b>${p.n}</b><small>${JOBS[p.j].i} ${JOBS[p.j].n}</small><span>${moodIco(moodOf(p))}</span></div>`).join('')}${cap-R.length>0?`<div class="irs" style="color:#8d97b5"><span class="irp">＋</span><small style="flex:1">${cap-R.length} place${cap-R.length>1?'s':''} libre${cap-R.length>1?'s':''}</small></div>`:''}</div>
    ${(b.amen||0)<2&&!b.dmg?`<button class="btn ${S.rego>=amenCost(b)?'blue':'ghost'}" id="amenB" style="width:100%;margin-top:8px">🛋️ Aménager · confort +8 · ⛏ ${fmt(amenCost(b))}</button>`:b.amen>=2?'<div class="irow"><span>🛋️ Entièrement aménagé</span></div>':''}`}
-function showInfo(o,opt){if(!o)return;const b=o.userData.b,d=DEFS[b.t],lv=lvOf(b);if(selected!==o){infoTab='prod';infoMini=!DESK&&!!(opt&&opt.tap);infoConf=null;try{tagY=new THREE.Box3().setFromObject(o).max.y+1.2}catch(_){tagY=6}}selected=o;selRing.visible=true;selRing.position.set(o.position.x,.12,o.position.z);
+function showInfo(o,opt){if(!o)return;const b=o.userData.b,d=DEFS[b.t],lv=lvOf(b);if(selected!==o){infoTab='prod';infoMini=!!(opt&&opt.tap);infoConf=null;try{tagY=new THREE.Box3().setFromObject(o).max.y+1.2}catch(_){tagY=6}}selected=o;selRing.visible=true;selRing.position.set(o.position.x,.12,o.position.z);
   const sl=slotsOf(b),wk=workersOf(b),wv=Math.round(wearOf(b)),refund=Math.round((b.inv||d.cost)/2),nIn=S.people.filter(p=>p.a===bkey(b)).length;
   const mc=Math.max(20,Math.round((b.inv||d.cost)*.1*(active('imprimante')?.5:1)));const sickHere=S.people.filter(p=>p.a===bkey(b)&&p.sick>0).length;
   const st=b.dmg?['#ff8a7a','⚠ En panne']:b.shed?['#ffb347','🔌 Délesté']:b.t==='generateur'?(b.run?['#ffb347','⚡ En marche']:(b.gm||'auto')==='off'?['#c9d0e8','⏹ Arrêté']:['#6dffb5','<i class="idot"></i>En veille']):b.pwr===false?['#c9d0e8','⏻ Éteint']:b.quar>0?['#ffd36b',`🚧 Quarantaine ${b.quar} h`]:b.off>0?['#ffcf9a',`⏸ Arrêté ${b.off} h`]:['#6dffb5','<i class="idot"></i>En marche'];
@@ -3036,7 +2982,7 @@ window.__f=0;function animate(){window.__f++;requestAnimationFrame(animate);let 
    grade.uniforms.uT.value=tAll%10;grade.uniforms.uAsp.value=camera.aspect}
   perf.push(dt);if(perf.length>90){const avg=perf.reduce((a,b)=>a+b)/perf.length;perf.length=0;slowN=avg>.03&&tAll>10&&!document.hidden?slowN+1:0;if(slowN>=2&&qStep<3){slowN=0;qStep++;if(qStep===1){gtao.enabled=false}else{pr=Math.max(1.5,pr-.25);renderer.setPixelRatio(pr);composer.setPixelRatio(pr);resize();shadowDirty=true}}}
   // rendu adaptatif : 10 i/s sous un menu plein écran, 30 i/s au repos, ombres ~15 i/s
-  frameN++;{const cover=!DESK&&!!document.querySelector('.sheet.open');const busy=onSplash||(introOn&&intro<1)||camGo||placing||drag||shipState!=='idle'||growing||performance.now()-lastIn<4000;
+  frameN++;{const cover=!!document.querySelector('.sheet.open');const busy=onSplash||(introOn&&intro<1)||camGo||placing||drag||shipState!=='idle'||growing||performance.now()-lastIn<4000;
    const every=cover?6:busy?1:2;if(frameN%every===0||shadowDirty){if(shadowDirty||growing||shipState!=='idle'||frameN%4<every){renderer.shadowMap.needsUpdate=true;shadowDirty=false}composer.render()}}
   if(snapNext&&mode==='base'&&!$('#splash').classList.contains('show-dim')){snapNext=false;lastSnap=Date.now();try{const c=document.createElement('canvas');c.width=c.height=128;const w=canvas.width,h=canvas.height,m=Math.min(w,h)*.62;c.getContext('2d').drawImage(canvas,(w-m)/2,Math.min(h-m,h*.6-m/2),m,m,0,0,128,128);localStorage.setItem('ap_thumb',c.toDataURL('image/jpeg',.7))}catch(_){}}
   uiT-=dt;if(uiT<=0){uiT=.25;computeRates();renderHUD();const rk=RESEARCH.map(r=>S.sci>=r.cost?1:0).join('')+S.tech.length;if(view==='research'&&rk!==lastRK)renderResearch();lastRK=rk;if(view==='commerce'){const kk=Math.floor(S.cr)+'|'+S.sol+'|'+S.contracts.length+S.orders.length+S.recruits.length+Math.floor(S.rego/50)+Math.floor(S.rare)+Math.floor(S.sci)+Math.floor(S.water/25)+Math.floor(S.he3);if(kk!==lastCom){lastCom=kk;renderCommerce()}}
@@ -3062,9 +3008,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='4.8';
+const APP_VER='4.8.1';
 const CHANGELOG=[
-  {v:'4.8',d:'15 nov.',n:[['🖥️','Version ordinateur','Au-delà de 1 100 px : barre du haut complète, menu à gauche, Construire en panneau latéral, ressources et fiche ancrées à droite.'],['⌨️','Clavier','Espace pause · 1-3 vitesse · B E R O C J H menus · ZQSD/flèches caméra · Tab module suivant · U améliorer · Échap fermer.'],['🖱️','Souris','Infobulle au survol des modules, clic droit pour annuler ou fermer.']]},
+  {v:'4.8.1',d:'15 nov.',n:[['↩️','Version ordinateur retirée','Retour à l\'interface d\'avant sur tous les écrans.']]},
   {v:'4.7.1',d:'15 nov.',n:[['🌗','Lune vue d\'orbite','Relief plus net et limite jour/nuit qui avance avec l\'heure de ta base.'],['☀️','Soleil','Visible derrière la station avec son halo.']]},
   {v:'4.7',d:'15 nov.',n:[['🛰️','Orbite futuriste','La station prend le style futuriste, la caméra est recadrée avec la Terre en fond.'],['🔷','Plan holographique','Avant sa construction, la station apparaît en hologramme.'],['🌙','Base visible','Les lumières de ta base brillent sur la Lune la nuit ; des drones cargo font la navette.']]},
   {v:'4.6.2',d:'15 nov.',n:[['🔋','Énergie','Stock / capacité dans le panneau Ressources, et alerte « Batteries pleines » quand l\'énergie produite est perdue.']]},
