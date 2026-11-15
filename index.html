@@ -317,7 +317,7 @@ body.free #hud,body.free #side,body.free #obj,body.free #nav,body.free #menuPop{
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.3</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.3.1</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -1808,7 +1808,7 @@ function tickHour(){
   S.water=clamp(S.water+r.water,0,150+count('extracteur')*120+S.colons*6);S.rare+=r.rare;
   S.rego+=r.rego;S.sci+=r.sci;
   // moral
-  let target=60+r.moralBonus+taxMoral()+(S.prime?6:0)-(S.grief>0?14:0)-(S.strike>0?6:0)-S.people.filter(p=>p.sick>0).length*1.5-Math.max(0,S.colons-10)*.5-(S.water<=0?20:0)+(r.cap>=S.colons?6:-15)-(S.o2<=0?40:0)-(S.food<=0?30:0)-(r.power<1?12:0);
+  let target=60+r.moralBonus+taxMoral()+LODGE[lodgeLv()].m+(S.prime?6:0)-(S.grief>0?14:0)-(S.strike>0?6:0)-S.people.filter(p=>p.sick>0).length*1.5-Math.max(0,S.colons-10)*.5-(S.water<=0?20:0)+(r.cap>=S.colons?6:-15)-(S.o2<=0?40:0)-(S.food<=0?30:0)-(r.power<1?12:0);
   target=clamp(target,0,100);S.moral=lerp(S.moral,target,.05);
   S.moral=clamp(S.moral,0,100);S.colons=Math.max(0,S.colons);
   if(S.shelter>0)S.shelter--;
@@ -2089,7 +2089,7 @@ function renderCrew(){const H=$('#crew');
   const tabs=`<div class="tabs"><button class="${crewTab==='team'?'on':''}" data-ct="team">👩‍🚀 Équipe (${S.people.length})</button><button class="${crewTab==='exp'?'on':''}" data-ct="exp">🚙 Expéditions${S.exp?' · en cours':''}</button></div>`;
   if(crewTab==='team'){
    if(pickFor){const p=S.people.find(x=>x.id===pickFor);const opts=S.b.filter(b=>slotsOf(b)&&!b.dmg).sort((a,b)=>(JOBS[p.j].fit.includes(b.t)?0:1)-(JOBS[p.j].fit.includes(a.t)?0:1)||freeSlots(b)-freeSlots(a));
-     H.innerHTML=`<div class="row" style="margin-bottom:10px"><div style="display:flex;gap:10px;align-items:center">${avatar(p)}<div><b>${p.n}</b><p style="font-size:12px;color:#9aa6c8">${JOBS[p.j].i} ${JOBS[p.j].n} · 💰 ${wageOf(p)}/sol${taxLv()?` (net ${Math.round(wageOf(p)*(1-TAXL[taxLv()].r))})`:''}</p></div></div><button class="btn ghost" data-back style="padding:8px 12px;font-size:13px">‹ Retour</button></div>`+
+     H.innerHTML=`<div class="row" style="margin-bottom:10px"><div style="display:flex;gap:10px;align-items:center">${avatar(p)}<div><b>${p.n}</b><p style="font-size:12px;color:#9aa6c8">${JOBS[p.j].i} ${JOBS[p.j].n} · 💰 ${wageOf(p)}/sol${taxLv()||lodgeLv()?` (net ${Math.round(wageOf(p)*(1-TAXL[taxLv()].r))-LODGE[lodgeLv()].r})`:''}</p></div></div><button class="btn ghost" data-back style="padding:8px 12px;font-size:13px">‹ Retour</button></div>`+
       `<div class="card" data-assign="" style="cursor:pointer"><b>Aucun poste</b><p>Repos à l'habitat.</p></div>`+
       opts.map(b=>{const fit=JOBS[p.j].fit.includes(b.t),fs=freeSlots(b)+(p.a===bkey(b)?1:0);return `<div class="card" data-assign="${bkey(b)}" style="cursor:pointer;display:flex;align-items:center;gap:10px;${fs<=0?'opacity:.4':''}${p.a===bkey(b)?';border-color:#7fd3ff':''}"><div style="font-size:22px">${DEFS[b.t].icon}</div><div style="flex:1"><b>${DEFS[b.t].name} <span style="color:#ffd36b;font-size:12px">${'★'.repeat(lvOf(b))}</span></b><p>${fs>0?fs+' place'+(fs>1?'s':'')+' libre'+(fs>1?'s':''):'Complet'} · ${fit?'<span style="color:#6dffb5">spécialité +30 %</span>':'+10 %'}</p></div></div>`}).join('');
      H.querySelector('[data-back]').onclick=()=>{pickFor=null;renderCrew()};
@@ -2225,7 +2225,10 @@ const wageBase=p=>(WAGE[p.j]||15)+Math.min(8,Math.floor(Math.max(0,S.sol*24+S.ho
 const wageOf=p=>Math.round(wageBase(p)*(S.prime?1.2:1));
 const subsidy=()=>Math.round(50+S.prestige*2.2+8*S.colons);
 const salaries=()=>S.people.reduce((a,p)=>a+wageOf(p),0)+Math.max(0,S.colons-S.people.length)*15;
-const netSol=()=>subsidy()+tourists()+taxEst().g-rent()-salaries();
+const LODGE=[{n:'Gratuit',r:0,m:3},{n:'5 💰',r:5,m:0},{n:'10 💰',r:10,m:-5}];
+const lodgeLv=()=>S.lodge??1;
+const lodgeEst=()=>{const e=taxEst();return LODGE[lodgeLv()].r*(e.pay-e.ref)};
+const netSol=()=>subsidy()+tourists()+taxEst().g+lodgeEst()-rent()-salaries();
 const rent=()=>20+S.b.length*2;
 const tourists=()=>S.st&&S.st.built&&!(S.st.down>0)?S.st.m.filter(m=>m.t==='habO').length*30:0;
 const fmtC=n=>(n<0?'−':'')+Math.abs(Math.round(n)).toLocaleString('fr-FR');
@@ -2241,8 +2244,8 @@ function taxMoral(){const m=TAXL[taxLv()].m;return m<0?Math.min(0,m+taxRelief())
 function taxPayers(){return S.people.filter(p=>!(p.sick>0)&&!p.iso&&!(p.born>=S.sol*24+S.hour-24))}
 function taxRefuse(n){return taxLv()===3&&S.moral<40?Math.ceil(n/4):0}
 function taxEst(){const P=taxPayers(),pay=P.length,ref=taxRefuse(pay),base=P.reduce((a,p)=>a+wageOf(p),0);return{pay,ref,ex:S.people.length-pay,base,g:Math.round(TAXL[taxLv()].r*base*(pay?(pay-ref)/pay:0)*(has('admin')?1.2:1))}}
-function collectTax(){const L=taxLv();if(!TAXL[L].r){S.taxStrike=0;return}const e=taxEst();S.cr+=e.g;S.taxLast=e.g;S.taxStrike=e.ref;
-  toast(`💰 +${e.g} de taxes · ${e.pay-e.ref} colon${e.pay-e.ref>1?'s':''} ${e.pay-e.ref>1?'ont':'a'} payé`+(e.ref?` · ${e.ref} refus`:''),e.ref?'#ff9a7a':'#ffd36b');logx(`Taxes : +${e.g} cr (${TAXL[L].n})${e.ref?`, ${e.ref} refus`:''}.`);
+function collectTax(){const L=taxLv();const lg=lodgeEst();if(lg){S.cr+=lg;logx(`Loyers : +${lg} cr.`)}if(!TAXL[L].r){S.taxStrike=0;if(lg)toast(`🏠 +${lg} de loyers`,'#ffd36b');return}const e=taxEst();S.cr+=e.g;S.taxLast=e.g;S.taxStrike=e.ref;
+  toast(`💰 +${e.g} de taxes${lg?` · 🏠 +${lg} de loyers`:''} · ${e.pay-e.ref} colon${e.pay-e.ref>1?'s':''} ${e.pay-e.ref>1?'ont':'a'} payé`+(e.ref?` · ${e.ref} refus`:''),e.ref?'#ff9a7a':'#ffd36b');logx(`Taxes : +${e.g} cr (${TAXL[L].n})${e.ref?`, ${e.ref} refus`:''}.`);
   if(L===3&&S.moral<25&&S.people.length>2&&Math.random()<.35)loseColon('est reparti·e (taxes trop lourdes)','💸')}
 function dailyEco(){
   // marché : marche aléatoire des prix
@@ -2285,7 +2288,9 @@ function renderCommerce(){const H=$('#com');const tabs=`<div class="seg2">${[['m
       ${tile('MORAL',`${mo>0?'+':mo<0?'−':''}${Math.abs(mo)} 🙂`,mo>0?'#6dffb5':mo<0?'#ff9a8a':'#fff',T.m<0&&rl?`${T.m} brut · Parc/Hôpital +${rl}`:T.w?'travail −5 %':'—')}
       ${tile('PAYEURS',`${e.pay-e.ref} / ${e.pay}`,e.ref?'#ff8a7a':'#fff',e.ref?`${e.ref} refus · grève`:`${e.ex} exempté${e.ex>1?'s':''}`,e.ref)}
       ${L===3?tile('RISQUE',S.moral<25?'Départ':'Grogne','#ffcf6b','départ si moral < 25'):tile('PAR COLON',T.r?`${Math.round(12*T.r*(S.prime?1.2:1))} à ${Math.round(33*T.r*(S.prime?1.2:1))} 💰`:'0 💰','#fff','selon le métier')}</div>
-     <div class="card" style="margin-top:8px"><div class="row" style="font-size:13px"><span>👩‍🚀 Salaires</span><b style="color:#ff9a8a">−${fmtC(sal)}</b></div><div class="row" style="font-size:13px;margin-top:5px"><span>🏛️ Taxe</span><b style="color:#6dffb5">+${fmtC(e.g)}</b></div><div class="row" style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.1)"><b>Coût net / sol</b><b style="color:#ffcf6b">−${fmtC(sal-e.g)} 💰</b></div></div>
+     <div class="row" style="margin:12px 0 8px"><b style="font-size:16px">🏠 Loyer des habitats</b><span style="font-size:11px;color:#8d97b5;font-weight:700">par colon et par sol</span></div>
+     <div class="seg2">${LODGE.map((t,i)=>`<button class="${i===lodgeLv()?'on':''}" data-lg="${i}">${t.n}<i>${t.m>0?'+'+t.m:t.m<0?t.m:'±0'} 🙂</i></button>`).join('')}</div>
+     <div class="card" style="margin-top:8px"><div class="row" style="font-size:13px"><span>👩‍🚀 Salaires</span><b style="color:#ff9a8a">−${fmtC(sal)}</b></div><div class="row" style="font-size:13px;margin-top:5px"><span>🏛️ Taxe</span><b style="color:#6dffb5">+${fmtC(e.g)}</b></div><div class="row" style="font-size:13px;margin-top:5px"><span>🏠 Loyers</span><b style="color:#6dffb5">+${fmtC(lodgeEst())}</b></div><div class="row" style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.1)"><b>Coût net / sol</b><b style="color:#ffcf6b">−${fmtC(Math.max(0,sal-e.g-lodgeEst()))} 💰</b></div></div>
      <div class="card"><div class="row" style="font-size:13px"><span>🌳 Parc</span><b style="color:${active('parc')?'#6dffb5':'#8d97b5'}">${active('parc')?'−2 malus':'non construit'}</b></div>
       <div class="row" style="font-size:13px;margin-top:6px"><span>🏥 Hôpital</span><b style="color:${active('hopital')?'#6dffb5':'#8d97b5'}">${active('hopital')?'−2 malus':'non construit'}</b></div>
       <div class="row" style="font-size:13px;margin-top:6px;${has('admin')?'':'opacity:.6'}"><span>${has('admin')?'✅':'🔒'} Recherche Administration</span><b>+20 % recettes</b></div></div>
@@ -2303,7 +2308,7 @@ function renderCommerce(){const H=$('#com');const tabs=`<div class="seg2">${[['m
   else if(comTab==='ct'){h+=S.contracts.map(c=>{const g=GOODS[c.k],have=Math.floor(S[c.k]||0),ok=have>=c.q;return `<div class="card" style="${c.acc?'border-color:rgba(127,211,255,.5)':''}"><div class="row"><div><div style="font-size:10.5px;color:#9aa6c8;font-weight:800;letter-spacing:.6px">${c.by.toUpperCase()}</div><b>${g.i} Livrer ${fmt(c.q)} ${g.n.toLowerCase()}</b></div><div style="text-align:right"><b style="color:#ffd36b">💰 ${fmtC(c.rew)}</b><p style="margin:0;color:#ffcf6b">⭐ +${c.pr}</p></div></div>
      <div class="row" style="margin-top:8px"><p style="margin:0">${c.acc?`⏱ ${c.left} sol${c.left>1?'s':''} restant${c.left>1?'s':''} · stock ${fmt(have)}/${fmt(c.q)}`:`Délai : ${c.days} sols`}</p>${c.acc?`<button class="btn ${ok&&pad?'go':'ghost'}" data-dl="${c.id}" ${ok&&pad?'':'disabled'} style="padding:8px 12px;font-size:12.5px">📦 Livrer</button>`:`<button class="btn blue" data-acc="${c.id}" style="padding:8px 12px;font-size:12.5px">Accepter</button>`}</div></div>`}).join('')+`<p class="iempty">Un contrat raté coûte 5 de prestige. Le prestige augmente la subvention et la valeur des contrats.</p>`}
   else{const B=S.bilan;const net=netSol();
-    h+=`<div class="card"><b>📊 Bilan quotidien</b>${[['🌍 Subvention de l\'agence',subsidy(),'#6dffb5'],['🏨 Touristes (station)',tourists(),'#6dffb5'],['🏛️ Taxe',taxEst().g,'#6dffb5'],['👩‍🚀 Salaires ('+S.colons+' colons)',-salaries(),'#ff9a8a'],['🧾 Loyer du terrain',-rent(),'#ff9a8a']].map(([l,v,c])=>`<div class="row" style="margin-top:6px;font-size:13px"><span>${l}</span><b style="color:${v?c:'#9aa6c8'}">${v>0?'+':''}${fmtC(v)}</b></div>`).join('')}
+    h+=`<div class="card"><b>📊 Bilan quotidien</b>${[['🌍 Subvention de l\'agence',subsidy(),'#6dffb5'],['🏨 Touristes (station)',tourists(),'#6dffb5'],['🏛️ Taxe',taxEst().g,'#6dffb5'],['🏠 Loyers',lodgeEst(),'#6dffb5'],['👩‍🚀 Salaires ('+S.colons+' colons)',-salaries(),'#ff9a8a'],['🧾 Loyer du terrain',-rent(),'#ff9a8a']].map(([l,v,c])=>`<div class="row" style="margin-top:6px;font-size:13px"><span>${l}</span><b style="color:${v?c:'#9aa6c8'}">${v>0?'+':''}${fmtC(v)}</b></div>`).join('')}
       <div class="row" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.1)"><b>Par sol</b><b style="color:${net>=0?'#6dffb5':'#ff8a7a'}">${net>=0?'+':''}${fmtC(net)} cr</b></div>${B&&B.unpaid?'<p style="color:#ff9a8a">⚠️ Les derniers salaires n\'ont pas été payés.</p>':''}</div>`+
      `<div class="card"><div class="row"><b>⭐ Prestige ${Math.round(S.prestige)}/100</b><span style="font-size:12px;color:#9aa6c8">subvention +${Math.round(S.prestige*2.2)}</span></div><div class="ibar"><span style="width:${S.prestige}%;background:linear-gradient(90deg,#ffb347,#ffd36b)"></span></div><p>Il monte avec les objectifs, les contrats, les expéditions et le bon moral. Il baisse avec les décès, les grèves et les dettes.</p></div>`+
      (S.loan?`<div class="card" style="border-color:rgba(255,180,100,.45)"><b>🏦 Prêt en cours</b><div class="row" style="margin-top:6px"><span>À rembourser</span><b>💰 ${fmtC(S.loan.owe)}</b></div><div class="row"><span>Échéance</span><b style="color:${S.loan.left<=2?'#ff8a7a':'#fff'}">${S.loan.left>0?S.loan.left+' sols':'dépassée'}</b></div><p>Intérêts : 2 % par sol.</p><button class="btn ${S.cr>=S.loan.owe?'go':'ghost'}" id="repay" style="width:100%;margin-top:8px" ${S.cr>=S.loan.owe?'':'disabled'}>Rembourser 💰 ${fmtC(S.loan.owe)}</button></div>`
@@ -2311,6 +2316,7 @@ function renderCommerce(){const H=$('#com');const tabs=`<div class="seg2">${[['m
   H.innerHTML=tabs+h;
   H.querySelectorAll('[data-ct2]').forEach(b=>b.onclick=()=>{comTab=b.dataset.ct2;renderCommerce()});
   H.querySelectorAll('[data-tx]').forEach(b=>b.onclick=()=>{S.tax=+b.dataset.tx;if(S.tax<3)S.taxStrike=0;toast(`🏛️ Taxe ${TAXL[S.tax].n}`,'#ffd36b');save();renderCommerce();renderHUD&&renderHUD()});
+  H.querySelectorAll('[data-lg]').forEach(b=>b.onclick=()=>{S.lodge=+b.dataset.lg;toast(`🏠 Loyer : ${LODGE[S.lodge].n}`,'#ffd36b');save();renderCommerce()});
   {const pt=$('#primeT');if(pt)pt.onclick=()=>{S.prime=!S.prime;toast(S.prime?'🎁 Prime activée · moral +6':'Prime désactivée','#ffd36b');save();renderCommerce()}}
   {const td=$('#taxDown');if(td)td.onclick=()=>{S.tax=2;S.taxStrike=0;save();renderCommerce()}}
   H.querySelectorAll('[data-sell]').forEach(b=>b.onclick=()=>{const [k,q]=b.dataset.sell.split(':');sell(k,+q);renderCommerce()});
@@ -2413,7 +2419,7 @@ function hudRes(r){const I=resInfo(r),W=I.filter(x=>x.warn).sort((a,b)=>a.h-b.h)
 function hudPanel(r){const I=resInfo(r);
   const rows=I.map(x=>{const g=r.g[x.k]||[0,0];const c=x.warn||x.col;return `<div class="hpr" data-hr="${x.k}"><span class="hpi">${x.ic}</span><div><div class="hpn"><span>${x.n}</span><b style="color:${c}">${x.G?'??':Math.round(x.f*100)+' %'}</b></div><div class="gbr"><span style="width:${(x.f*100).toFixed(1)}%;background:${c}"></span></div></div><div class="hpg"><span style="color:#6dffb5">+${fR(g[0])}</span> / <span style="color:#ff9a8a">−${fR(g[1])}</span><br>${x.rate<0?`<span style="color:${c}">${x.h>99?'99+':Math.floor(x.h)} h</span>`:'par heure'}</div></div>`}).join('');
   const kv=(l,v,c)=>`<div class="hkv"><span>${l}</span><b style="color:${c||'#fff'}">${v}</b></div>`;
-  const bl=[['🌍 Subvention',subsidy()],['🏨 Touristes',tourists()],['🏛️ Taxe',taxEst().g],['👩‍🚀 Salaires',-salaries()],['🧾 Loyer',-rent()]].filter(x=>x[1]),nt=netSol();
+  const bl=[['🌍 Subvention',subsidy()],['🏨 Touristes',tourists()],['🏛️ Taxe',taxEst().g],['🏠 Loyers',lodgeEst()],['👩‍🚀 Salaires',-salaries()],['🧾 Terrain',-rent()]].filter(x=>x[1]),nt=netSol();
   return rows+`<div class="hbl">${bl.map(([l,v])=>`<div><span>${l}</span><b style="color:${v>0?'#6dffb5':'#ff9a8a'}">${v>0?'+':'−'}${fmtC(Math.abs(v))}</b></div>`).join('')}<div class="hbt"><b>Bilan / sol</b><b style="color:${nt>=0?'#6dffb5':'#ff8a7a'}">${nt>=0?'+':'−'}${fmtC(Math.abs(nt))} 💰</b></div></div><div class="hkg">${kv('💰 Crédits',fmtC(S.cr),'#ffd36b')}${kv('🎁 Prime',S.prime?'+20 %':'non',S.prime?'#6dffb5':'#9aa6c8')}${kv('⛏ Régolithe',fmtC(S.rego))}${kv('🔩 Rares',fmtC(S.rare),'#ffcf9a')}${kv('🔬 Science',fmtC(S.sci),'#d39bff')}${kv('👩‍🚀 Colons',`${S.colons}/${r.cap} ${moodIco(S.moral)} ${Math.round(S.moral)}`)}</div><div class="hpf">Tap sur une ressource → Construire</div>`}
 function gbar(k,ic,label,val,cap,rate,col){const G=S.glitch&&S.glitch.res===k;const f=clamp(val/Math.max(1,cap),0,1);const h=rate<0?val/-rate:Infinity;const warn=h<8?'#ff4d5e':h<24?'#ffb347':null;
   const sub=G?'???':rate>=0?'+'+(Math.abs(rate)<10?rate.toFixed(1).replace('.',','):Math.round(rate))+'/h':h>99?'99+ h':Math.floor(h)+' h';const c=warn||col;
@@ -2822,8 +2828,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='4.3';
+const APP_VER='4.3.1';
 const CHANGELOG=[
+  {v:'4.3.1',d:'15 nov.',n:[['🏠','Loyer des habitats','Chaque colon paie un loyer à 07:00 : gratuit (+3 🙂), 5 💰 ou 10 💰 (−5 🙂). Réglage dans Paie.']]},
   {v:'4.3',d:'15 nov.',n:[['👩‍🚀','Salaires par métier','Botaniste 12 → Médecin 25 💰/sol, +1 💰 tous les 10 sols d\'ancienneté. Prime +20 % : moral +6.'],['🏛️','Taxe en %','10, 20 ou 35 % du salaire : jamais plus que ce que gagne le colon.'],['📊','Bilan','Subvention +8 💰 par colon ; bilan du sol dans le panneau Ressources, net/sol sur la puce 💰.']]},
   {v:'4.2',d:'15 nov.',n:[['🌪️','Tempêtes de poussière','Prévues 6 h avant (12 h avec observatoire), force 1 à 5 : panneaux −60 %, usure ×2, véhicules à l\'arrêt, décharges.'],['🔌','Générateurs','Ils prennent le relais, mais leurs filtres s\'encrassent après 6 h (sauf niveau 3) et ils attirent les décharges.'],['🧹','Nettoyage','Panneaux encrassés après la tempête : robot ou ⛏ 40. Nouveaux : Mât de décharge et recherche Revêtement antistatique.']]},
   {v:'4.1.1',d:'15 nov.',n:[['🚀','Pastille navette','L\'état de la navette a sa propre pastille en haut à droite.'],['🎯','Objectif lisible','Sur 2 lignes avec une barre de progression.']]},
