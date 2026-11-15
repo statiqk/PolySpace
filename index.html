@@ -319,7 +319,7 @@ body.free #hud,body.free #side,body.free #obj,body.free #nav,body.free #menuPop{
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.5.3</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.6</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -1127,6 +1127,37 @@ MODELS.tour=lv=>{const g=new THREE.Group();plinth(g);const Y=.33;const n=lv+1,H=
 
 }
 
+{
+const box=(w,h,d,mat,x,y,z,p)=>mesh(new THREE.BoxGeometry(w,h,d),mat,x,y,z,p);
+const cyl=(rt,rb,h,mat,x,y,z,p,seg=28)=>mesh(new THREE.CylinderGeometry(rt,rb,h,seg),mat,x,y,z,p);
+const sph=(r,mat,x,y,z,p,ws=28,hs=16,half=false)=>mesh(new THREE.SphereGeometry(r,ws,hs,0,Math.PI*2,0,half?Math.PI/2:Math.PI),mat,x,y,z,p);
+const tor=(r,t,mat,x,y,z,p)=>{const m=mesh(new THREE.TorusGeometry(r,t,8,40),mat,x,y,z,p);m.rotation.x=Math.PI/2;return m};
+const glow=m=>{m.castShadow=false;return m};
+const pipe=(a,b,r,mat,p)=>{const A=new THREE.Vector3(...a),B=new THREE.Vector3(...b);const m=mesh(new THREE.CylinderGeometry(r,r,A.distanceTo(B),10),mat,(A.x+B.x)/2,(A.y+B.y)/2,(A.z+B.z)/2,p);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),B.clone().sub(A).normalize());return m};
+const WLVL=new THREE.MeshStandardMaterial({color:0x06223a,emissive:0x2a9cff,emissiveIntensity:2.6});
+const OLVL=new THREE.MeshStandardMaterial({color:0x032a2a,emissive:0x5fffe8,emissiveIntensity:2.6});
+const Y=.33;
+// citerne d'eau : cuves verticales avec jauge lumineuse
+MODELS.citerne=lv=>{const g=new THREE.Group();plinth(g);const T=lv===1?[[0,0,1.05,1.9]]:lv===2?[[-.55,-.2,.95,2.0],[.95,.75,.62,1.5]]:[[-.6,-.45,.9,2.3],[.85,-.6,.62,1.7],[.55,.9,.62,1.7]];const lev=[];
+  for(const [x,z,r,h] of T){cyl(r,r,h,M.white,x,Y+h/2,z,g,36);sph(r,M.white,x,Y+h,z,g,36,12,true).scale.y=.45;
+    for(const f of [.18,.5,.82])cyl(r+.02,r+.02,.07,M.gold,x,Y+h*f,z,g,36);
+    const a=Math.atan2(2-z,2-x)*0+Math.PI*.25;const gx=x+Math.cos(a)*(r+.015),gz=z+Math.sin(a)*(r+.015);
+    box(.16,h*.8,.05,M.dark,gx,Y+h*.5,gz,g).rotation.y=-a+Math.PI/2;const lv2=glow(box(.1,h*.78,.06,WLVL,gx+Math.cos(a)*.01,Y+h*.11+h*.39,gz+Math.sin(a)*.01,g));lv2.rotation.y=-a+Math.PI/2;lev.push({m:lv2,h:h*.78,y0:Y+h*.11});
+    cyl(.12,.12,.1,M.grey,x,Y+h+r*.45,z,g,12)}
+  box(.55,.45,.4,M.panelW,1.25,Y+.23,-1.25,g);glow(box(.3,.05,.02,M.cyan,1.25,Y+.33,-1.04,g));pipe([1.25,Y+.15,-1.0],[T[0][0]+.5,Y+.15,T[0][1]],.06,M.copper,g);
+  if(T.length>1)for(let k=1;k<T.length;k++)pipe([T[0][0],Y+.2,T[0][1]],[T[k][0],Y+.2,T[k][1]],.06,M.copper,g);
+  g.userData.levels=lev;return g};
+// réservoir d'O2 : sphères cryogéniques sur pieds
+MODELS.reservoirO2=lv=>{const g=new THREE.Group();plinth(g);const P=lv===1?[[0,0,1.0]]:lv===2?[[-.75,0,.8],[.85,.15,.72]]:[[-.8,-.7,.7],[.8,-.7,.7],[0,.8,.78]];const lev=[];
+  for(const [x,z,r] of P){const cy=Y+.55+r;for(let k=0;k<4;k++){const a=k*Math.PI/2+Math.PI/4;pipe([x+Math.cos(a)*r*.95,Y,z+Math.sin(a)*r*.95],[x+Math.cos(a)*r*.55,cy-r*.2,z+Math.sin(a)*r*.55],.045,M.grey,g)}
+    tor(r*.72,.04,M.grey,x,cy-r*.55,z,g);sph(r,M.white,x,cy,z,g);tor(r*1.005,.035,M.gold,x,cy,z,g);
+    const ring=glow(mesh(new THREE.TorusGeometry(r*1.02,.03,8,40,Math.PI*2),OLVL,x,cy,z,g));ring.rotation.set(Math.PI/2,0,0);lev.push({ring,cy,r});
+    cyl(.08,.08,.35,M.grey,x,cy+r+.12,z,g,10);glow(sph(.05,M.cyan,x,cy+r+.32,z,g,10,6))}
+  box(.6,.5,.35,M.panelW,1.3,Y+.25,1.3,g);glow(box(.34,.06,.02,M.cyan,1.3,Y+.36,1.48,g));for(const s of [-1,1])cyl(.06,.06,.25,M.orange,1.3+s*.18,Y+.62,1.3,g,10);
+  for(const [x,z] of P)pipe([1.3,Y+.15,1.3],[x,Y+.15,z],.05,M.copper,g);
+  g.userData.levels2=lev;return g};
+}
+
 /* ===== 9 bâtiments détaillés (v3.5) ===== */
 {
 const box=(w,h,d,mat,x,y,z,p)=>mesh(new THREE.BoxGeometry(w,h,d),mat,x,y,z,p);
@@ -1518,6 +1549,8 @@ const selRing=new THREE.Mesh(new THREE.RingGeometry(2.3,2.55,48),new THREE.MeshB
 
 /* ================== DONNÉES DE JEU ================== */
 const DEFS={
+ citerne:{name:'Citerne d\'eau',cat:'vie',icon:'🛢️',cost:300,rare:1,en:-1,wcap:300,desc:'Cuves isolées : +300 de stock d\'eau. La jauge suit le niveau. Réserve d\'urgence de 10 %.',bg:'#14406a'},
+ reservoirO2:{name:'Réservoir d\'O₂',cat:'vie',icon:'🫧',cost:350,rare:2,en:-2,ocap:250,desc:'Sphères cryogéniques : +250 de stock d\'oxygène. Réserve d\'urgence de 10 %.',bg:'#0f4a55'},
  habitat:{name:'Habitat',cat:'vie',icon:'🏠',cost:400,en:-4,cap:4,desc:'Loge 4 colons. Pressurisé. Confort correct.',bg:'#2b3a66'},
  dortoir:{name:'Dortoir',cat:'vie',icon:'🛏️',cost:450,en:-5,cap:8,moral:-2,lodge:.6,desc:'Loge 8 colons à moindre coût, mais à l\'étroit : moral −2, loyer ×0,6.',bg:'#4a3a22'},
  suite:{name:'Suite résidentielle',cat:'vie',icon:'🏡',cost:700,rare:4,en:-4,cap:3,moral:4,lodge:2,desc:'3 colons dans le confort : baie vitrée, jardin sous verre. Moral +4, loyer ×2.',bg:'#4a2a66'},
@@ -1787,7 +1820,7 @@ function rebuildCorridors(){batchDirty=true;placeModLights();disposeMerged(corri
   for(const x of [-.6,.6]){const r=mesh(new THREE.CylinderGeometry(.48,.48,.14,20),M.gold,x,.75,0,g);r.rotation.z=Math.PI/2}
   mesh(new THREE.BoxGeometry(.35,.08,.12),M.win,0,.95,.4,g).castShadow=false;mesh(new THREE.BoxGeometry(1.6,.3,.6),M.grey,0,.15,0,g);
   corridors.add(mergeStatic(g))}}shadowDirty=true}
-function damage(b,why){if(!b||b.dmg||!S.b.includes(b))return;b.dmg=true;b.nd=(b.nd||0)+1;removeBuilding(b);addBuilding(b,false);const o=occ.get(key(b.i,b.j));
+function damage(b,why){if(!b||b.dmg||!S.b.includes(b))return;if(b.t==='citerne'||b.t==='reservoirO2'){const k=b.t==='citerne'?'water':'o2',l=Math.round(S[k]*.25);S[k]-=l;toast(`${b.t==='citerne'?'💧':'🫧'} Fuite : −${l} ${b.t==='citerne'?'eau':'oxygène'}`,'#ff8a7a')}b.dmg=true;b.nd=(b.nd||0)+1;removeBuilding(b);addBuilding(b,false);const o=occ.get(key(b.i,b.j));
   if(o)for(let k=0;k<40;k++){const a=Math.random()*6.28;fire.emit(o.position.x,1.5,o.position.z,Math.cos(a)*5,2+Math.random()*5,Math.sin(a)*5,.6,.5,1,.6,.25,0,-6)}
   toast(`💥 ${DEFS[b.t].name} endommagé (${why})`,'#ff8a7a');logx(`${DEFS[b.t].name} endommagé : ${why}.`);vib([80,40,80]);computeRates()}
 const repCost=b=>Math.round((b.inv||DEFS[b.t].cost)*.3*(active('imprimante')?.5:1));
@@ -1836,7 +1869,7 @@ function computeRates(){
   const eff=S.shelter>0?0:(.55+.45*S.moral/100)*(1-(TAXL[taxLv()].w||0));
   for(const b of S.b){const d=DEFS[b.t],e=bEff(b);
     cap+=e.cap;store+=e.store;prod+=e.solar*day+e.prod;use+=e.use;o2+=e.o2;food+=e.food;rego+=e.rego*eff;sci+=e.sci*eff;moral+=e.moral;water+=e.water;wuse+=e.wuse;rare+=e.rare*eff;
-    if(LUNAR&&PRESS.includes(b.t)&&!b.dmg&&b.pwr!==false&&!b.shed)use+=1.5}
+    if(LUNAR&&PRESS.includes(b.t)&&!b.dmg&&b.pwr!==false&&!b.shed)use+=1.5;if(LUNAR&&(d.wcap||d.ocap)&&!b.dmg&&b.pwr!==false&&!b.shed)use+=-d.en*LV_U[lvOf(b)-1]}
   for(const m of S.st.built&&!(S.st.down>0)?S.st.m:[]){const d=SDEFS[m.t];if(d.en)prod+=d.en;if(d.sci)sci+=d.sci;if(d.cap)cap+=d.cap;if(d.food)food+=d.food;if(d.moral)moral+=d.moral}
   if(botOn())use+=1;
   const net=prod-use;let power=1;if(S.energy<=0&&net<0)power=clamp(prod/use,0,1);
@@ -1871,9 +1904,9 @@ function tickHour(){
   homeAssign();dsTick();if(!dsOn()&&botOn()&&Math.random()<.5){const d=dirtyB()[0];if(d&&S.hour%1===0){cleanB(d,false);toast('🤖 Le robot a nettoyé un module','#9fe0ff')}}
   powerManage();const r=computeRates();
   S.energy=clamp(S.energy+r.net,0,r.store);
-  S.o2=clamp(S.o2+r.o2,0,120+count('recycleur')*80+S.colons*8);
+  S.o2=clamp(S.o2+r.o2,0,o2Cap());
   S.food=clamp(S.food+r.food,0,120+count('serre')*80+S.colons*8);
-  S.water=clamp(S.water+r.water,0,150+count('extracteur')*120+S.colons*6);S.rare+=r.rare;
+  S.water=clamp(S.water+r.water,0,waterCap());tankReserve();S.rare+=r.rare;
   S.rego+=r.rego;S.sci+=r.sci;
   // moral
   let target=60+r.moralBonus+taxMoral()+LODGE[lodgeLv()].m+(S.prime?6:0)-(S.grief>0?14:0)-(S.strike>0?6:0)-S.people.filter(p=>p.sick>0).length*1.5-Math.max(0,S.colons-10)*.5-(S.water<=0?20:0)+(r.cap>=S.colons?6:-15)-(S.o2<=0?40:0)-(S.food<=0?30:0)-(r.power<1?12:0);
@@ -2450,13 +2483,17 @@ function gameOver(){if(over)return;over=true;modalOpen=true;try{localStorage.rem
 /* ================== INTERFACE ================== */
 const fmt=n=>{n=Math.round(n);return Math.abs(n)>=10000?(n/1000).toFixed(1).replace('.',',')+' k':n.toLocaleString('fr-FR')};
 const sgn=n=>(n>=0?'+':'')+(Math.abs(n)<10?n.toFixed(1).replace('.',','):Math.round(n));
-const o2Cap=()=>120+count('recycleur')*80+S.colons*8,foodCap=()=>120+count('serre')*80+S.colons*8,waterCap=()=>150+count('extracteur')*120+S.colons*6;
+const tankCap=k=>S.b.reduce((a,b)=>{const v=DEFS[b.t][k];return v&&!b.dmg?a+Math.round(v*LV_K[lvOf(b)-1]):a},0);
+const o2Cap=()=>120+count('recycleur')*80+S.colons*8+tankCap('ocap'),foodCap=()=>120+count('serre')*80+S.colons*8,waterCap=()=>150+count('extracteur')*120+S.colons*6+tankCap('wcap');
+function tankReserve(){for(const [k,ck,cf,n,ic] of [['water','wcap',waterCap,'eau','💧'],['o2','ocap',o2Cap,'oxygène','🫧']]){const tc=tankCap(ck);if(!tc)continue;const f=S[k]/cf(),fl='res_'+k;
+  if(f<.05&&!S[fl]){S[fl]=1;const add=Math.round(tc*.1);S[k]+=add;toast(`${ic} Réserve d'urgence libérée : +${add} ${n}`,'#ffb347');logx(`Réserve d'urgence d'${n} libérée (+${add}).`)}else if(f>.5)S[fl]=0}}
 const SUGGEST={o2:'recycleur',water:'extracteur',food:'serre',energy:'solaire'};
 function tryBuild(k){const d=DEFS[k];if(d.req&&!has(d.req))return toast('🔒 '+d.name+' : recherche requise');if(d.unique&&count(k))return toast('Déjà construit');const c=bCost(k);if(!canPay(c))return toast('Il faut '+costTxt(c),'#ff8a7a');startPlace(k)}
 function focusB(b){const o=occ.get(key(b.i,b.j));if(!o)return;if(mode!=='base')setMode('base');setView('base');showInfo(o);camGo={p:camera.position.clone(),t:controls.target.clone(),k:0,to:o.position.clone()}}
 function getAlerts(){const r=rates,A=[];if(!r.store)return A;
   const res=[['o2','💨','Oxygène',r.o2],['water','💧','Eau',r.water],['food','🌱','Vivres',r.food],['energy','⚡','Énergie',r.net]];
   for(const [k,ic,n,rt] of res){if(rt>=0)continue;const h=S[k]/-rt;if(h<30){const sev=h<6?4:h<14?3:2;const sk=SUGGEST[k];A.push({sev,ic,t:`${n} épuisé${k==='water'||k==='energy'?'e':''}${k==='food'?'s':''} dans ${Math.max(0,Math.floor(h))} h`,sub:`Construire : ${DEFS[sk].name}`,btn:'Construire',col:'#3d8bff',fn:()=>tryBuild(sk)})}}
+  for(const [k,cf,n,ic,t] of [['o2',o2Cap,'Oxygène','🫧','reservoirO2'],['water',waterCap,'Eau','🛢️','citerne']]){const rt=k==='o2'?rates.o2:rates.water;if(S[k]>=cf()-1&&rt>.5)A.push({sev:1,ic,t:`${n} au maximum`,sub:`+${fR(rt)}/h perdus · construis ${k==='o2'?'un réservoir':'une citerne'}`,btn:'Construire',col:'#3d8bff',fn:()=>{cat='vie';setView('build')}})}
   if(S.ds&&S.ds.ph==='fc')A.push({sev:S.ds.prep?1:3,ic:'🌪️',t:`Tempête de poussière dans ${S.ds.in} h`,sub:S.ds.prep?'Base préparée':`Force ${S.ds.f}/5 · ${S.ds.dur} h`,btn:S.ds.prep?null:'Préparer',col:'#ff9a3d',fn:()=>dsPrep()});
   if(dsOn())A.push({sev:3,ic:'🌪️',t:'Tempête en cours',sub:`Force ${S.ds.f}/5 · encore ${S.ds.left} h${S.ds.fold?' · panneaux repliés':''}`,col:'#ff9a3d'});
   {const d=dirtyB();if(d.length&&!dsOn())A.push({sev:2,ic:'🧹',t:`${d.length} module${d.length>1?'s':''} encrassé${d.length>1?'s':''}`,sub:`Nettoyage ⛏ 40 chacun${botOn()?' · le robot s\'en occupe':''}`,btn:'Nettoyer',col:'#3d8bff',fn:()=>cleanAll()})}
@@ -2493,8 +2530,8 @@ const RESL=[['o2','💨','Oxygène','O₂','#5fe1ff'],['water','💧','Eau','Eau
 const fmtS=n=>{n=Math.round(n);const a=Math.abs(n);return a>=1e6?(n/1e6).toFixed(1).replace('.',',')+'M':a>=1e5?Math.round(n/1000)+'k':a>=1000?(n/1000).toFixed(1).replace('.',',')+'k':String(n)};
 const fR=v=>Math.abs(v)<10?v.toFixed(1).replace('.',','):String(Math.round(v));
 function resInfo(r){const cap={o2:o2Cap(),water:waterCap(),energy:r.store,food:foodCap()},rt={o2:r.o2,water:r.water,energy:r.net,food:r.food};
-  return RESL.map(([k,ic,n,sn,col])=>{const v=S[k],f=clamp(v/Math.max(1,cap[k]),0,1),rate=rt[k],h=rate<0?v/-rate:Infinity,G=S.glitch&&S.glitch.res===k;
-    const warn=G||h<8?'#ff4d5e':h<24?'#ffb347':h<48||f<.35?'#ffcf6b':null;return{k,ic,n,sn,col,f,rate,h,G,warn}})}
+  return RESL.map(([k,ic,n,sn,col])=>{const v=S[k],cp=cap[k],f=clamp(v/Math.max(1,cap[k]),0,1),rate=rt[k],h=rate<0?v/-rate:Infinity,G=S.glitch&&S.glitch.res===k;
+    const warn=G||h<8?'#ff4d5e':h<24?'#ffb347':h<48||f<.35?'#ffcf6b':null;return{k,ic,n,sn,col,f,rate,h,G,warn,v,cp}})}
 let hudOpen=false;
 function hudRes(r){const I=resInfo(r),W=I.filter(x=>x.warn).sort((a,b)=>a.h-b.h);const bad=W.some(x=>x.warn!=='#ffcf6b');
   const pc=Math.round(I.reduce((a,x)=>a+x.f,0)/4*100),rc=bad?W[0].warn:W.length?'#ffcf6b':'#2fd38a';
@@ -2504,7 +2541,7 @@ function hudRes(r){const I=resInfo(r),W=I.filter(x=>x.warn).sort((a,b)=>a.h-b.h)
   const hh=String(S.hour).padStart(2,'0');
   return `${ring}<div class="ht">${tl}</div>${it}<div class="hclk"><b>SOL ${S.sol}</b><small>${hh}:00 ${mode==='orbit'?'🛰️':LUNAR?'🌑':r.day>0?'☀':'☾'}</small></div><span class="hcar">${hudOpen?'⌃':'⌄'}</span>`}
 function hudPanel(r){const I=resInfo(r);
-  const rows=I.map(x=>{const g=r.g[x.k]||[0,0];const c=x.warn||x.col;return `<div class="hpr" data-hr="${x.k}"><span class="hpi">${x.ic}</span><div><div class="hpn"><span>${x.n}</span><b style="color:${c}">${x.G?'??':Math.round(x.f*100)+' %'}</b></div><div class="gbr"><span style="width:${(x.f*100).toFixed(1)}%;background:${c}"></span></div></div><div class="hpg"><span style="color:#6dffb5">+${fR(g[0])}</span> / <span style="color:#ff9a8a">−${fR(g[1])}</span><br>${x.rate<0?`<span style="color:${c}">${x.h>99?'99+':Math.floor(x.h)} h</span>`:'par heure'}</div></div>`}).join('');
+  const rows=I.map(x=>{const g=r.g[x.k]||[0,0];const c=x.warn||x.col;return `<div class="hpr" data-hr="${x.k}"><span class="hpi">${x.ic}</span><div><div class="hpn"><span>${x.n}</span><b style="color:${c}">${x.G?'??':(x.k==='o2'||x.k==='water')?`${fmtS(x.v)}<span style="color:#8d97b5;font-weight:700"> / ${fmtS(x.cp)}</span>`:Math.round(x.f*100)+' %'}</b></div><div class="gbr"><span style="width:${(x.f*100).toFixed(1)}%;background:${c}"></span></div></div><div class="hpg"><span style="color:#6dffb5">+${fR(g[0])}</span> / <span style="color:#ff9a8a">−${fR(g[1])}</span><br>${x.rate<0?`<span style="color:${c}">${x.h>99?'99+':Math.floor(x.h)} h</span>`:'par heure'}</div></div>`}).join('');
   const kv=(l,v,c)=>`<div class="hkv"><span>${l}</span><b style="color:${c||'#fff'}">${v}</b></div>`;
   const bl=[['🌍 Subvention',subsidy()],['🏨 Touristes',tourists()],['🏛️ Taxe',taxEst().g],['🏠 Loyers',lodgeEst()],['👩‍🚀 Salaires',-salaries()],['🧾 Terrain',-rent()]].filter(x=>x[1]),nt=netSol();
   return rows+`<div class="hbl">${bl.map(([l,v])=>`<div><span>${l}</span><b style="color:${v>0?'#6dffb5':'#ff9a8a'}">${v>0?'+':'−'}${fmtC(Math.abs(v))}</b></div>`).join('')}<div class="hbt"><b>Bilan / sol</b><b style="color:${nt>=0?'#6dffb5':'#ff8a7a'}">${nt>=0?'+':'−'}${fmtC(Math.abs(nt))} 💰</b></div></div><div class="hkg">${kv('💰 Crédits',fmtC(S.cr),'#ffd36b')}${kv('🎁 Prime',S.prime?'+20 %':'non',S.prime?'#6dffb5':'#9aa6c8')}${kv('⛏ Régolithe',fmtC(S.rego))}${kv('🔩 Rares',fmtC(S.rare),'#ffcf9a')}${kv('🔬 Science',fmtC(S.sci),'#d39bff')}${kv('👩‍🚀 Colons',`${S.colons}/${r.cap} ${moodIco(S.moral)} ${Math.round(S.moral)}`)}</div><div class="hpf">Tap sur une ressource → Construire</div>`}
@@ -2609,7 +2646,7 @@ function suggested(){const s=new Set();for(const a of (curAlerts||[]))if(a.sev>=
   if(S.req){const map={parc:'parc',hopital:'hopital',vivres:'serre',eau:'extracteur',place:'habitat'};if(map[S.req.k])s.add(map[S.req.k])}if(rates.cap<=S.colons)s.add('habitat');return s}
 function fxChips(k){const d=DEFS[k],L=[];if(d.water)L.push(['#4fb8ff','💧 +'+d.water+'/h']);if(d.o2)L.push(['#5fe1ff','💨 +'+d.o2+'/h']);if(d.food)L.push(['#6dffb5','🌱 +'+d.food+'/h']);if(d.rego)L.push(['#ffb36b','⛏ +'+d.rego+'/h']);if(d.sci)L.push(['#d39bff','🔬 +'+String(d.sci).replace('.',',')+'/h']);
   if(d.cap)L.push(['#fff','👩‍🚀 +'+d.cap]);if(d.store)L.push(['#5fe1ff','🔋 +'+d.store]);if(d.solar)L.push(['#ffd84a','☀️ +'+d.solar]);if(d.moral)L.push([d.moral>0?'#ffd36b':'#ff9a8a','🙂 '+(d.moral>0?'+':'−')+Math.abs(d.moral)]);
-  if(k==='generateur')L.push(['#ffd84a','⚡ +18'],['#ff9a8a','💧 −2,5']);if(k==='recycleur')L.push(['#ff9a8a','💧 −0,6']);if(k==='serre')L.push(['#ff9a8a','💧 −0,5']);if(d.en)L.push([d.en>0?'#ffd84a':'#9aa6c8','⚡ '+(d.en>0?'+':'−')+Math.abs(d.en)]);
+  if(k==='generateur')L.push(['#ffd84a','⚡ +18'],['#ff9a8a','💧 −2,5']);if(d.wcap)L.push(['#4fb8ff','💧 +'+d.wcap+' stock']);if(d.ocap)L.push(['#5fe1ff','🫧 +'+d.ocap+' stock']);if(k==='recycleur')L.push(['#ff9a8a','💧 −0,6']);if(k==='serre')L.push(['#ff9a8a','💧 −0,5']);if(d.en)L.push([d.en>0?'#ffd84a':'#9aa6c8','⚡ '+(d.en>0?'+':'−')+Math.abs(d.en)]);
   const SP={imprimante:'🛠️ −50 % réparations',spatioport:'🛸 navettes ×1,5',bouclier:'🛡️ anti-météorites',hopital:'🏥 isole les malades',helium3:'🟣 +hélium-3',observatoire:'🧭 −20 % risque',frigo:'🧊 vivres conservés',pad:'🚀 navettes'};if(SP[k])L.unshift(['#fff',SP[k]]);
   return L.slice(0,3).map(([c,t])=>`<span style="color:${c}">${t}</span>`).join('')}
 function renderBuild(){const sug=suggested();
@@ -2698,6 +2735,7 @@ function showInfo(o,opt){if(!o)return;const b=o.userData.b,d=DEFS[b.t],lv=lvOf(b
       const cap=k==='cap'?`${v} / ${rates.cap} places · ${S.colons} colons`:k==='use'?`${pct} % de ta consommation`:k==='wuse'?`${pct} % de la conso d'eau`:k==='moral'?'bonus de moral':`${pct} % de la base`;
       return `<div class="itile${stale?' dim':''}"><small>${lab.toUpperCase()}${neg?' · CONSO':''}</small><b style="color:${k==='cap'?'#fff':c}">${ic} ${neg?'−':'+'}${k==='cap'||k==='store'||k==='moral'?v:nf(v)}<i>${u==='/h'?'/h':' '+u}</i></b>${k==='moral'?'':`<div class="ibar"><span style="width:${Math.min(100,k==='cap'?v/Math.max(1,rates.cap)*100:pct)}%;background:${c}"></span></div>`}<em>${cap}</em></div>`});
     if(b.t==='pad')tiles.push(`<div class="itile"><small>NAVETTES</small><b>🚀 ${PADT[lv-1]}</b></div>`);if(SPX[b.t])tiles.push(`<div class="itile"><small>EFFET SPÉCIAL</small><b>${SPX[b.t][0]} ${SPX[b.t][1]}</b></div>`);
+    if(d.wcap||d.ocap){const w=!!d.wcap,cv=Math.round((w?d.wcap:d.ocap)*LV_K[lv-1]),cap=w?waterCap():o2Cap(),v=w?S.water:S.o2;tiles.unshift(`<div class="itile"><small>CAPACITÉ AJOUTÉE</small><b style="color:${w?'#4fb8ff':'#5fe1ff'}">${w?'💧':'🫧'} +${cv}</b><em>${Math.round(cv/cap*100)} % du stock total</em></div><div class="itile"><small>STOCK DE LA BASE</small><b>${fmt(v)}<i> / ${fmt(cap)}</i></b><div class="ibar"><span style="width:${Math.min(100,v/cap*100)}%;background:${w?'#4fb8ff':'#5fe1ff'}"></span></div><em>réserve d'urgence 10 % sous 5 %</em></div>`)}
     if(b.t==='helium3')tiles.push(`<div class="itile${stale?' dim':''}"><small>HÉLIUM-3</small><b style="color:#d39bff">🟣 +${nf(.35*LV_K[lv-1])}<i>/h</i></b><em>à vendre au Commerce</em></div>`);
     if(b.t==='batterie')tiles.push(`<div class="itile"><small>PERTE LA NUIT</small><b style="color:#9aa6c8">−1 %<i>/h</i></b><em>du stock, sans soleil (−${nf(S.energy*.01)}/h)</em></div>`);
     const adv=adviceFor(b);const dirtH=b.dirt>0?`<div class="card" style="display:flex;align-items:center;gap:10px;border-color:rgba(255,180,70,.5);margin-top:8px"><span style="font-size:20px">🧹</span><div style="flex:1"><b style="color:#ffcf6b">Encrassé · −${b.dirt} %</b><p style="margin:0">Poussière de la tempête</p></div><button class="btn blue" id="cleanB" style="padding:8px 12px;font-size:12.5px">⛏ 40</button></div>`:'';const gmode=b.t==='generateur'?`<div class="igm">${[['off','Arrêt'],['auto','Auto'],['on','Marche forcée']].map(([k,l])=>`<button data-gm="${k}" class="${(b.gm||'auto')===k?'on':''}">${l}</button>`).join('')}</div>`:'';
@@ -2873,6 +2911,8 @@ window.__f=0;function animate(){window.__f++;requestAnimationFrame(animate);let 
     if(u.pulse){const s=1+Math.sin(tAll*3)*.08;u.pulse.scale.setScalar(s)}
     if(u.b&&u.b.t==='generateur'&&u.b.run&&Math.random()<dt*10){_tv.set(.45,2.6,-.05);o.localToWorld(_tv);dust.emit(_tv.x,_tv.y,_tv.z,(Math.random()-.5)*.3,1.2+Math.random()*.6,(Math.random()-.5)*.3,1.1,.9,.85,.88,.92,.6)}
     if(u.drill&&!S.shelter&&o.userData.b.pwr!==false){u.drill.rotation.y+=dt*6;u.drill.position.y=2.6+Math.sin(tAll*1.3)*.35;if(Math.random()<dt*14)dust.emit(o.position.x+(Math.random()-.5)*1.6,1.3,o.position.z+(Math.random()-.5)*1.6,(Math.random()-.5)*1.5,.6+Math.random(),(Math.random()-.5)*1.5,1.4,.55,.62,.6,.57,.9)}
+    if(u.levels){const f=clamp(S.water/Math.max(1,waterCap()),0,1);for(const L of u.levels){L.m.scale.y=Math.max(.02,f);L.m.position.y=L.y0+L.h*Math.max(.02,f)/2}}
+    if(u.levels2){const f=clamp(S.o2/Math.max(1,o2Cap()),0,1),t=f*2-1,k=Math.sqrt(Math.max(.04,1-t*t));for(const L of u.levels2){L.ring.position.y=L.cy+t*L.r*.97;L.ring.scale.set(k,k,1)}}
     if(u.track){for(const tk of u.tracks||[u.track]){if(tk.fix){tk.tilt.rotation.x=lerp(tk.tilt.rotation.x,sunDir.y>.02?clamp(Math.atan2(sunDir.x,sunDir.y),-1.1,1.1):0,.05);continue}const a=Math.atan2(sunDir.x,sunDir.z);let da=a-tk.piv.rotation.y;da=Math.atan2(Math.sin(da),Math.cos(da));tk.piv.rotation.y+=da*.05;tk.tilt.rotation.x=lerp(tk.tilt.rotation.x,clamp(Math.PI/2-Math.max(sunDir.y,.15)-.0,0,1.2),.05)}}
     {const worn=!o.userData.b.dmg&&wearOf(o.userData.b)<25;if(worn&&!u.worn){const w=new THREE.Sprite(wornMat);w.scale.set(1.1,1.1,1);w.position.y=5;w.renderOrder=5;o.add(w);u.worn=w}if(u.worn){u.worn.visible=worn;u.worn.position.y=5+Math.sin(tAll*2.5)*.2}
      if(o.userData.b.off>0&&Math.random()<dt*3)dust.emit(o.position.x,3,o.position.z,(Math.random()-.5)*.3,.6,(Math.random()-.5)*.3,2,.7,.85,.85,.9,1,.1)}
@@ -2940,8 +2980,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='4.5.3';
+const APP_VER='4.6';
 const CHANGELOG=[
+  {v:'4.6',d:'15 nov.',n:[['🛢️','Citerne d\'eau','+300 de stock d\'eau (×1,6 / ×2,3), jauge lumineuse qui suit le niveau.'],['🫧','Réservoir d\'O₂','+250 de stock d\'oxygène dans des sphères cryogéniques.'],['🛡️','Réserve d\'urgence','10 % libérés automatiquement sous 5 %. Stock / capacité dans le panneau Ressources, alerte quand la production est perdue.']]},
   {v:'4.5.3',d:'15 nov.',n:[['☀️','Suivi du soleil','Les rangées de panneaux pivotent maintenant d\'est en ouest avec le soleil, et se mettent à plat la nuit.']]},
   {v:'4.5.2',d:'15 nov.',n:[['☀️','Panneaux solaires','Nouveau modèle en rangées qui suivent le soleil : 2, 3 puis 4 rangées. Plus de panneaux qui se traversent, et plus de surface à chaque niveau.']]},
   {v:'4.5.1',d:'15 nov.',n:[['✨','Anneau retiré','Plus d\'anneau holographique au-dessus des modules.']]},
