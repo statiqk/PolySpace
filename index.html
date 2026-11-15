@@ -247,6 +247,8 @@ html,body{height:100%;overflow:hidden;background:#000;color:#eef2ff;font-family:
 #chips #crewChip{margin-left:auto}
 #loc{position:absolute;right:10px;top:8px;margin:0!important;text-align:right;font-size:10px!important;letter-spacing:1px!important;line-height:1.4;color:#c9d2ee}
 #name{display:none!important}
+.ires{margin-top:8px;background:rgba(255,255,255,.04);border-radius:14px;padding:6px 10px}.iresh{display:flex;justify-content:space-between;font-size:10px;font-weight:800;letter-spacing:1px;color:#8d97b5;padding:4px 0}.iresh span{letter-spacing:0;color:#c9d0e8}
+.irs{display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid rgba(255,255,255,.06);font-size:12.5px}.irs svg{flex:none}.irs b{font-size:12.5px}.irs small{font-size:11px;color:#9aa6c8;flex:1}.irp{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.06);display:grid;place-items:center}
 /* v4.1 : HUD intelligent */
 #loc{display:none!important}
 #res{display:flex!important;align-items:center;gap:8px;padding-right:0!important;cursor:pointer;min-height:38px}
@@ -317,7 +319,7 @@ body.free #hud,body.free #side,body.free #obj,body.free #nav,body.free #menuPop{
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.4</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.4.1</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -1859,7 +1861,7 @@ function powerManage(){const r0=computeRates();const frac=S.energy/Math.max(1,r0
 function genCover(){const G=S.b.filter(b=>b.t==='generateur'&&!b.dmg&&b.pwr!==false&&(b.gm||'auto')!=='off').reduce((a,b)=>a+nomOf(b).prod,0);
   let use=0,vital=0;for(const b of S.b){const u=nomOf(b).use;if(!u)continue;use+=u;if(prioOf(b)===0)vital+=u}if(LUNAR)use+=rates.heat||0;return{G,use,vital}}
 function tickHour(){
-  dsTick();if(!dsOn()&&botOn()&&Math.random()<.5){const d=dirtyB()[0];if(d&&S.hour%1===0){cleanB(d,false);toast('🤖 Le robot a nettoyé un module','#9fe0ff')}}
+  homeAssign();dsTick();if(!dsOn()&&botOn()&&Math.random()<.5){const d=dirtyB()[0];if(d&&S.hour%1===0){cleanB(d,false);toast('🤖 Le robot a nettoyé un module','#9fe0ff')}}
   powerManage();const r=computeRates();
   S.energy=clamp(S.energy+r.net,0,r.store);
   S.o2=clamp(S.o2+r.o2,0,120+count('recycleur')*80+S.colons*8);
@@ -2072,7 +2074,25 @@ const onExp=p=>S.exp&&S.exp.team.includes(p.id);
 function workersOf(b){const k=bkey(b);return S.people.filter(p=>p.a===k&&!onExp(p)&&!(p.hurt>0)&&!unavailable(p))}
 function slotsOf(b){return WORKABLE.includes(b.t)?lvOf(b):0}
 function workBonus(b){let x=0;for(const p of workersOf(b))x+=(JOBS[p.j].fit.includes(b.t)?.3:.1)*(1-(p.fat||0)/200);return x}
-function moodOf(p){let m=S.moral+p.tr-(p.fat||0)/6-(p.sick>0?15:0)-(S.grief>0?8:0)-(p.bone>70?6:0);const b=p.a&&S.b.find(b=>bkey(b)===p.a);if(onExp(p))m+=6;else if(p.hurt>0)m-=15;else if(!b)m-=8;else m+=JOBS[p.j].fit.includes(b.t)?9:2;return clamp(Math.round(m),0,100)}
+const COMF={dortoir:45,habitat:70,suite:95,tour:75};
+const isHouse=b=>!!DEFS[b.t].cap;
+const houseCap=b=>b.dmg?0:Math.round(DEFS[b.t].cap*LV_K[lvOf(b)-1]);
+const residents=b=>S.people.filter(p=>p.home===bkey(b));
+function comfortParts(b){const P=[];let c=(COMF[b.t]??70);P.push(['base',c]);const lv=lvOf(b);if(lv>1)P.push(['Niveau '+lv,5*(lv-1)]);if(b.amen)P.push(['Aménagé',8*b.amen]);
+  let near=0,noise=0;for(const o of S.b){if(o===b||o.dmg)continue;const dd=Math.max(Math.abs(o.i-b.i),Math.abs(o.j-b.j));if(dd>1)continue;if(o.t==='parc'||o.t==='serre')near=1;if(['foreuse','mine','reacteur','helium3','generateur'].includes(o.t))noise=1}
+  if(near)P.push(['Voisin parc/serre',8]);if(noise)P.push(['Bruit industriel',-8]);
+  const cap=houseCap(b),n=residents(b).length;if(cap&&n/cap>.9)P.push(['Plein',-8]);const w=wearOf(b);if(w<60)P.push(['Usure',-Math.round((60-w)/4)]);if(b.dmg)P.push(['En panne',-40]);return P}
+const _cf=new Map();let _cfT=0;
+const comfortOf=b=>{const t=performance.now();if(t-_cfT>500){_cf.clear();_cfT=t}let v=_cf.get(b);if(v===undefined){v=clamp(comfortParts(b).reduce((a,x)=>a+x[1],0),10,100);_cf.set(b,v)}return v};
+function homeAssign(){const H=S.b.filter(isHouse);const keys=new Set(H.map(bkey));const cnt=new Map();
+  for(const p of S.people){if(p.home&&(!keys.has(p.home)))p.home=null;if(p.home){const b=H.find(x=>bkey(x)===p.home);const k=(cnt.get(p.home)||0)+1;if(k>houseCap(b)){p.home=null}else cnt.set(p.home,k)}}
+  const free=H.filter(b=>houseCap(b)>(cnt.get(bkey(b))||0)).sort((a,b)=>comfortOf(b)-comfortOf(a));
+  for(const p of S.people){if(p.home)continue;const b=free.find(b=>houseCap(b)>(cnt.get(bkey(b))||0));if(!b)break;p.home=bkey(b);cnt.set(p.home,(cnt.get(p.home)||0)+1)}}
+const homeOf=p=>p.home&&S.b.find(b=>bkey(b)===p.home);
+const homeMood=p=>{const h=homeOf(p);return h?Math.round((comfortOf(h)-70)/8):-8};
+const restK=p=>{const h=homeOf(p);return h?.8+comfortOf(h)/200:.7};
+const amenCost=b=>150*((b.amen||0)+1)*(b.t==='tour'?2:1);
+function moodOf(p){let m=S.moral+p.tr+homeMood(p)-(p.fat||0)/6-(p.sick>0?15:0)-(S.grief>0?8:0)-(p.bone>70?6:0);const b=p.a&&S.b.find(b=>bkey(b)===p.a);if(onExp(p))m+=6;else if(p.hurt>0)m-=15;else if(!b)m-=8;else m+=JOBS[p.j].fit.includes(b.t)?9:2;return clamp(Math.round(m),0,100)}
 const moodIco=m=>m>75?'😄':m>55?'🙂':m>35?'😐':m>18?'😟':'😫';
 function loseColon(why,ic){const cand=S.people.filter(p=>!onExp(p));if(!cand.length){S.colons--;return}cand.sort((a,b)=>moodOf(a)-moodOf(b));const p=cand[0];S.people=S.people.filter(x=>x!==p);S.colons--;if(!S.chain&&Math.random()<.3)S.chain={j:p.j,left:2+Math.floor(Math.random()*5)};toast(`${ic} ${p.n} ${why}`,'#ff8a7a');logx(`${p.n} (${JOBS[p.j].n}) ${why}.`)}
 function syncPeople(reason){S.people=S.people||[];S.colons=Math.max(0,S.colons|0);
@@ -2226,7 +2246,7 @@ function tickHealth(){
       else if(p.sev>.8&&!hosp&&Math.random()<.006){killColon(p,'maladie');continue}}
     if(p.imm>0)p.imm--;if(p.rest>0){p.rest--;if(p.rest===0&&p.auto)endRest(p)}if(p.child>0){p.child--;if(p.child===0)toast(`🧒 ${p.n} est assez grand·e pour travailler`,'#9fe0ff')}
     // fatigue
-    const working=p.a&&!unavailable(p)&&!onExp(p)&&!(p.hurt>0);p.fat=clamp((p.fat||0)+(working?.55:p.rest>0&&p.auto?-5:-1.6),0,100);
+    const working=p.a&&!unavailable(p)&&!onExp(p)&&!(p.hurt>0);p.fat=clamp((p.fat||0)+(working?.55:(p.rest>0&&p.auto?-5:-1.6)*restK(p)),0,100);
     if(p.rest>0&&p.auto&&p.fat<=15){p.rest=0;endRest(p)}
     if(working&&p.fat>=80&&p.fat<98){const busy=S.people.some(q=>q!==p&&q.a===p.a&&q.rest>0&&q.auto);if(!busy||p.fat>=92)startRest(p)}
     if(p.fat>=98&&working){p.rest=12;toast(`😴 ${p.n} s'effondre de fatigue (12 h de repos)`,'#ffcf9a')}
@@ -2624,6 +2644,13 @@ function genTip(b){const {G,use,vital}=genCover();const one=nomOf(b).prod||1;con
   if(G>=use)return`<div class="itip g"><span>✅</span><div><b>Toute la base est couverte</b> par tes générateurs (${Math.round(G)} / ${Math.round(use)} ⚡/h).</div></div>`;
   const nAll=Math.ceil((use-G)/one);if(G>=vital)return`<div class="itip g"><span>💡</span><div><b>Le vital est couvert</b> (${pct} % de la base). Il faudrait <b>${nAll}</b> générateur${nAll>1?'s':''} de plus pour tout couvrir ; sinon le délestage coupe le confort.</div></div>`;
   const nV=Math.ceil((vital-G)/one);return`<div class="itip w"><span>⚠️</span><div><b>Le vital n'est pas couvert</b> (${pct} % de la base). Construis encore <b>${nV}</b> générateur${nV>1?'s':''} pour garder O₂, eau et habitats en cas de coupure.</div></div>`}
+function houseBlock(b){homeAssign();const R=residents(b),cap=houseCap(b),c=comfortOf(b),P=comfortParts(b),lg=Math.round(LODGE[lodgeLv()].r*(DEFS[b.t].lodge??1)*R.filter(p=>!(p.sick>0)&&!p.iso).length),rk=.8+c/200;
+  const cc=c>=80?'#6dffb5':c>=55?'#ffd36b':'#ff9a8a';
+  const tile=(k,v,col,sub)=>`<div class="itile"><small>${k}</small><b style="color:${col}">${v}</b><em>${sub}</em></div>`;
+  return `<div class="itiles">${tile('OCCUPATION',`${R.length} / ${cap}`,'#fff',cap-R.length>0?`${cap-R.length} place${cap-R.length>1?'s':''} libre${cap-R.length>1?'s':''}`:'complet')}${tile('CONFORT',c+' %',cc,P.filter(x=>x[0]!=='base').map(x=>`${x[0]} ${x[1]>0?'+':'−'}${Math.abs(x[1])}`).join(' · ')||'standard')}
+   ${tile('LOYER',`+${lg} 💰`,'#ffd36b',LODGE[lodgeLv()].r?`${R.length} × ${LODGE[lodgeLv()].r}${(DEFS[b.t].lodge??1)!==1?' × '+String(DEFS[b.t].lodge).replace('.',','):''} / sol`:'loyer gratuit')}${tile('REPOS',`×${rk.toFixed(2).replace('.',',').replace(/0$/,'')}`,'#9fe0ff','récupération fatigue')}</div>
+   <div class="ires"><div class="iresh">RÉSIDENTS <span>humeur ${c>=70?'+':''}${Math.round((c-70)/8)} 🙂</span></div>${R.map(p=>`<div class="irs">${avatar(p,30)}<b>${p.n}</b><small>${JOBS[p.j].i} ${JOBS[p.j].n}</small><span>${moodIco(moodOf(p))}</span></div>`).join('')}${cap-R.length>0?`<div class="irs" style="color:#8d97b5"><span class="irp">＋</span><small style="flex:1">${cap-R.length} place${cap-R.length>1?'s':''} libre${cap-R.length>1?'s':''}</small></div>`:''}</div>
+   ${(b.amen||0)<2&&!b.dmg?`<button class="btn ${S.rego>=amenCost(b)?'blue':'ghost'}" id="amenB" style="width:100%;margin-top:8px">🛋️ Aménager · confort +8 · ⛏ ${fmt(amenCost(b))}</button>`:b.amen>=2?'<div class="irow"><span>🛋️ Entièrement aménagé</span></div>':''}`}
 function showInfo(o,opt){if(!o)return;const b=o.userData.b,d=DEFS[b.t],lv=lvOf(b);if(selected!==o){infoTab='prod';infoMini=!!(opt&&opt.tap);infoConf=null;try{tagY=new THREE.Box3().setFromObject(o).max.y+1.2}catch(_){tagY=6}}selected=o;selRing.visible=true;selRing.position.set(o.position.x,.12,o.position.z);
   const sl=slotsOf(b),wk=workersOf(b),wv=Math.round(wearOf(b)),refund=Math.round((b.inv||d.cost)/2),nIn=S.people.filter(p=>p.a===bkey(b)).length;
   const mc=Math.max(20,Math.round((b.inv||d.cost)*.1*(active('imprimante')?.5:1)));const sickHere=S.people.filter(p=>p.a===bkey(b)&&p.sick>0).length;
@@ -2651,7 +2678,7 @@ function showInfo(o,opt){if(!o)return;const b=o.userData.b,d=DEFS[b.t],lv=lvOf(b
     if(b.t==='batterie')tiles.push(`<div class="itile"><small>PERTE LA NUIT</small><b style="color:#9aa6c8">−1 %<i>/h</i></b><em>du stock, sans soleil (−${nf(S.energy*.01)}/h)</em></div>`);
     const adv=adviceFor(b);const dirtH=b.dirt>0?`<div class="card" style="display:flex;align-items:center;gap:10px;border-color:rgba(255,180,70,.5);margin-top:8px"><span style="font-size:20px">🧹</span><div style="flex:1"><b style="color:#ffcf6b">Encrassé · −${b.dirt} %</b><p style="margin:0">Poussière de la tempête</p></div><button class="btn blue" id="cleanB" style="padding:8px 12px;font-size:12.5px">⛏ 40</button></div>`:'';const gmode=b.t==='generateur'?`<div class="igm">${[['off','Arrêt'],['auto','Auto'],['on','Marche forcée']].map(([k,l])=>`<button data-gm="${k}" class="${(b.gm||'auto')===k?'on':''}">${l}</button>`).join('')}</div>`:'';
     const prio=nomOf(b).use>0?`<div class="irow"><span>Priorité en cas de coupure</span><span class="iprio">${PRIOLAB.map((l,i)=>`<button data-pr="${i}" class="${prioOf(b)===i?'on p'+i:''}">${l}</button>`).join('')}</span></div>`:'';
-    body=gmode+dirtH+(b.pwr===false?`<div class="itip w"><span>⏻</span><div>Module éteint : il ne produit ni ne consomme. Valeurs affichées : en marche.</div></div>`:'')+(b.dmg?`<div class="itip r"><span>⚠</span><div>En panne : production arrêtée. Valeurs affichées : une fois réparé.</div></div>`:'')+
+    body=gmode+dirtH+(isHouse(b)?houseBlock(b):'')+(b.pwr===false?`<div class="itip w"><span>⏻</span><div>Module éteint : il ne produit ni ne consomme. Valeurs affichées : en marche.</div></div>`:'')+(b.dmg?`<div class="itip r"><span>⚠</span><div>En panne : production arrêtée. Valeurs affichées : une fois réparé.</div></div>`:'')+
       `<div class="itiles">${tiles.join('')||'<p class="iempty">Aucune production directe.</p>'}</div>`+prio+(b.t==='generateur'?genTip(b):'')+
       (sl?`<div class="irow"><span>Bonus équipe · ${wk.length?wk.map(p=>p.n.split(' ')[0]+(JOBS[p.j].fit.includes(b.t)?' ★':'')).join(' + '):'personne'}</span><b style="color:#7fd3ff">+${Math.round(workBonus(b)*100)} %</b></div>`:'')+
       (adv?`<div class="itip ${adv[0]}"><span>${adv[1]}</span><div>${adv[2]}</div></div>`:'');
@@ -2684,6 +2711,7 @@ function showInfo(o,opt){if(!o)return;const b=o.userData.b,d=DEFS[b.t],lv=lvOf(b
   I.classList.add('show');$('#obj').style.opacity=0;
   // interactions
   $('#iClose').onclick=hideInfo;I.querySelectorAll('[data-it]').forEach(x=>x.onclick=()=>{infoTab=x.dataset.it;infoConf=null;showInfo(o)});
+  {const ab=I.querySelector('#amenB');if(ab)ab.onclick=()=>{const c=amenCost(b);if(S.rego<c)return toast('⛏ Pas assez de régolithe','#ff8a7a');S.rego-=c;b.amen=(b.amen||0)+1;toast('🛋️ Logement aménagé · confort +8','#6dffb5');save();renderHUD();showInfo(o)}}
   {const cb=I.querySelector('#cleanB');if(cb)cb.onclick=()=>{if(!cleanB(b,true))return toast('⛏ Pas assez de régolithe','#ff8a7a');toast('🧹 Module nettoyé','#6dffb5');computeRates();save();renderHUD();showInfo(o)}}
   I.querySelectorAll('[data-gm]').forEach(x=>x.onclick=()=>{b.gm=x.dataset.gm;if(b.gm==='on'&&!b.dmg&&S.water>1)b.run=true;if(b.gm==='off')b.run=false;computeRates();save();renderHUD();showInfo(o)});
   I.querySelectorAll('[data-pr]').forEach(x=>x.onclick=()=>{const v=+x.dataset.pr;b.prio=v===(TIER[b.t]??1)?undefined:v;save();showInfo(o)});
@@ -2888,8 +2916,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='4.4';
+const APP_VER='4.4.1';
 const CHANGELOG=[
+  {v:'4.4.1',d:'15 nov.',n:[['🏠','Fiche logement','Chaque colon a un logement : résidents, occupation, confort, loyer et repos dans la fiche.'],['🛋️','Confort','Selon le modèle, le niveau, l\'usure, les voisins et l\'aménagement : il joue sur l\'humeur et la récupération.']]},
   {v:'4.4',d:'15 nov.',n:[['🛏️','Dortoir','8 places pour ⛏ 450, mais moral −2 et loyer ×0,6.'],['🏡','Suite résidentielle','3 places de luxe : baie vitrée, jardin sous verre, moral +4, loyer ×2.'],['🏢','Tour d\'habitation','14 places sur une case, jusqu\'à 4 étages (recherche Urbanisme).']]},
   {v:'4.3.1',d:'15 nov.',n:[['🏠','Loyer des habitats','Chaque colon paie un loyer à 07:00 : gratuit (+3 🙂), 5 💰 ou 10 💰 (−5 🙂). Réglage dans Paie.']]},
   {v:'4.3',d:'15 nov.',n:[['👩‍🚀','Salaires par métier','Botaniste 12 → Médecin 25 💰/sol, +1 💰 tous les 10 sols d\'ancienneté. Prime +20 % : moral +6.'],['🏛️','Taxe en %','10, 20 ou 35 % du salaire : jamais plus que ce que gagne le colon.'],['📊','Bilan','Subvention +8 💰 par colon ; bilan du sol dans le panneau Ressources, net/sol sur la puce 💰.']]},
