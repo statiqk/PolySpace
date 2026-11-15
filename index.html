@@ -319,7 +319,7 @@ body.free #hud,body.free #side,body.free #obj,body.free #nav,body.free #menuPop{
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.4.1</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.4.2</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -2666,7 +2666,7 @@ function showInfo(o,opt){if(!o)return;const b=o.userData.b,d=DEFS[b.t],lv=lvOf(b
   const I=$('#info');I.classList.toggle('mini',infoMini);
   if(infoMini){const fx=FLD.filter(f=>e[f[0]]>0).slice(0,2).map(([k,ic,,u,c,neg])=>`<span style="color:${c}">${ic} ${neg?'−':'+'}${k==='cap'||k==='store'||k==='moral'?e[k]:nf(e[k])}${u==='/h'?'/h':''}</span>`).join('');
     I.innerHTML=`<div class="hdl" id="iHdl"></div><div class="ihead"><div class="ith sm" style="--c:${d.bg}">${thumbOf(b.t,lv)}</div><div class="ititle"><div class="iname">${d.name} <span class="ilv">${'★'.repeat(lv)} Niv ${lv}</span></div><div class="imini"><span style="color:${st[0]}">${st[1]}</span>${fx}</div></div>${nav}<button class="x" id="iClose">✕</button></div>
-     <div class="iact">${main}${canPwr?`<button class="btn ghost ib" id="iPwr">⏻<small>${b.pwr===false?'OFF':'ON'}</small></button>`:''}<button class="btn ghost ib" id="iExp">⌃<small>DÉTAILS</small></button></div><div class="ihint">↑ glisse vers le haut pour la fiche complète</div>`}
+     <div class="iact">${main}${canPwr?`<button class="btn ghost ib" id="iPwr" ${b.shed?'style="color:#ffb347"':''}>⏻<small>${b.shed?'FORCER':b.pwr===false?'OFF':'ON'}</small></button>`:''}<button class="btn ghost ib" id="iExp">⌃<small>DÉTAILS</small></button></div><div class="ihint">↑ glisse vers le haut pour la fiche complète</div>`}
   else{
   let body='';
   if(infoTab==='prod'){
@@ -2707,7 +2707,7 @@ function showInfo(o,opt){if(!o)return;const b=o.userData.b,d=DEFS[b.t],lv=lvOf(b
    <div class="ibody">${body}</div>
    ${infoConf?`<div class="itip w conf"><span>⚠️</span><div>${infoConf==='del'?`Démonter : ${cqd?cqd[1]+' · ':''}récupère ⛏ ${fmt(refund)}`:`Éteindre : ${consequence(b,false)[1]}`}<br><small>Touche encore le bouton pour confirmer.</small></div></div>`:''}
    <div class="iact">${main}</div>
-   <div class="iact2">${canPwr?`<button class="btn ghost" id="iPwr" ${b.pwr===false?'style="color:#6dffb5;background:rgba(80,255,170,.14)"':''}><span>⏻</span><small>${b.pwr===false?'ALLUMER':'ÉTEINDRE'}</small></button>`:''}<button class="btn ghost" id="iMaint" ${b.dmg||wv>=95||S.rego<mc?'disabled':''}><span>🧰</span><small>${wv>=95?'ENTRETENU':'ENTRETIEN · '+mc}</small></button>${PRESS.includes(b.t)&&!b.dmg?`<button class="btn ghost" id="iQuar" ${b.quar>0?'style="background:rgba(255,210,60,.2)"':''}><span>🚧</span><small>${b.quar>0?'LEVER':'QUARANTAINE'}</small></button>`:''}<button class="btn ghost" id="iDel" ${canDel?'':'disabled'} ${infoConf==='del'?'style="background:rgba(255,90,77,.3)"':''}><span>🗑️</span><small>${infoConf==='del'?'CONFIRMER':'DÉMONTER'}</small></button></div>`}
+   <div class="iact2">${canPwr?`<button class="btn ghost" id="iPwr" ${b.shed?'style="color:#ffb347;background:rgba(255,180,70,.14)"':b.pwr===false?'style="color:#6dffb5;background:rgba(80,255,170,.14)"':''}><span>⏻</span><small>${b.shed?'FORCER':b.pwr===false?'ALLUMER':'ÉTEINDRE'}</small></button>`:''}<button class="btn ghost" id="iMaint" ${b.dmg||wv>=95||S.rego<mc?'disabled':''}><span>🧰</span><small>${wv>=95?'ENTRETENU':'ENTRETIEN · '+mc}</small></button>${PRESS.includes(b.t)&&!b.dmg?`<button class="btn ghost" id="iQuar" ${b.quar>0?'style="background:rgba(255,210,60,.2)"':''}><span>🚧</span><small>${b.quar>0?'LEVER':'QUARANTAINE'}</small></button>`:''}<button class="btn ghost" id="iDel" ${canDel?'':'disabled'} ${infoConf==='del'?'style="background:rgba(255,90,77,.3)"':''}><span>🗑️</span><small>${infoConf==='del'?'CONFIRMER':'DÉMONTER'}</small></button></div>`}
   I.classList.add('show');$('#obj').style.opacity=0;
   // interactions
   $('#iClose').onclick=hideInfo;I.querySelectorAll('[data-it]').forEach(x=>x.onclick=()=>{infoTab=x.dataset.it;infoConf=null;showInfo(o)});
@@ -2720,7 +2720,7 @@ function showInfo(o,opt){if(!o)return;const b=o.userData.b,d=DEFS[b.t],lv=lvOf(b
   $('#iMain').onclick=()=>{if(b.dmg){const c=repCost(b);if(S.rego<c)return;S.rego-=c;b.dmg=false;b.wear=100;removeBuilding(b);addBuilding(b,'up');toast('🔧 '+d.name+' réparé','#6dffb5');logx(d.name+' réparé.');computeRates();save();showInfo(occ.get(key(b.i,b.j)));return}
     const c=upCost(b),cr=upRare(b);if(lv>=3||S.rego<c||S.rare<cr||(lv===2&&!has('inge')))return;S.rego-=c;S.rare-=cr;b.inv=(b.inv||d.cost)+c;b.lv=lv+1;b.wear=100;removeBuilding(b);addBuilding(b,'up');toast(`⬆️ ${d.name} niveau ${b.lv}`,'#7fd3ff');logx(`${d.name} amélioré au niveau ${b.lv}.`);computeRates();checkObj();save();showInfo(occ.get(key(b.i,b.j)))};
   const im=$('#iMaint');if(im)im.onclick=()=>{if(b.dmg||S.rego<mc)return;S.rego-=mc;b.wear=100;toast('🧰 '+d.name+' entretenu','#6dffb5');for(let k=0;k<25;k++){const a=Math.random()*6.28;fire.emit(o.position.x+Math.cos(a)*1.5,1+Math.random()*2,o.position.z+Math.sin(a)*1.5,0,1.5,0,.6,.35,.4,.9,1,0,0)}computeRates();save();showInfo(o)};
-  const ip=$('#iPwr');if(ip)ip.onclick=()=>{const on=b.pwr===false;if(!on&&b.t==='habitat'&&S.b.filter(x=>x.t==='habitat'&&x.pwr!==false).length<=1)return toast('Le dernier habitat doit rester allumé');
+  const ip=$('#iPwr');if(ip)ip.onclick=()=>{if(b.shed){b.prio=0;b.shed=false;removeBuilding(b);addBuilding(b,false);toast(`⚡ ${d.name} rallumé · priorité Vitale, il ne sera plus délesté`,'#6dffb5');logx(d.name+' forcé en priorité vitale.');computeRates();save();showInfo(occ.get(key(b.i,b.j)));return}const on=b.pwr===false;if(!on&&b.t==='habitat'&&S.b.filter(x=>x.t==='habitat'&&x.pwr!==false).length<=1)return toast('Le dernier habitat doit rester allumé');
     if(!on&&!infoMini&&infoConf!=='pwr'){const cq=consequence(b,false);if(cq&&cq[0]==='w'){infoConf='pwr';showInfo(o);return}}infoConf=null;
     b.pwr=on?undefined:false;removeBuilding(b);addBuilding(b,false);const no=occ.get(key(b.i,b.j));toast(on?`⏻ ${d.name} rallumé`:`⏻ ${d.name} éteint · économise ⚡ ${nf(nomOf(b).use)}/h`,on?'#6dffb5':'#9aa6c8');logx(d.name+(on?' rallumé.':' éteint.'));computeRates();save();showInfo(no)};
   const iq=$('#iQuar');if(iq)iq.onclick=()=>{b.quar=b.quar>0?0:48;toast(b.quar?'🚧 '+d.name+' en quarantaine 48 h':'Quarantaine levée','#ffd36b');computeRates();save();showInfo(o)};
@@ -2916,8 +2916,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='4.4.1';
+const APP_VER='4.4.2';
 const CHANGELOG=[
+  {v:'4.4.2',d:'15 nov.',n:[['⚡','Module délesté','Le bouton ⏻ d\'un module délesté (ex. pas de tir) devient « Forcer » : il repasse en priorité Vitale et se rallume.']]},
   {v:'4.4.1',d:'15 nov.',n:[['🏠','Fiche logement','Chaque colon a un logement : résidents, occupation, confort, loyer et repos dans la fiche.'],['🛋️','Confort','Selon le modèle, le niveau, l\'usure, les voisins et l\'aménagement : il joue sur l\'humeur et la récupération.']]},
   {v:'4.4',d:'15 nov.',n:[['🛏️','Dortoir','8 places pour ⛏ 450, mais moral −2 et loyer ×0,6.'],['🏡','Suite résidentielle','3 places de luxe : baie vitrée, jardin sous verre, moral +4, loyer ×2.'],['🏢','Tour d\'habitation','14 places sur une case, jusqu\'à 4 étages (recherche Urbanisme).']]},
   {v:'4.3.1',d:'15 nov.',n:[['🏠','Loyer des habitats','Chaque colon paie un loyer à 07:00 : gratuit (+3 🙂), 5 💰 ou 10 💰 (−5 🙂). Réglage dans Paie.']]},
