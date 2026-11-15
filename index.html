@@ -257,7 +257,13 @@ html,body{height:100%;overflow:hidden;background:#000;color:#eef2ff;font-family:
 .hpr{display:grid;grid-template-columns:24px 1fr 84px;gap:7px;align-items:center;padding:7px 0;border-top:1px solid rgba(255,255,255,.07);cursor:pointer}
 .hpi{font-size:16px}.hpn{display:flex;justify-content:space-between;font-size:12px;font-weight:800}.hpg{font-size:10px;text-align:right;color:#9aa6c8;line-height:1.35}
 .hkg{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}.hkv{display:flex;justify-content:space-between;background:rgba(255,255,255,.05);border-radius:10px;padding:6px 9px;font-size:11.5px;color:#c9d0e8}.hkv b{font-size:12px}
-#hud.hopen~#side,#hud.hopen~#obj{display:none!important}
+#hud.hopen~#side,#hud.hopen~#obj,#hud.hopen~#shipP{display:none!important}
+#shipP{position:fixed;right:62px;top:calc(env(safe-area-inset-top) + 104px);z-index:9;border-radius:99px;padding:5px 11px;font-size:11px;font-weight:800;color:#9fe0ff;background:rgba(12,16,30,.72)!important;pointer-events:none;white-space:nowrap}
+body.free #shipP{display:none!important}
+#obj{right:12px!important;max-width:none!important;border-radius:18px!important;padding:7px 12px 7px 7px!important}
+#obj .oi{width:34px!important;height:34px!important;font-size:16px!important}
+#obj .ob{flex:1;min-width:0}#obj .ob b{display:block;font-size:12.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#obj .ob small{display:block;font-size:10.5px;color:#9aa6c8;font-weight:700;margin-top:1px}
+#obj .obar{height:4px;border-radius:4px;background:rgba(255,255,255,.12);margin-top:4px;overflow:hidden}#obj .obar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#ff9a3d,#ffd36b)}
 .hpf{font-size:10px;color:#8d97b5;text-align:center;margin-top:7px}
 #side{top:calc(env(safe-area-inset-top) + 98px)!important}
 #recenter,#comBtn,#jbtn{display:none!important}
@@ -282,7 +288,7 @@ body.free #hud,body.free #side,body.free #obj,body.free #nav,body.free #menuPop{
 <div id="side"><div id="speed" class="glass sb">▶×1</div><div id="recenter" class="glass sb">🎯</div><div id="bell" class="glass sb">🔔<span id="bellN">0</span></div><div id="menuBtn" class="glass sb">☰</div><div id="comBtn" class="glass sb">💰</div><div id="jbtn" class="glass sb">📋</div></div>
 <div id="alert"></div><div id="menuPop" class="glass"><button data-m="comBtn">💰 Commerce</button><button data-m="tax">🏛️ Taxe</button><button data-m="jbtn">📋 Journal</button><button data-m="recenter">🎯 Recentrer la vue</button></div>
 <div id="toasts"></div>
-<div id="obj" class="glass"></div>
+<div id="obj" class="glass"></div><div id="shipP" class="glass" style="display:none"></div>
 <div id="info" class="glass"></div><div id="selTag"></div>
 <div id="place" class="glass"><div class="hint">Touche une case libre pour déplacer le module</div><div class="row"><button class="btn ghost" id="pCancel" style="flex:1">Annuler</button><button class="btn blue" id="pOk" style="flex:2">✓ Construire</button></div></div>
 <nav id="nav" class="glass">
@@ -308,7 +314,7 @@ body.free #hud,body.free #side,body.free #obj,body.free #nav,body.free #menuPop{
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.1</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.1.1</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -1842,6 +1848,7 @@ let hourFrac=0;
 
 /* ================== NAVETTE ================== */
 let shipState='idle',shipT=0;
+function shipTxt(){if(shipState!=='idle')return `<span style="color:#6dffb5">🚀 ${shipState==='down'?'Navette en approche':shipState==='sit'?'Déchargement…':'Décollage'}</span>`;if(S.orbW>0)return `<span style="color:#ffb36b">🛰️ En orbite · attend ${S.orbW} h</span>`;if(!padOK()&&S.ship>3)return `<span style="color:#ffcf6b">🚀 Navette en pause · pas de tir éteint</span>`;return `🚀 Navette dans ${S.ship} h`}
 function shipPill(){return S.orbW>0?`<span class="os" style="color:#ffb36b">🛰️ attend ${S.orbW} h</span>`:!padOK()&&S.ship>3?'<span class="os" style="color:#9aa6c8">🚀 en pause</span>':`<span class="os">🚀 ${S.ship} h</span>`}
 function padOK(){const p=S.b.find(b=>b.t==='pad');return!!p&&!p.dmg&&p.pwr!==false&&!(p.off>0)}
 function padPos(){const p=S.b.find(b=>b.t==='pad');return p?new THREE.Vector3(p.i*TILE,0,p.j*TILE):null}
@@ -2339,7 +2346,7 @@ const fmtS=n=>{n=Math.round(n);const a=Math.abs(n);return a>=1e6?(n/1e6).toFixed
 const fR=v=>Math.abs(v)<10?v.toFixed(1).replace('.',','):String(Math.round(v));
 function resInfo(r){const cap={o2:o2Cap(),water:waterCap(),energy:r.store,food:foodCap()},rt={o2:r.o2,water:r.water,energy:r.net,food:r.food};
   return RESL.map(([k,ic,n,sn,col])=>{const v=S[k],f=clamp(v/Math.max(1,cap[k]),0,1),rate=rt[k],h=rate<0?v/-rate:Infinity,G=S.glitch&&S.glitch.res===k;
-    const warn=G||h<8?'#ff4d5e':h<24?'#ffb347':(rate<-.05&&f<.97)||f<.5?'#ffcf6b':null;return{k,ic,n,sn,col,f,rate,h,G,warn}})}
+    const warn=G||h<8?'#ff4d5e':h<24?'#ffb347':h<48||f<.35?'#ffcf6b':null;return{k,ic,n,sn,col,f,rate,h,G,warn}})}
 let hudOpen=false;
 function hudRes(r){const I=resInfo(r),W=I.filter(x=>x.warn).sort((a,b)=>a.h-b.h);const bad=W.some(x=>x.warn!=='#ffcf6b');
   const pc=Math.round(I.reduce((a,x)=>a+x.f,0)/4*100),rc=bad?W[0].warn:W.length?'#ffcf6b':'#2fd38a';
@@ -2358,7 +2365,7 @@ function gbar(k,ic,label,val,cap,rate,col){const G=S.glitch&&S.glitch.res===k;co
 function renderHUD(){const r=rates;if(!r.store)return;
   {const h=hudRes(r);if(h!==renderHUD.r){$('#res').innerHTML=h;renderHUD.r=h}if(hudOpen){const p=hudPanel(r);if(p!==renderHUD.p){$('#hpan').innerHTML=p;renderHUD.p=p}}}
   const hh=String(S.hour).padStart(2,'0');{const t=mode==='orbit'?`SOL ${S.sol}<br>${hh}:00 · 🛰️`:`SOL ${S.sol}<br>${hh}:00 ${LUNAR?'🌑':r.day>0?'☀':'☾'}`;if(t!==renderHUD.l){$('#loc').innerHTML=t;renderHUD.l=t}}
-  {const h=`<span class="pl" id="crChip" style="color:#ffd36b;cursor:pointer">💰 ${fmtS(S.cr)}${taxLv()?`<i style="font-style:normal;font-size:9.5px;margin-left:3px;color:${S.taxStrike?'#ff9a7a':'#6dffb5'}">+${taxEst().g}</i>`:''}</span><span class="pl">⛏ ${fmtS(S.rego)}<i style="color:${r.rego>0?'#6dffb5':'#9aa6c8'}">${r.rego>0?'▲':''}</i></span><span class="pl" style="color:#ffcf9a">🔩 ${fmtS(S.rare)}</span><span class="pl" style="color:#d39bff">🔬 ${fmtS(S.sci)}</span><span class="pl" id="crewChip" style="color:${S.moral>60?'#6dffb5':S.moral>30?'#ffd36b':'#ff8a7a'}">${moodIco(S.moral)} <span style="color:${S.colons>=r.cap?'#ffcf6b':'#fff'}">${S.colons}</span></span>`;if(h!==renderHUD.c){$('#chips').innerHTML=h;renderHUD.c=h}}
+  {const h=`<span class="pl" id="crChip" style="color:#ffd36b;cursor:pointer">💰 ${fmtS(S.cr)}${taxLv()&&taxEst().g?`<i style="font-style:normal;font-size:9.5px;margin-left:3px;color:${S.taxStrike?'#ff9a7a':'#6dffb5'}">+${taxEst().g}</i>`:''}</span><span class="pl">⛏ ${fmtS(S.rego)}<i style="color:${r.rego>0?'#6dffb5':'#9aa6c8'}">${r.rego>0?'▲':''}</i></span><span class="pl" style="color:#ffcf9a">🔩 ${fmtS(S.rare)}</span><span class="pl" style="color:#d39bff">🔬 ${fmtS(S.sci)}</span><span class="pl" id="crewChip" style="color:${S.moral>60?'#6dffb5':S.moral>30?'#ffd36b':'#ff8a7a'}">${moodIco(S.moral)} <span style="color:${S.colons>=r.cap?'#ffcf6b':'#fff'}">${S.colons}</span></span>`;if(h!==renderHUD.c){$('#chips').innerHTML=h;renderHUD.c=h}}
   // alerte principale + cloche
   curAlerts=getAlerts();const top=curAlerts.find(a=>a.sev>=1)||curAlerts[0];const n=curAlerts.filter(a=>a.sev>=1).length;
   $('#bellN').textContent=n;$('#bellN').style.display=n?'grid':'none';$('#bellN').style.background=SEVC[top?top.sev:0];
@@ -2366,9 +2373,9 @@ function renderHUD(){const r=rates;if(!r.store)return;
   if(ah!==lastAlertH){$('#alert').innerHTML=ah;lastAlertH=ah}
   if(view==='alerts'){const k=curAlerts.map(a=>a.t+a.sub).join('|');if(k!==lastAlertsSheet){lastAlertsSheet=k;renderAlerts()}}
   // objectif en pastille
-  let h='';if(shipState!=='idle'){h=`<span class="oi">🚀</span><span>${shipState==='down'?'Navette en approche':shipState==='sit'?'Déchargement…':'Décollage'}</span>`}
-  else if(S.obj<OBJ.length){const o=OBJ[S.obj];const p=o.p?clamp(o.p(S),0,1):null;h=`<span class="oi">${o.ic}</span><span><b style="color:#ffb36b">${S.obj+1}/${OBJ.length}</b> · ${o.t}${p!==null?` · ${Math.round(p*100)} %`:''}</span>`+(count('pad')?shipPill():'')}
-  else h=`<span class="oi">🌕</span><span>Base accomplie !</span>`+(count('pad')?shipPill():'');
+  let h='';if(S.obj<OBJ.length){const o=OBJ[S.obj];const p=o.p?clamp(o.p(S),0,1):null;h=`<span class="oi">${o.ic}</span><div class="ob"><b>${o.t}</b><small>Objectif ${S.obj+1}/${OBJ.length}${p!==null?` · ${Math.round(p*100)} %`:''}</small>${p!==null?`<div class="obar"><i style="width:${Math.round(p*100)}%"></i></div>`:''}</div>`}
+  else h=`<span class="oi">🌕</span><div class="ob"><b>Base accomplie !</b><small>Tous les objectifs sont atteints</small></div>`;
+  {const sp=mode==='base'&&(count('pad')||shipState!=='idle')?shipTxt():'';if(sp!==renderHUD.sp){const e=$('#shipP');e.innerHTML=sp;e.style.display=sp?'':'none';renderHUD.sp=sp}}
   if(mode==='orbit'){if(!S.st.built){const ok=S.b.some(b=>b.t==='pad'&&!b.dmg);h=`<span class="oi" style="background:linear-gradient(135deg,#3dc1ff,#5a6bff)">🛰️</span><span>${ok?'Mettre en orbite le noyau':'Nécessite un pas de tir'}</span><button class="btn ${ok&&S.rego>=STATION_COST?'blue':'ghost'}" data-act="station" style="padding:7px 10px;font-size:11.5px">⛏ ${STATION_COST} · 🔩 20</button>`}
     else{h=`<span class="oi" style="background:linear-gradient(135deg,#3dc1ff,#5a6bff)">🛰️</span><span><b>Hélios</b> · ${S.st.m.length}/${PORTS.length} ${S.st.m.map(m=>SDEFS[m.t].icon).join('')}</span><button class="btn blue" data-act="addmod" style="padding:7px 10px;font-size:11.5px">＋ Module</button>`}}
   if(h!==lastObj){$('#obj').innerHTML=h;lastObj=h}
@@ -2756,8 +2763,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='4.1';
+const APP_VER='4.1.1';
 const CHANGELOG=[
+  {v:'4.1.1',d:'15 nov.',n:[['🚀','Pastille navette','L\'état de la navette a sa propre pastille en haut à droite.'],['🎯','Objectif lisible','Sur 2 lignes avec une barre de progression.']]},
   {v:'4.1',d:'15 nov.',n:[['✓','HUD intelligent','« Base stable » quand tout va bien ; seules les ressources en baisse s\'affichent, avec leur autonomie.'],['📊','Panneau Ressources','Tap sur le HUD : production / consommation par heure, stocks, taxe. Tap sur une ressource → Construire.'],['🔢','Nombres courts','10,1k, 153k : la ligne du bas ne déborde plus.']]},
   {v:'4.0.1',d:'15 nov.',n:[['🖤','Écran noir corrigé','Plus de flash noir quand le jeu ajuste sa qualité ; ajustement plus progressif.']]},
   {v:'4.0',d:'15 nov.',n:[['🏛️','Taxe des habitants','4 niveaux (Aucune, Légère, Normale, Forte), prélevée chaque sol à 07:00. Réglage : ☰ → Taxe ou Commerce.'],['✊','Grève fiscale','Taxe forte et moral bas : des colons refusent de payer, voire repartent.'],['🌳','Contreparties','Parc et Hôpital adoucissent la taxe ; recherche Administration : +20 % de recettes.']]},
