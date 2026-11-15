@@ -294,7 +294,7 @@ body.free #hud,body.free #side,body.free #obj,body.free #nav,body.free #menuPop{
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v3.9.1</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v3.9.2</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -2375,7 +2375,7 @@ function suggested(){const s=new Set();for(const a of (curAlerts||[]))if(a.sev>=
   if(S.req){const map={parc:'parc',hopital:'hopital',vivres:'serre',eau:'extracteur',place:'habitat'};if(map[S.req.k])s.add(map[S.req.k])}if(rates.cap<=S.colons)s.add('habitat');return s}
 function fxChips(k){const d=DEFS[k],L=[];if(d.water)L.push(['#4fb8ff','💧 +'+d.water+'/h']);if(d.o2)L.push(['#5fe1ff','💨 +'+d.o2+'/h']);if(d.food)L.push(['#6dffb5','🌱 +'+d.food+'/h']);if(d.rego)L.push(['#ffb36b','⛏ +'+d.rego+'/h']);if(d.sci)L.push(['#d39bff','🔬 +'+String(d.sci).replace('.',',')+'/h']);
   if(d.cap)L.push(['#fff','👩‍🚀 +'+d.cap]);if(d.store)L.push(['#5fe1ff','🔋 +'+d.store]);if(d.solar)L.push(['#ffd84a','☀️ +'+d.solar]);if(d.moral)L.push(['#ffd36b','🙂 +'+d.moral]);
-  if(k==='recycleur')L.push(['#ff9a8a','💧 −0,6']);if(k==='serre')L.push(['#ff9a8a','💧 −0,5']);if(d.en)L.push([d.en>0?'#ffd84a':'#9aa6c8','⚡ '+(d.en>0?'+':'−')+Math.abs(d.en)]);
+  if(k==='generateur')L.push(['#ffd84a','⚡ +18'],['#ff9a8a','💧 −2,5']);if(k==='recycleur')L.push(['#ff9a8a','💧 −0,6']);if(k==='serre')L.push(['#ff9a8a','💧 −0,5']);if(d.en)L.push([d.en>0?'#ffd84a':'#9aa6c8','⚡ '+(d.en>0?'+':'−')+Math.abs(d.en)]);
   const SP={imprimante:'🛠️ −50 % réparations',spatioport:'🛸 navettes ×1,5',bouclier:'🛡️ anti-météorites',hopital:'🏥 isole les malades',helium3:'🟣 +hélium-3',observatoire:'🧭 −20 % risque',frigo:'🧊 vivres conservés',pad:'🚀 navettes'};if(SP[k])L.unshift(['#fff',SP[k]]);
   return L.slice(0,3).map(([c,t])=>`<span style="color:${c}">${t}</span>`).join('')}
 function renderBuild(){const sug=suggested();
@@ -2695,8 +2695,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='3.9.1';
+const APP_VER='3.9.2';
 const CHANGELOG=[
+  {v:'3.9.2',d:'15 nov.',n:[['⚡','Générateur','Sa carte affiche la production (+18) et la consommation d\'eau.']]},
   {v:'3.9.1',d:'15 nov.',n:[['🔌','Miniature 3D','Le générateur de secours a sa miniature 3D dans Construire et sa fiche.'],['⚡','Miniatures plus rapides','La catégorie ouverte est générée en priorité.']]},
  {v:'3.9',d:'Générateur de secours',n:[['🔌','Générateur de secours','Pile à combustible : démarre seule quand l\'énergie baisse, consomme de l\'eau en marche. Plusieurs s\'additionnent.'],['⚖️','Délestage','En cas de manque, la base coupe d\'abord le confort puis la production, jamais le vital. Priorité réglable dans chaque fiche.'],['🔗','Recherches','Piles à combustible et Micro-réseau (+25 %).']]},
  {v:'3.8',d:'Plus fluide, plus de place',n:[['🧱','Bâtiments regroupés','Les parties fixes des bâtiments sont dessinées ensemble : beaucoup moins de travail par image sur les grandes bases.'],['💡','Lumières','Les lumières de nuit ne sont plus calculées le jour ; moins de lumières au total.'],['💾','Démarrage','Les textures de la Terre et du ciel sont gardées après le premier lancement.'],['📏','Interface compacte','Jauges et ressources dans un seul bloc, menu ☰, demandes dans la cloche.'],['👆','Vue libre','Double-tap sur le sol pour masquer l\'interface.']]},
