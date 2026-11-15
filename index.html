@@ -319,7 +319,7 @@ body.free #hud,body.free #side,body.free #obj,body.free #nav,body.free #menuPop{
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.6</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.6.1</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -925,7 +925,7 @@ N.frigo=lv=>{const g=new THREE.Group();plinth(g);
   for(let i=0;i<6;i++)box(.04,1.1,.7,M.grey,-1.62,1.05,-1.2+i*.22,g);
   if(lv>=2){cyl(.5,.5,1.7,ICE,1.25,1.15,-1.15,g,24);for(const y of [.6,1.15,1.7])cyl(.52,.52,.06,M.cyan,1.25,y,-1.15,g,24);cyl(.5,.5,.05,FROST,1.25,2.02,-1.15,g,24)}
   if(lv>=3){for(const [x,z,s] of [[.95,1.25,.45],[1.35,1.25,.4],[1.12,1.3,.38]])box(s,s,s,M.orange,x,.33+s/2+(x===1.12?.42:0),z,g)}
-  g.userData.spin=fans[0];g.userData.spin2=fans[1];return g};
+  g.userData.spin=fans[0];g.userData.spin2=fans[1];const FLV=new THREE.MeshStandardMaterial({color:0x0a2a14,emissive:0x6dffb5,emissiveIntensity:2.6});box(.18,1.34,.04,M.dark,.85,1.1,.885,g);const fl=box(.11,1.28,.05,FLV,.85,1.1,.9,g);fl.castShadow=false;g.userData.levels3=[{m:fl,h:1.28,y0:.46}];return g};
 /* 2. Panneaux solaires : 1, 2 puis 4 trackers */
 const glowS=m=>{m.castShadow=false;return m};const sphS=(r,mat,x,y,z,p)=>mesh(new THREE.SphereGeometry(r,10,8),mat,x,y,z,p);
 N.solaire=lv=>{const g=new THREE.Group();plinth(g,3.2);const rows=lv===1?[-.72,.72]:lv===2?[-1.02,0,1.02]:[-1.17,-.39,.39,1.17],dep=lv===1?1.25:lv===2?.9:.68,L=2.9,tr=[];const RG=new THREE.Group();RG.rotation.y=Math.PI/2;g.add(RG);
@@ -1556,7 +1556,7 @@ const DEFS={
  suite:{name:'Suite résidentielle',cat:'vie',icon:'🏡',cost:700,rare:4,en:-4,cap:3,moral:4,lodge:2,desc:'3 colons dans le confort : baie vitrée, jardin sous verre. Moral +4, loyer ×2.',bg:'#4a2a66'},
  tour:{name:'Tour d\'habitation',cat:'vie',icon:'🏢',cost:1400,rare:10,en:-8,cap:14,desc:'14 colons sur une seule case, sur plusieurs étages.',bg:'#2a4a5a',req:'urba'},
  extracteur:{name:'Extracteur de glace',cat:'vie',icon:'💧',cost:340,en:-5,water:5,desc:'Chauffe la glace du sous-sol et produit de l\'eau.',bg:'#1d4a7a'},
- frigo:{name:'Entrepôt réfrigéré',cat:'vie',icon:'🧊',cost:300,en:-3,unique:true,desc:'Les vivres ne périment presque plus (−0,1 %/h au lieu de −0,4 %/h).',bg:'#2a5a7a'},
+ frigo:{name:'Entrepôt réfrigéré',cat:'vie',icon:'🧊',cost:300,en:-3,fcap:250,desc:'+250 de stock de vivres, et les vivres ne périment presque plus (−0,1 %/h au lieu de −0,4 %/h).',bg:'#2a5a7a'},
  serre:{name:'Serre hydroponique',cat:'vie',icon:'🌱',cost:320,en:-6,food:3,desc:'Produit des vivres.',bg:'#1f6a45'},
  recycleur:{name:'Recycleur O₂',cat:'vie',icon:'💨',cost:280,en:-5,o2:4,desc:"Produit l'oxygène.",bg:'#1d5a7a'},
  parc:{name:'Dôme parc',cat:'vie',icon:'🌳',cost:650,rare:5,en:-3,moral:10,desc:'Un coin de verdure. Moral +10.',bg:'#2f6a2a',req:'parc'},
@@ -1905,7 +1905,7 @@ function tickHour(){
   powerManage();const r=computeRates();
   S.energy=clamp(S.energy+r.net,0,r.store);
   S.o2=clamp(S.o2+r.o2,0,o2Cap());
-  S.food=clamp(S.food+r.food,0,120+count('serre')*80+S.colons*8);
+  S.food=clamp(S.food+r.food,0,foodCap());
   S.water=clamp(S.water+r.water,0,waterCap());tankReserve();S.rare+=r.rare;
   S.rego+=r.rego;S.sci+=r.sci;
   // moral
@@ -2484,7 +2484,7 @@ function gameOver(){if(over)return;over=true;modalOpen=true;try{localStorage.rem
 const fmt=n=>{n=Math.round(n);return Math.abs(n)>=10000?(n/1000).toFixed(1).replace('.',',')+' k':n.toLocaleString('fr-FR')};
 const sgn=n=>(n>=0?'+':'')+(Math.abs(n)<10?n.toFixed(1).replace('.',','):Math.round(n));
 const tankCap=k=>S.b.reduce((a,b)=>{const v=DEFS[b.t][k];return v&&!b.dmg?a+Math.round(v*LV_K[lvOf(b)-1]):a},0);
-const o2Cap=()=>120+count('recycleur')*80+S.colons*8+tankCap('ocap'),foodCap=()=>120+count('serre')*80+S.colons*8,waterCap=()=>150+count('extracteur')*120+S.colons*6+tankCap('wcap');
+const o2Cap=()=>120+count('recycleur')*80+S.colons*8+tankCap('ocap'),foodCap=()=>120+count('serre')*80+S.colons*8+tankCap('fcap'),waterCap=()=>150+count('extracteur')*120+S.colons*6+tankCap('wcap');
 function tankReserve(){for(const [k,ck,cf,n,ic] of [['water','wcap',waterCap,'eau','💧'],['o2','ocap',o2Cap,'oxygène','🫧']]){const tc=tankCap(ck);if(!tc)continue;const f=S[k]/cf(),fl='res_'+k;
   if(f<.05&&!S[fl]){S[fl]=1;const add=Math.round(tc*.1);S[k]+=add;toast(`${ic} Réserve d'urgence libérée : +${add} ${n}`,'#ffb347');logx(`Réserve d'urgence d'${n} libérée (+${add}).`)}else if(f>.5)S[fl]=0}}
 const SUGGEST={o2:'recycleur',water:'extracteur',food:'serre',energy:'solaire'};
@@ -2493,7 +2493,7 @@ function focusB(b){const o=occ.get(key(b.i,b.j));if(!o)return;if(mode!=='base')s
 function getAlerts(){const r=rates,A=[];if(!r.store)return A;
   const res=[['o2','💨','Oxygène',r.o2],['water','💧','Eau',r.water],['food','🌱','Vivres',r.food],['energy','⚡','Énergie',r.net]];
   for(const [k,ic,n,rt] of res){if(rt>=0)continue;const h=S[k]/-rt;if(h<30){const sev=h<6?4:h<14?3:2;const sk=SUGGEST[k];A.push({sev,ic,t:`${n} épuisé${k==='water'||k==='energy'?'e':''}${k==='food'?'s':''} dans ${Math.max(0,Math.floor(h))} h`,sub:`Construire : ${DEFS[sk].name}`,btn:'Construire',col:'#3d8bff',fn:()=>tryBuild(sk)})}}
-  for(const [k,cf,n,ic,t] of [['o2',o2Cap,'Oxygène','🫧','reservoirO2'],['water',waterCap,'Eau','🛢️','citerne']]){const rt=k==='o2'?rates.o2:rates.water;if(S[k]>=cf()-1&&rt>.5)A.push({sev:1,ic,t:`${n} au maximum`,sub:`+${fR(rt)}/h perdus · construis ${k==='o2'?'un réservoir':'une citerne'}`,btn:'Construire',col:'#3d8bff',fn:()=>{cat='vie';setView('build')}})}
+  for(const [k,cf,n,ic,t] of [['o2',o2Cap,'Oxygène','🫧','reservoirO2'],['water',waterCap,'Eau','🛢️','citerne'],['food',foodCap,'Vivres','🧊','frigo']]){const rt=k==='o2'?rates.o2:k==='water'?rates.water:rates.food;if(S[k]>=cf()-1&&rt>.5)A.push({sev:1,ic,t:`${n} au maximum`,sub:`+${fR(rt)}/h perdus · construis ${k==='o2'?'un réservoir':k==='water'?'une citerne':'un entrepôt réfrigéré'}`,btn:'Construire',col:'#3d8bff',fn:()=>{cat='vie';setView('build')}})}
   if(S.ds&&S.ds.ph==='fc')A.push({sev:S.ds.prep?1:3,ic:'🌪️',t:`Tempête de poussière dans ${S.ds.in} h`,sub:S.ds.prep?'Base préparée':`Force ${S.ds.f}/5 · ${S.ds.dur} h`,btn:S.ds.prep?null:'Préparer',col:'#ff9a3d',fn:()=>dsPrep()});
   if(dsOn())A.push({sev:3,ic:'🌪️',t:'Tempête en cours',sub:`Force ${S.ds.f}/5 · encore ${S.ds.left} h${S.ds.fold?' · panneaux repliés':''}`,col:'#ff9a3d'});
   {const d=dirtyB();if(d.length&&!dsOn())A.push({sev:2,ic:'🧹',t:`${d.length} module${d.length>1?'s':''} encrassé${d.length>1?'s':''}`,sub:`Nettoyage ⛏ 40 chacun${botOn()?' · le robot s\'en occupe':''}`,btn:'Nettoyer',col:'#3d8bff',fn:()=>cleanAll()})}
@@ -2541,7 +2541,7 @@ function hudRes(r){const I=resInfo(r),W=I.filter(x=>x.warn).sort((a,b)=>a.h-b.h)
   const hh=String(S.hour).padStart(2,'0');
   return `${ring}<div class="ht">${tl}</div>${it}<div class="hclk"><b>SOL ${S.sol}</b><small>${hh}:00 ${mode==='orbit'?'🛰️':LUNAR?'🌑':r.day>0?'☀':'☾'}</small></div><span class="hcar">${hudOpen?'⌃':'⌄'}</span>`}
 function hudPanel(r){const I=resInfo(r);
-  const rows=I.map(x=>{const g=r.g[x.k]||[0,0];const c=x.warn||x.col;return `<div class="hpr" data-hr="${x.k}"><span class="hpi">${x.ic}</span><div><div class="hpn"><span>${x.n}</span><b style="color:${c}">${x.G?'??':(x.k==='o2'||x.k==='water')?`${fmtS(x.v)}<span style="color:#8d97b5;font-weight:700"> / ${fmtS(x.cp)}</span>`:Math.round(x.f*100)+' %'}</b></div><div class="gbr"><span style="width:${(x.f*100).toFixed(1)}%;background:${c}"></span></div></div><div class="hpg"><span style="color:#6dffb5">+${fR(g[0])}</span> / <span style="color:#ff9a8a">−${fR(g[1])}</span><br>${x.rate<0?`<span style="color:${c}">${x.h>99?'99+':Math.floor(x.h)} h</span>`:'par heure'}</div></div>`}).join('');
+  const rows=I.map(x=>{const g=r.g[x.k]||[0,0];const c=x.warn||x.col;return `<div class="hpr" data-hr="${x.k}"><span class="hpi">${x.ic}</span><div><div class="hpn"><span>${x.n}</span><b style="color:${c}">${x.G?'??':(x.k==='o2'||x.k==='water'||x.k==='food')?`${fmtS(x.v)}<span style="color:#8d97b5;font-weight:700"> / ${fmtS(x.cp)}</span>`:Math.round(x.f*100)+' %'}</b></div><div class="gbr"><span style="width:${(x.f*100).toFixed(1)}%;background:${c}"></span></div></div><div class="hpg"><span style="color:#6dffb5">+${fR(g[0])}</span> / <span style="color:#ff9a8a">−${fR(g[1])}</span><br>${x.rate<0?`<span style="color:${c}">${x.h>99?'99+':Math.floor(x.h)} h</span>`:'par heure'}</div></div>`}).join('');
   const kv=(l,v,c)=>`<div class="hkv"><span>${l}</span><b style="color:${c||'#fff'}">${v}</b></div>`;
   const bl=[['🌍 Subvention',subsidy()],['🏨 Touristes',tourists()],['🏛️ Taxe',taxEst().g],['🏠 Loyers',lodgeEst()],['👩‍🚀 Salaires',-salaries()],['🧾 Terrain',-rent()]].filter(x=>x[1]),nt=netSol();
   return rows+`<div class="hbl">${bl.map(([l,v])=>`<div><span>${l}</span><b style="color:${v>0?'#6dffb5':'#ff9a8a'}">${v>0?'+':'−'}${fmtC(Math.abs(v))}</b></div>`).join('')}<div class="hbt"><b>Bilan / sol</b><b style="color:${nt>=0?'#6dffb5':'#ff8a7a'}">${nt>=0?'+':'−'}${fmtC(Math.abs(nt))} 💰</b></div></div><div class="hkg">${kv('💰 Crédits',fmtC(S.cr),'#ffd36b')}${kv('🎁 Prime',S.prime?'+20 %':'non',S.prime?'#6dffb5':'#9aa6c8')}${kv('⛏ Régolithe',fmtC(S.rego))}${kv('🔩 Rares',fmtC(S.rare),'#ffcf9a')}${kv('🔬 Science',fmtC(S.sci),'#d39bff')}${kv('👩‍🚀 Colons',`${S.colons}/${r.cap} ${moodIco(S.moral)} ${Math.round(S.moral)}`)}</div><div class="hpf">Tap sur une ressource → Construire</div>`}
@@ -2646,7 +2646,7 @@ function suggested(){const s=new Set();for(const a of (curAlerts||[]))if(a.sev>=
   if(S.req){const map={parc:'parc',hopital:'hopital',vivres:'serre',eau:'extracteur',place:'habitat'};if(map[S.req.k])s.add(map[S.req.k])}if(rates.cap<=S.colons)s.add('habitat');return s}
 function fxChips(k){const d=DEFS[k],L=[];if(d.water)L.push(['#4fb8ff','💧 +'+d.water+'/h']);if(d.o2)L.push(['#5fe1ff','💨 +'+d.o2+'/h']);if(d.food)L.push(['#6dffb5','🌱 +'+d.food+'/h']);if(d.rego)L.push(['#ffb36b','⛏ +'+d.rego+'/h']);if(d.sci)L.push(['#d39bff','🔬 +'+String(d.sci).replace('.',',')+'/h']);
   if(d.cap)L.push(['#fff','👩‍🚀 +'+d.cap]);if(d.store)L.push(['#5fe1ff','🔋 +'+d.store]);if(d.solar)L.push(['#ffd84a','☀️ +'+d.solar]);if(d.moral)L.push([d.moral>0?'#ffd36b':'#ff9a8a','🙂 '+(d.moral>0?'+':'−')+Math.abs(d.moral)]);
-  if(k==='generateur')L.push(['#ffd84a','⚡ +18'],['#ff9a8a','💧 −2,5']);if(d.wcap)L.push(['#4fb8ff','💧 +'+d.wcap+' stock']);if(d.ocap)L.push(['#5fe1ff','🫧 +'+d.ocap+' stock']);if(k==='recycleur')L.push(['#ff9a8a','💧 −0,6']);if(k==='serre')L.push(['#ff9a8a','💧 −0,5']);if(d.en)L.push([d.en>0?'#ffd84a':'#9aa6c8','⚡ '+(d.en>0?'+':'−')+Math.abs(d.en)]);
+  if(k==='generateur')L.push(['#ffd84a','⚡ +18'],['#ff9a8a','💧 −2,5']);if(d.wcap)L.push(['#4fb8ff','💧 +'+d.wcap+' stock']);if(d.fcap)L.push(['#6dffb5','🌱 +'+d.fcap+' stock']);if(d.ocap)L.push(['#5fe1ff','🫧 +'+d.ocap+' stock']);if(k==='recycleur')L.push(['#ff9a8a','💧 −0,6']);if(k==='serre')L.push(['#ff9a8a','💧 −0,5']);if(d.en)L.push([d.en>0?'#ffd84a':'#9aa6c8','⚡ '+(d.en>0?'+':'−')+Math.abs(d.en)]);
   const SP={imprimante:'🛠️ −50 % réparations',spatioport:'🛸 navettes ×1,5',bouclier:'🛡️ anti-météorites',hopital:'🏥 isole les malades',helium3:'🟣 +hélium-3',observatoire:'🧭 −20 % risque',frigo:'🧊 vivres conservés',pad:'🚀 navettes'};if(SP[k])L.unshift(['#fff',SP[k]]);
   return L.slice(0,3).map(([c,t])=>`<span style="color:${c}">${t}</span>`).join('')}
 function renderBuild(){const sug=suggested();
@@ -2735,7 +2735,7 @@ function showInfo(o,opt){if(!o)return;const b=o.userData.b,d=DEFS[b.t],lv=lvOf(b
       const cap=k==='cap'?`${v} / ${rates.cap} places · ${S.colons} colons`:k==='use'?`${pct} % de ta consommation`:k==='wuse'?`${pct} % de la conso d'eau`:k==='moral'?'bonus de moral':`${pct} % de la base`;
       return `<div class="itile${stale?' dim':''}"><small>${lab.toUpperCase()}${neg?' · CONSO':''}</small><b style="color:${k==='cap'?'#fff':c}">${ic} ${neg?'−':'+'}${k==='cap'||k==='store'||k==='moral'?v:nf(v)}<i>${u==='/h'?'/h':' '+u}</i></b>${k==='moral'?'':`<div class="ibar"><span style="width:${Math.min(100,k==='cap'?v/Math.max(1,rates.cap)*100:pct)}%;background:${c}"></span></div>`}<em>${cap}</em></div>`});
     if(b.t==='pad')tiles.push(`<div class="itile"><small>NAVETTES</small><b>🚀 ${PADT[lv-1]}</b></div>`);if(SPX[b.t])tiles.push(`<div class="itile"><small>EFFET SPÉCIAL</small><b>${SPX[b.t][0]} ${SPX[b.t][1]}</b></div>`);
-    if(d.wcap||d.ocap){const w=!!d.wcap,cv=Math.round((w?d.wcap:d.ocap)*LV_K[lv-1]),cap=w?waterCap():o2Cap(),v=w?S.water:S.o2;tiles.unshift(`<div class="itile"><small>CAPACITÉ AJOUTÉE</small><b style="color:${w?'#4fb8ff':'#5fe1ff'}">${w?'💧':'🫧'} +${cv}</b><em>${Math.round(cv/cap*100)} % du stock total</em></div><div class="itile"><small>STOCK DE LA BASE</small><b>${fmt(v)}<i> / ${fmt(cap)}</i></b><div class="ibar"><span style="width:${Math.min(100,v/cap*100)}%;background:${w?'#4fb8ff':'#5fe1ff'}"></span></div><em>réserve d'urgence 10 % sous 5 %</em></div>`)}
+    if(d.wcap||d.ocap||d.fcap){const w=!!d.wcap,fo=!!d.fcap,cv=Math.round((w?d.wcap:fo?d.fcap:d.ocap)*LV_K[lv-1]),cap=w?waterCap():fo?foodCap():o2Cap(),v=w?S.water:fo?S.food:S.o2;tiles.unshift(`<div class="itile"><small>CAPACITÉ AJOUTÉE</small><b style="color:${w?'#4fb8ff':fo?'#6dffb5':'#5fe1ff'}">${w?'💧':fo?'🌱':'🫧'} +${cv}</b><em>${Math.round(cv/cap*100)} % du stock total</em></div><div class="itile"><small>STOCK DE LA BASE</small><b>${fmt(v)}<i> / ${fmt(cap)}</i></b><div class="ibar"><span style="width:${Math.min(100,v/cap*100)}%;background:${w?'#4fb8ff':fo?'#6dffb5':'#5fe1ff'}"></span></div><em>${fo?'vivres conservés −0,1 %/h':'réserve d\'urgence 10 % sous 5 %'}</em></div>`)}
     if(b.t==='helium3')tiles.push(`<div class="itile${stale?' dim':''}"><small>HÉLIUM-3</small><b style="color:#d39bff">🟣 +${nf(.35*LV_K[lv-1])}<i>/h</i></b><em>à vendre au Commerce</em></div>`);
     if(b.t==='batterie')tiles.push(`<div class="itile"><small>PERTE LA NUIT</small><b style="color:#9aa6c8">−1 %<i>/h</i></b><em>du stock, sans soleil (−${nf(S.energy*.01)}/h)</em></div>`);
     const adv=adviceFor(b);const dirtH=b.dirt>0?`<div class="card" style="display:flex;align-items:center;gap:10px;border-color:rgba(255,180,70,.5);margin-top:8px"><span style="font-size:20px">🧹</span><div style="flex:1"><b style="color:#ffcf6b">Encrassé · −${b.dirt} %</b><p style="margin:0">Poussière de la tempête</p></div><button class="btn blue" id="cleanB" style="padding:8px 12px;font-size:12.5px">⛏ 40</button></div>`:'';const gmode=b.t==='generateur'?`<div class="igm">${[['off','Arrêt'],['auto','Auto'],['on','Marche forcée']].map(([k,l])=>`<button data-gm="${k}" class="${(b.gm||'auto')===k?'on':''}">${l}</button>`).join('')}</div>`:'';
@@ -2912,6 +2912,7 @@ window.__f=0;function animate(){window.__f++;requestAnimationFrame(animate);let 
     if(u.b&&u.b.t==='generateur'&&u.b.run&&Math.random()<dt*10){_tv.set(.45,2.6,-.05);o.localToWorld(_tv);dust.emit(_tv.x,_tv.y,_tv.z,(Math.random()-.5)*.3,1.2+Math.random()*.6,(Math.random()-.5)*.3,1.1,.9,.85,.88,.92,.6)}
     if(u.drill&&!S.shelter&&o.userData.b.pwr!==false){u.drill.rotation.y+=dt*6;u.drill.position.y=2.6+Math.sin(tAll*1.3)*.35;if(Math.random()<dt*14)dust.emit(o.position.x+(Math.random()-.5)*1.6,1.3,o.position.z+(Math.random()-.5)*1.6,(Math.random()-.5)*1.5,.6+Math.random(),(Math.random()-.5)*1.5,1.4,.55,.62,.6,.57,.9)}
     if(u.levels){const f=clamp(S.water/Math.max(1,waterCap()),0,1);for(const L of u.levels){L.m.scale.y=Math.max(.02,f);L.m.position.y=L.y0+L.h*Math.max(.02,f)/2}}
+    if(u.levels3){const f=clamp(S.food/Math.max(1,foodCap()),0,1);for(const L of u.levels3){L.m.scale.y=Math.max(.02,f);L.m.position.y=L.y0+L.h*Math.max(.02,f)/2}}
     if(u.levels2){const f=clamp(S.o2/Math.max(1,o2Cap()),0,1),t=f*2-1,k=Math.sqrt(Math.max(.04,1-t*t));for(const L of u.levels2){L.ring.position.y=L.cy+t*L.r*.97;L.ring.scale.set(k,k,1)}}
     if(u.track){for(const tk of u.tracks||[u.track]){if(tk.fix){tk.tilt.rotation.x=lerp(tk.tilt.rotation.x,sunDir.y>.02?clamp(Math.atan2(sunDir.x,sunDir.y),-1.1,1.1):0,.05);continue}const a=Math.atan2(sunDir.x,sunDir.z);let da=a-tk.piv.rotation.y;da=Math.atan2(Math.sin(da),Math.cos(da));tk.piv.rotation.y+=da*.05;tk.tilt.rotation.x=lerp(tk.tilt.rotation.x,clamp(Math.PI/2-Math.max(sunDir.y,.15)-.0,0,1.2),.05)}}
     {const worn=!o.userData.b.dmg&&wearOf(o.userData.b)<25;if(worn&&!u.worn){const w=new THREE.Sprite(wornMat);w.scale.set(1.1,1.1,1);w.position.y=5;w.renderOrder=5;o.add(w);u.worn=w}if(u.worn){u.worn.visible=worn;u.worn.position.y=5+Math.sin(tAll*2.5)*.2}
@@ -2980,8 +2981,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='4.6';
+const APP_VER='4.6.1';
 const CHANGELOG=[
+  {v:'4.6.1',d:'15 nov.',n:[['🧊','Entrepôt réfrigéré','Il stocke maintenant +250 de vivres (×1,6 / ×2,3), avec une jauge sur la façade, et on peut en construire plusieurs.']]},
   {v:'4.6',d:'15 nov.',n:[['🛢️','Citerne d\'eau','+300 de stock d\'eau (×1,6 / ×2,3), jauge lumineuse qui suit le niveau.'],['🫧','Réservoir d\'O₂','+250 de stock d\'oxygène dans des sphères cryogéniques.'],['🛡️','Réserve d\'urgence','10 % libérés automatiquement sous 5 %. Stock / capacité dans le panneau Ressources, alerte quand la production est perdue.']]},
   {v:'4.5.3',d:'15 nov.',n:[['☀️','Suivi du soleil','Les rangées de panneaux pivotent maintenant d\'est en ouest avec le soleil, et se mettent à plat la nuit.']]},
   {v:'4.5.2',d:'15 nov.',n:[['☀️','Panneaux solaires','Nouveau modèle en rangées qui suivent le soleil : 2, 3 puis 4 rangées. Plus de panneaux qui se traversent, et plus de surface à chaque niveau.']]},
