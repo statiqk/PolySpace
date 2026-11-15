@@ -294,7 +294,7 @@ body.free #hud,body.free #side,body.free #obj,body.free #nav,body.free #menuPop{
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v3.9</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v3.9.1</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -2365,9 +2365,9 @@ function makeThumb(t,lv){if(!thumbRT)thumbSetup();const g=build3D(t,lv);thumbSce
   g.traverse(o=>{if(o.isMesh)o.geometry.dispose()});
   const cv=document.createElement('canvas');cv.width=cv.height=192;const cx=cv.getContext('2d');const id=cx.createImageData(192,192);
   for(let y=0;y<192;y++){const sy=191-y;id.data.set(px.subarray(sy*768,sy*768+768),y*768)}cx.putImageData(id,0,0);return cv.toDataURL('image/png')}
-function thumbOf(t,lv=1){const k=t+lv;if(THUMB[k])return `<img src="${THUMB[k]}" alt="">`;if(!thumbQ.includes(k))thumbQ.push(k);return `<span class="tph">${DEFS[t].icon}</span>`}
-function pumpThumbs(){if(!thumbQ.length)return;const k=thumbQ.shift();const lv=+k.slice(-1),t=k.slice(0,-1);try{THUMB[k]=makeThumb(t,lv)}catch(e){THUMB[k]=null}
-  if(view==='build'&&(thumbQ.length%4===0||!thumbQ.length))renderBuild();if(!thumbQ.length&&selected)showInfo(selected)}
+function thumbOf(t,lv=1){const k=t+lv;if(THUMB[k])return `<img src="${THUMB[k]}" alt="">`;{const i=thumbQ.indexOf(k);if(i>=0)thumbQ.splice(i,1);thumbQ.unshift(k)}return `<span class="tph">${DEFS[t].icon}</span>`}
+function pumpThumbs(){if(!thumbQ.length)return;if(view==='build'){const i=thumbQ.findIndex(k=>{const d=DEFS[k.slice(0,-1)];return d&&d.cat===cat});if(i>0)thumbQ.unshift(thumbQ.splice(i,1)[0])}const k=thumbQ.shift();const lv=+k.slice(-1),t=k.slice(0,-1);try{THUMB[k]=makeThumb(t,lv)}catch(e){THUMB[k]=null}
+  if(view==='build'&&(DEFS[t]?.cat===cat||!thumbQ.length))renderBuild();if(!thumbQ.length&&selected)showInfo(selected)}
 
 /* ================== CONSTRUIRE ================== */
 const CATS=[['vie','🫁','Vie'],['energie','⚡','Énergie'],['industrie','🏭','Industrie'],['science','🔬','Science']];
@@ -2644,7 +2644,7 @@ window.__f=0;function animate(){window.__f++;requestAnimationFrame(animate);let 
   }
   bGroup.traverse(o=>{if(o.userData.blink)o.visible=Math.sin(tAll*4+o.id)>.2});
   // rover
-  updateRover(dt);updateDecor(dt);if(tAll>2)pumpThumbs();
+  updateRover(dt);updateDecor(dt);if(performance.now()>1500){pumpThumbs();if(view==='build'||view==='info')pumpThumbs()}
   updateShuttle(dt);updateMeteors(dt);
   // tempête
   if(storm>0){storm-=gdt;if(Math.random()<dt*25){const x=(Math.random()-.5)*80,z=(Math.random()-.5)*80;fire.emit(x+20,40,z-20,-12,-22,8,1.4,1.2,1,.45,.35,0,0)}}
@@ -2695,8 +2695,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='3.9';
+const APP_VER='3.9.1';
 const CHANGELOG=[
+  {v:'3.9.1',d:'15 nov.',n:[['🔌','Miniature 3D','Le générateur de secours a sa miniature 3D dans Construire et sa fiche.'],['⚡','Miniatures plus rapides','La catégorie ouverte est générée en priorité.']]},
  {v:'3.9',d:'Générateur de secours',n:[['🔌','Générateur de secours','Pile à combustible : démarre seule quand l\'énergie baisse, consomme de l\'eau en marche. Plusieurs s\'additionnent.'],['⚖️','Délestage','En cas de manque, la base coupe d\'abord le confort puis la production, jamais le vital. Priorité réglable dans chaque fiche.'],['🔗','Recherches','Piles à combustible et Micro-réseau (+25 %).']]},
  {v:'3.8',d:'Plus fluide, plus de place',n:[['🧱','Bâtiments regroupés','Les parties fixes des bâtiments sont dessinées ensemble : beaucoup moins de travail par image sur les grandes bases.'],['💡','Lumières','Les lumières de nuit ne sont plus calculées le jour ; moins de lumières au total.'],['💾','Démarrage','Les textures de la Terre et du ciel sont gardées après le premier lancement.'],['📏','Interface compacte','Jauges et ressources dans un seul bloc, menu ☰, demandes dans la cloche.'],['👆','Vue libre','Double-tap sur le sol pour masquer l\'interface.']]},
  {v:'3.7',d:'Véhicules remodélisés',n:[['🚙','Rover','Cabine pressurisée, roues en treillis, parabole, phares et bras de prélèvement.'],['🚚','Benne, robot, grue','Camion-benne à cabine vitrée, robot sur chenilles avec pince, grue en treillis.'],['🚀','Navette et drone','Navette avec boosters et cockpit, drone à rotors carénés qui tournent.']]},
