@@ -1,9 +1,9 @@
 {
- "version": "4.2",
+ "version": "4.3",
  "date": "2026-11-15",
  "notes": [
-  "Tempêtes de poussière",
-  "Générateurs et tempêtes",
-  "Mât de décharge, Revêtement antistatique"
+  "Salaires par métier",
+  "Taxe en % du salaire",
+  "Bilan du sol"
  ]
 }
