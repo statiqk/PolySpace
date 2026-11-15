@@ -319,7 +319,7 @@ body.free #hud,body.free #side,body.free #obj,body.free #nav,body.free #menuPop{
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.5</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.5.1</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -2583,7 +2583,6 @@ build3D=function(t,lv=1){const g=_b3(t,lv);
   g.traverse(o=>{if(o.isMesh&&!Array.isArray(o.material)&&FMAP.has(o.material))o.material=FMAP.get(o.material)});
   const s=3.5,y=.335;for(const [w,d,x,z] of [[s-.1,.05,0,(s-.1)/2],[s-.1,.05,0,-(s-.1)/2],[.05,s-.1,(s-.1)/2,0],[.05,s-.1,-(s-.1)/2,0]]){const m=new THREE.Mesh(new THREE.BoxGeometry(w,.04,d),FM.acc);m.position.set(x,y,z);g.add(m)}
   for(const [x,z] of [[1,1],[1,-1],[-1,1],[-1,-1]]){const c=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,.05,12),FM.acc2);c.position.set(x*(s/2-.2),.43,z*(s/2-.2));g.add(c)}
-  const bb=new THREE.Box3().setFromObject(g);const r=new THREE.Mesh(new THREE.TorusGeometry(.32,.025,8,6),FM.acc);r.rotation.x=Math.PI/2;r.position.set(0,bb.max.y+.45,0);g.add(r);
   return g};
 
 function makeThumb(t,lv){if(!thumbRT)thumbSetup();const g=build3D(t,lv);thumbScene.add(g);const box=new THREE.Box3().setFromObject(g);const c=box.getCenter(new THREE.Vector3()),s=box.getSize(new THREE.Vector3()).length();
@@ -2934,8 +2933,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='4.5';
+const APP_VER='4.5.1';
 const CHANGELOG=[
+  {v:'4.5.1',d:'15 nov.',n:[['✨','Anneau retiré','Plus d\'anneau holographique au-dessus des modules.']]},
   {v:'4.5',d:'15 nov.',n:[['✨','Look futuriste','Coques nacrées, bardage anthracite, bandes lumineuses cyan et violettes, structures chromées.'],['🟦','Dalle connectée','Les socles ont une grille lumineuse ; un anneau holographique flotte au-dessus de chaque module.']]},
   {v:'4.4.3',d:'15 nov.',n:[['🐛','Modules niveau 3','La fiche d\'un module au niveau maximum plantait : ⏻ Allumer, Entretien, Quarantaine et Démonter ne répondaient plus. Corrigé.']]},
   {v:'4.4.2',d:'15 nov.',n:[['⚡','Module délesté','Le bouton ⏻ d\'un module délesté (ex. pas de tir) devient « Forcer » : il repasse en priorité Vitale et se rallume.']]},
