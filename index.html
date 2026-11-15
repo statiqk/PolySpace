@@ -319,7 +319,7 @@ body.free #hud,body.free #side,body.free #obj,body.free #nav,body.free #menuPop{
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.4.2</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.4.3</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -2717,7 +2717,7 @@ function showInfo(o,opt){if(!o)return;const b=o.userData.b,d=DEFS[b.t],lv=lvOf(b
   I.querySelectorAll('[data-pr]').forEach(x=>x.onclick=()=>{const v=+x.dataset.pr;b.prio=v===(TIER[b.t]??1)?undefined:v;save();showInfo(o)});
   I.querySelectorAll('[data-nv]').forEach(x=>x.onclick=ev=>{ev.stopPropagation();navInfo(+x.dataset.nv)});
   const ex=$('#iExp');if(ex)ex.onclick=()=>{infoMini=false;showInfo(o)};$('#iHdl').onclick=()=>{infoMini=!infoMini;showInfo(o)};
-  $('#iMain').onclick=()=>{if(b.dmg){const c=repCost(b);if(S.rego<c)return;S.rego-=c;b.dmg=false;b.wear=100;removeBuilding(b);addBuilding(b,'up');toast('🔧 '+d.name+' réparé','#6dffb5');logx(d.name+' réparé.');computeRates();save();showInfo(occ.get(key(b.i,b.j)));return}
+  if($('#iMain'))$('#iMain').onclick=()=>{if(b.dmg){const c=repCost(b);if(S.rego<c)return;S.rego-=c;b.dmg=false;b.wear=100;removeBuilding(b);addBuilding(b,'up');toast('🔧 '+d.name+' réparé','#6dffb5');logx(d.name+' réparé.');computeRates();save();showInfo(occ.get(key(b.i,b.j)));return}
     const c=upCost(b),cr=upRare(b);if(lv>=3||S.rego<c||S.rare<cr||(lv===2&&!has('inge')))return;S.rego-=c;S.rare-=cr;b.inv=(b.inv||d.cost)+c;b.lv=lv+1;b.wear=100;removeBuilding(b);addBuilding(b,'up');toast(`⬆️ ${d.name} niveau ${b.lv}`,'#7fd3ff');logx(`${d.name} amélioré au niveau ${b.lv}.`);computeRates();checkObj();save();showInfo(occ.get(key(b.i,b.j)))};
   const im=$('#iMaint');if(im)im.onclick=()=>{if(b.dmg||S.rego<mc)return;S.rego-=mc;b.wear=100;toast('🧰 '+d.name+' entretenu','#6dffb5');for(let k=0;k<25;k++){const a=Math.random()*6.28;fire.emit(o.position.x+Math.cos(a)*1.5,1+Math.random()*2,o.position.z+Math.sin(a)*1.5,0,1.5,0,.6,.35,.4,.9,1,0,0)}computeRates();save();showInfo(o)};
   const ip=$('#iPwr');if(ip)ip.onclick=()=>{if(b.shed){b.prio=0;b.shed=false;removeBuilding(b);addBuilding(b,false);toast(`⚡ ${d.name} rallumé · priorité Vitale, il ne sera plus délesté`,'#6dffb5');logx(d.name+' forcé en priorité vitale.');computeRates();save();showInfo(occ.get(key(b.i,b.j)));return}const on=b.pwr===false;if(!on&&b.t==='habitat'&&S.b.filter(x=>x.t==='habitat'&&x.pwr!==false).length<=1)return toast('Le dernier habitat doit rester allumé');
@@ -2916,8 +2916,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='4.4.2';
+const APP_VER='4.4.3';
 const CHANGELOG=[
+  {v:'4.4.3',d:'15 nov.',n:[['🐛','Modules niveau 3','La fiche d\'un module au niveau maximum plantait : ⏻ Allumer, Entretien, Quarantaine et Démonter ne répondaient plus. Corrigé.']]},
   {v:'4.4.2',d:'15 nov.',n:[['⚡','Module délesté','Le bouton ⏻ d\'un module délesté (ex. pas de tir) devient « Forcer » : il repasse en priorité Vitale et se rallume.']]},
   {v:'4.4.1',d:'15 nov.',n:[['🏠','Fiche logement','Chaque colon a un logement : résidents, occupation, confort, loyer et repos dans la fiche.'],['🛋️','Confort','Selon le modèle, le niveau, l\'usure, les voisins et l\'aménagement : il joue sur l\'humeur et la récupération.']]},
   {v:'4.4',d:'15 nov.',n:[['🛏️','Dortoir','8 places pour ⛏ 450, mais moral −2 et loyer ×0,6.'],['🏡','Suite résidentielle','3 places de luxe : baie vitrée, jardin sous verre, moral +4, loyer ×2.'],['🏢','Tour d\'habitation','14 places sur une case, jusqu\'à 4 étages (recherche Urbanisme).']]},
