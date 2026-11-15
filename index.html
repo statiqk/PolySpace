@@ -320,7 +320,7 @@ body.free #hud,body.free #side,body.free #obj,body.free #nav,body.free #menuPop{
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.9</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.9.1</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -378,7 +378,7 @@ const pmrem=new THREE.PMREMGenerator(renderer);
 scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;
 scene.environmentIntensity=.22;
 
-const rt=new THREE.WebGLRenderTarget(innerWidth*DPR,innerHeight*DPR,{type:THREE.HalfFloatType,samples:MOBILE?0:4});
+const rt=new THREE.WebGLRenderTarget(innerWidth*DPR,innerHeight*DPR,{type:THREE.HalfFloatType,samples:0});
 const composer=new EffectComposer(renderer,rt);
 const renderPass=new RenderPass(scene,camera);composer.addPass(renderPass);
 const gtao=new GTAOPass(scene,camera,innerWidth,innerHeight);gtao.updateGtaoMaterial({radius:1.4,distanceExponent:1.4,thickness:1.6,scale:1.2});gtao.blendIntensity=.85;
@@ -403,7 +403,7 @@ const grade=new ShaderPass({uniforms:{tDiffuse:{value:null},uPx:{value:new THREE
    c+=fl*uVis;vec2 v=vUv-.5;c*=1.-dot(v,v)*.6;
    float n=fract(sin(dot(vUv*vec2(12.9898,78.233)+uT,vec2(1.,57.)))*43758.5453);c+=(n-.5)*.01;
    gl_FragColor=vec4(c,1.);}`});
-composer.addPass(grade);window.__grade=grade;resize();
+composer.addPass(grade);window.__grade=grade;if(!MOBILE)composer.addPass(fxaa);resize();
 
 function resize(){const w=innerWidth,h=innerHeight;camera.aspect=w/h;camera.fov=w<h?58:42;camera.updateProjectionMatrix();renderer.setSize(w,h);composer.setSize(w,h);bloom.resolution.set(ULTRA()?w:w/2,ULTRA()?h:h/2);if(window.__gt)window.__gt.setSize(w*renderer.getPixelRatio(),h*renderer.getPixelRatio());const pr=renderer.getPixelRatio();fxaa.material.uniforms.resolution.value.set(1/(w*pr),1/(h*pr));if(window.__grade)window.__grade.uniforms.uPx.value.set(1/(w*pr),1/(h*pr))}
 addEventListener('resize',resize);resize();
@@ -3010,8 +3010,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='4.9';
+const APP_VER='4.9.1';
 const CHANGELOG=[
+  {v:'4.9.1',d:'15 nov.',n:[['🖥️','Rectangle noir (PC)','L\'anticrénelage matériel, en cause sur certaines cartes graphiques, est remplacé par un lissage logiciel.']]},
   {v:'4.9',d:'15 nov.',n:[['💎','Qualité Ultra (PC)','Pleine résolution, ombres 4096 à chaque image, occlusion et halo en pleine qualité, 60 i/s en continu, textures nettes de loin.'],['⚙️','Réglages','Ultra / Haute / Économie. Ultra est choisi par défaut sur ordinateur si la carte graphique le permet.']]},
   {v:'4.8.2',d:'15 nov.',n:[['🖥️','Navigateur PC','Plus de rectangle noir qui clignote ; HUD compact en haut à gauche sur grand écran ; caméra plus proche de la base au démarrage.']]},
   {v:'4.8.1',d:'15 nov.',n:[['↩️','Version ordinateur retirée','Retour à l\'interface d\'avant sur tous les écrans.']]},
