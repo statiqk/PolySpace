@@ -317,7 +317,7 @@ body.free #hud,body.free #side,body.free #obj,body.free #nav,body.free #menuPop{
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.3.1</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.4</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -1063,6 +1063,61 @@ MODELS.generateur=lv=>{const g=new THREE.Group();plinth(g);
   if(lv>=3){for(let k=0;k<4;k++)box(.05,1.3,.9,M.panelW,-1.35+k*.0,Y+1.85,.35,g).position.set(-1.0+k*.28,Y+1.75,.35);box(1.1,.06,1,M.grey,-.58,Y+1.12,.35,g);glow(sph(.07,M.red,-1.0,Y+2.45,.35,g))}
   g.userData.vent=null;return g};
 }
+{
+const box=(w,h,d,mat,x,y,z,p)=>mesh(new THREE.BoxGeometry(w,h,d),mat,x,y,z,p);
+const cyl=(rt,rb,h,mat,x,y,z,p,seg=24)=>mesh(new THREE.CylinderGeometry(rt,rb,h,seg),mat,x,y,z,p);
+const sph=(r,mat,x,y,z,p,ws=24,hs=12,half=false)=>mesh(new THREE.SphereGeometry(r,ws,hs,0,Math.PI*2,0,half?Math.PI/2:Math.PI),mat,x,y,z,p);
+const tor=(r,t,mat,x,y,z,p,rx=Math.PI/2,arc=Math.PI*2)=>{const m=mesh(new THREE.TorusGeometry(r,t,8,48,arc),mat,x,y,z,p);m.rotation.x=rx;return m};
+const glow=m=>{m.castShadow=false;return m};
+const pipe=(a,b,r,mat,p)=>{const A=new THREE.Vector3(...a),B=new THREE.Vector3(...b);const m=mesh(new THREE.CylinderGeometry(r,r,A.distanceTo(B),10),mat,(A.x+B.x)/2,(A.y+B.y)/2,(A.z+B.z)/2,p);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),B.clone().sub(A).normalize());return m};
+const ring=(n,r,y,fn)=>{for(let i=0;i<n;i++){const a=i/n*Math.PI*2;fn(Math.cos(a)*r,y,Math.sin(a)*r,a,i)}};
+/* ===== habitats : dortoir, suite, tour (v4.4) ===== */
+MODELS.dortoir=lv=>{const g=new THREE.Group();plinth(g);const Y=.33;
+  const hut=(z,r,L)=>{const hg=(h)=>{const q=new THREE.CylinderGeometry(r,r,h,32,1,false,0,Math.PI);q.rotateZ(Math.PI/2);return q};
+    mesh(hg(L),M.white,0,Y+.02,z,g);
+    for(let k=-2;k<=2;k++)tor(r+.015,.03,M.gold,k*L/5.2,Y+.02,z,g,0,Math.PI).rotation.set(0,Math.PI/2,0);
+    for(const s of [-1,1]){mesh(hg(.06),M.panelW,s*L/2,Y+.02,z,g);
+      box(.34,.62,.5,M.panelW,s*(L/2+.17),Y+.31,z,g);box(.36,.06,.52,M.orange,s*(L/2+.17),Y+.64,z,g);glow(box(.02,.34,.22,M.winB,s*(L/2+.345),Y+.3,z,g))}
+    for(let k=0;k<6;k++){const x=-L/2+.4+k*(L-.8)/5;for(const a of [-.95,.95]){const w=cyl(.1,.1,.06,M.dark,x,Y+.02+Math.cos(a)*r,z+Math.sin(a)*r,g,14);w.rotation.x=a;
+      const gl=glow(cyl(.07,.07,.07,M.win,x,Y+.02+Math.cos(a)*(r+.005),z+Math.sin(a)*(r+.005),g,12));gl.rotation.x=a}}};
+  if(lv===1){hut(0,.92,2.7);cyl(.22,.22,.9,M.panelW,-1.1,Y+.45,1.25,g,16);cyl(.22,.22,.9,M.panelW,-.6,Y+.45,1.25,g,16);pipe([-1.1,Y+.8,1.25],[-1.1,Y+.8,.8],.04,M.copper,g)}
+  else{hut(-.78,.72,2.9);hut(.78,.72,2.9);box(.5,.5,.9,M.panelW,0,Y+.25,0,g);box(.52,.05,.92,M.orange,0,Y+.52,0,g);
+    if(lv>=3){for(const z of [-.78,.78])for(let k=0;k<3;k++){const p=box(.7,.04,.5,M.solar,-.9+k*.9,Y+.95,z,g);p.rotation.x=z>0?-.25:.25}
+      cyl(.04,.04,.8,M.grey,1.45,Y+1.2,0,g,8);glow(sph(.07,M.red,1.45,Y+1.62,0,g))}}
+  return g};
+MODELS.suite=lv=>{const g=new THREE.Group();plinth(g);const Y=.33;
+  // dôme bas principal
+  const d=sph(1.25,M.white,-.25,Y+.15,-.2,g,40,16,true);d.scale.y=.62;cyl(1.27,1.27,.18,M.gold,-.25,Y+.12,-.2,g,40);
+  // grande baie vitrée
+  const bay=new THREE.Mesh(new THREE.SphereGeometry(1.262,40,12,-.75,1.5,.95,.55),M.glass);bay.position.set(-.25,Y+.15,-.2);bay.scale.y=.62;bay.renderOrder=2;g.add(bay);
+  glow(box(1.2,.32,.04,M.win,-.25,Y+.42,.86,g));
+  for(let k=0;k<5;k++)box(.03,.5,.03,M.grey,-.25+(k-2)*.3,Y+.45,1.0-.04*Math.abs(k-2),g);
+  // terrasse
+  box(1.6,.06,.7,M.paint,-.25,Y+.04,1.35,g);for(let k=0;k<7;k++)box(.03,.28,.03,M.grey,-1.0+k*.25,Y+.2,1.68,g);box(1.6,.03,.03,M.grey,-.25,Y+.34,1.68,g);
+  // jardin sous verre
+  cyl(.55,.6,.12,M.panelW,1.1,Y+.06,.9,g,28);const gd=sph(.55,M.glassG,1.1,Y+.12,.9,g,28,12,true);gd.renderOrder=2;
+  for(const [x,z,s] of [[1.0,.8,.22],[1.25,1.0,.17],[1.15,.7,.13]]){sph(s,M.tree,x,Y+.2+s,z,g,10,8);cyl(.03,.03,.2,M.copper,x,Y+.2,z,g,6)}
+  pipe([.6,Y+.18,.6],[.85,Y+.18,.75],.08,M.panelW,g);
+  if(lv>=2){cyl(.5,.55,.12,M.panelW,1.1,Y+.06,-1.0,g,28);const g2=sph(.5,M.glassG,1.1,Y+.12,-1.0,g,28,12,true);g2.renderOrder=2;sph(.2,M.tree,1.1,Y+.35,-1,g,10,8);pipe([.75,Y+.18,-.75],[.95,Y+.18,-.85],.08,M.panelW,g)}
+  if(lv>=3){tor(.55,.05,M.gold,-.25,Y+.95,-.2,g);const ob=sph(.5,M.glass,-.25,Y+.9,-.2,g,28,10,true);ob.renderOrder=2;glow(cyl(.45,.45,.04,M.win,-.25,Y+.88,-.2,g,28))}
+  glow(sph(.05,M.amber,-1.0,Y+.42,1.68,g));glow(sph(.05,M.amber,.5,Y+.42,1.68,g));
+  return g};
+MODELS.tour=lv=>{const g=new THREE.Group();plinth(g);const Y=.33;const n=lv+1,H=.95,R=.95;
+  cyl(1.15,1.2,.3,M.grey,0,Y+.15,0,g,32);
+  for(let f=0;f<n;f++){const y=Y+.3+f*H;cyl(R,R,H-.06,M.white,0,y+H/2,0,g,40);cyl(R+.02,R+.02,.08,M.gold,0,y+.04,0,g,40);
+    ring(10,R+.005,y+H*.55,(x,yy,z,a)=>{const w=glow(box(.2,.26,.03,(f+Math.round(a*3))%3?M.win:M.winB,x,yy,z,g));w.rotation.y=-a+Math.PI/2});
+    tor(R+.28,.03,M.grey,0,y+.06,0,g);ring(12,R+.28,y+.22,(x,yy,z)=>box(.025,.3,.025,M.grey,x,yy,z,g))}
+  const top=Y+.3+n*H;dome(g,R,M.white,top);
+  // ascenseur vitré
+  const sh=box(.36,n*H+.3,.36,M.glass,R+.25,Y+.3+(n*H+.3)/2,-.1,g);sh.renderOrder=2;box(.4,.06,.4,M.grey,R+.25,Y+.3+n*H+.32,-.1,g);
+  box(.28,.32,.28,M.panelW,R+.25,Y+.3+H*(n-1)*.5+.2,-.1,g);
+  // antenne
+  cyl(.04,.04,1.1,M.grey,0,top+R*.8+.4,0,g,8);glow(sph(.08,M.red,0,top+R*.8+.95,0,g));tor(.22,.02,M.grey,0,top+R*.8+.5,0,g,0);
+  box(.6,.5,.4,M.panelW,-1.2,Y+.25,1.15,g);cyl(.18,.18,.7,M.panelW,1.2,Y+.35,1.2,g,16);
+  return g};
+
+}
+
 /* ===== 9 bâtiments détaillés (v3.5) ===== */
 {
 const box=(w,h,d,mat,x,y,z,p)=>mesh(new THREE.BoxGeometry(w,h,d),mat,x,y,z,p);
@@ -1454,7 +1509,10 @@ const selRing=new THREE.Mesh(new THREE.RingGeometry(2.3,2.55,48),new THREE.MeshB
 
 /* ================== DONNÉES DE JEU ================== */
 const DEFS={
- habitat:{name:'Habitat',cat:'vie',icon:'🏠',cost:400,en:-4,cap:4,desc:'Loge 4 colons. Pressurisé.',bg:'#2b3a66'},
+ habitat:{name:'Habitat',cat:'vie',icon:'🏠',cost:400,en:-4,cap:4,desc:'Loge 4 colons. Pressurisé. Confort correct.',bg:'#2b3a66'},
+ dortoir:{name:'Dortoir',cat:'vie',icon:'🛏️',cost:450,en:-5,cap:8,moral:-2,lodge:.6,desc:'Loge 8 colons à moindre coût, mais à l\'étroit : moral −2, loyer ×0,6.',bg:'#4a3a22'},
+ suite:{name:'Suite résidentielle',cat:'vie',icon:'🏡',cost:700,rare:4,en:-4,cap:3,moral:4,lodge:2,desc:'3 colons dans le confort : baie vitrée, jardin sous verre. Moral +4, loyer ×2.',bg:'#4a2a66'},
+ tour:{name:'Tour d\'habitation',cat:'vie',icon:'🏢',cost:1400,rare:10,en:-8,cap:14,desc:'14 colons sur une seule case, sur plusieurs étages.',bg:'#2a4a5a',req:'urba'},
  extracteur:{name:'Extracteur de glace',cat:'vie',icon:'💧',cost:340,en:-5,water:5,desc:'Chauffe la glace du sous-sol et produit de l\'eau.',bg:'#1d4a7a'},
  frigo:{name:'Entrepôt réfrigéré',cat:'vie',icon:'🧊',cost:300,en:-3,unique:true,desc:'Les vivres ne périment presque plus (−0,1 %/h au lieu de −0,4 %/h).',bg:'#2a5a7a'},
  serre:{name:'Serre hydroponique',cat:'vie',icon:'🌱',cost:320,en:-6,food:3,desc:'Produit des vivres.',bg:'#1f6a45'},
@@ -1476,7 +1534,7 @@ const DEFS={
  observatoire:{name:'Observatoire',cat:'science',icon:'🔭',cost:550,rare:6,en:-4,sci:1.5,desc:'+1,5 🔬/h, et repère les dangers : expéditions 20 % moins risquées.',bg:'#2a2a6a'},
  labo:{name:'Laboratoire',cat:'science',icon:'🔬',cost:520,rare:4,en:-6,sci:1,desc:'Produit des points de science.',bg:'#4a2a66'},
 };
-const PRESS=['habitat','serre','recycleur','parc','labo','reacteur','imprimante','hopital','observatoire'];
+const PRESS=['habitat','dortoir','suite','tour','serre','recycleur','parc','labo','reacteur','imprimante','hopital','observatoire'];
 const RESEARCH=[
  {id:'serreled',name:'Serres LED',icon:'💡',cost:30,desc:'Serres +50 % de vivres.'},
  {id:'forage',name:'Forage profond',icon:'⛏️',cost:45,desc:'Foreuses +50 % de régolithe.'},
@@ -1490,6 +1548,7 @@ const RESEARCH=[
  {id:'secours',name:'Piles à combustible',icon:'🔌',cost:40,desc:'Débloque le Générateur de secours.'},
  {id:'microgrid',name:'Micro-réseau',icon:'🔗',cost:70,desc:'Générateurs de secours +25 % et délestage plus fin.'},
  {id:'antistat',name:'Revêtement antistatique',icon:'🧲',cost:60,desc:'Panneaux et générateurs ne s\'encrassent plus pendant les tempêtes de poussière.'},
+ {id:'urba',name:'Urbanisme',icon:'🏢',cost:80,desc:'Débloque la Tour d\'habitation (14 places).'},
  {id:'admin',name:'Administration',icon:'🏛️',cost:45,desc:'Recettes des taxes +20 %.'},
  {id:'navette',name:'Navette lourde',icon:'🚀',cost:90,desc:'Ravitaillements plus fréquents et plus gros.'},
 ];
@@ -2227,7 +2286,8 @@ const subsidy=()=>Math.round(50+S.prestige*2.2+8*S.colons);
 const salaries=()=>S.people.reduce((a,p)=>a+wageOf(p),0)+Math.max(0,S.colons-S.people.length)*15;
 const LODGE=[{n:'Gratuit',r:0,m:3},{n:'5 💰',r:5,m:0},{n:'10 💰',r:10,m:-5}];
 const lodgeLv=()=>S.lodge??1;
-const lodgeEst=()=>{const e=taxEst();return LODGE[lodgeLv()].r*(e.pay-e.ref)};
+const lodgeK=()=>{let c=0,w=0;for(const b of S.b){const d=DEFS[b.t];if(!d.cap||b.dmg)continue;const k=Math.round(d.cap*LV_K[lvOf(b)-1]);c+=k;w+=k*(d.lodge??1)}return c?w/c:1};
+const lodgeEst=()=>{const e=taxEst();return Math.round(LODGE[lodgeLv()].r*(e.pay-e.ref)*lodgeK())};
 const netSol=()=>subsidy()+tourists()+taxEst().g+lodgeEst()-rent()-salaries();
 const rent=()=>20+S.b.length*2;
 const tourists=()=>S.st&&S.st.built&&!(S.st.down>0)?S.st.m.filter(m=>m.t==='habO').length*30:0;
@@ -2504,7 +2564,7 @@ const CATS=[['vie','🫁','Vie'],['energie','⚡','Énergie'],['industrie','🏭
 function suggested(){const s=new Set();for(const a of (curAlerts||[]))if(a.sev>=2&&a.btn==='Construire'){const m=a.t.match(/Eau|Oxygène|Vivres|Énergie/);if(m)s.add({Eau:'extracteur',Oxygène:'recycleur',Vivres:'serre',Énergie:'solaire'}[m[0]])}
   if(S.req){const map={parc:'parc',hopital:'hopital',vivres:'serre',eau:'extracteur',place:'habitat'};if(map[S.req.k])s.add(map[S.req.k])}if(rates.cap<=S.colons)s.add('habitat');return s}
 function fxChips(k){const d=DEFS[k],L=[];if(d.water)L.push(['#4fb8ff','💧 +'+d.water+'/h']);if(d.o2)L.push(['#5fe1ff','💨 +'+d.o2+'/h']);if(d.food)L.push(['#6dffb5','🌱 +'+d.food+'/h']);if(d.rego)L.push(['#ffb36b','⛏ +'+d.rego+'/h']);if(d.sci)L.push(['#d39bff','🔬 +'+String(d.sci).replace('.',',')+'/h']);
-  if(d.cap)L.push(['#fff','👩‍🚀 +'+d.cap]);if(d.store)L.push(['#5fe1ff','🔋 +'+d.store]);if(d.solar)L.push(['#ffd84a','☀️ +'+d.solar]);if(d.moral)L.push(['#ffd36b','🙂 +'+d.moral]);
+  if(d.cap)L.push(['#fff','👩‍🚀 +'+d.cap]);if(d.store)L.push(['#5fe1ff','🔋 +'+d.store]);if(d.solar)L.push(['#ffd84a','☀️ +'+d.solar]);if(d.moral)L.push([d.moral>0?'#ffd36b':'#ff9a8a','🙂 '+(d.moral>0?'+':'−')+Math.abs(d.moral)]);
   if(k==='generateur')L.push(['#ffd84a','⚡ +18'],['#ff9a8a','💧 −2,5']);if(k==='recycleur')L.push(['#ff9a8a','💧 −0,6']);if(k==='serre')L.push(['#ff9a8a','💧 −0,5']);if(d.en)L.push([d.en>0?'#ffd84a':'#9aa6c8','⚡ '+(d.en>0?'+':'−')+Math.abs(d.en)]);
   const SP={imprimante:'🛠️ −50 % réparations',spatioport:'🛸 navettes ×1,5',bouclier:'🛡️ anti-météorites',hopital:'🏥 isole les malades',helium3:'🟣 +hélium-3',observatoire:'🧭 −20 % risque',frigo:'🧊 vivres conservés',pad:'🚀 navettes'};if(SP[k])L.unshift(['#fff',SP[k]]);
   return L.slice(0,3).map(([c,t])=>`<span style="color:${c}">${t}</span>`).join('')}
@@ -2653,7 +2713,7 @@ function updSelTag(){const t=document.getElementById('selTag');if(!t)return;cons
   t.style.display='block';t.style.transform=`translate(${(_tv.x*.5+.5)*innerWidth}px,${(-_tv.y*.5+.5)*innerHeight}px) translate(-50%,-100%)`;t.classList.toggle('bad',!!b.dmg)}
 
 /* ================== RECHERCHE : ARBRE ================== */
-const TREE={serreled:[0,0,null],forage:[1,0,null],parc:[0,1,'serreled'],inge:[1,1,'forage'],vaccin:[0,2,'parc'],panneaux:[1,2,'inge'],champ:[0,3,'vaccin'],fusion:[1,3,'panneaux'],he3:[0,4,'fusion'],navette:[1,4,'panneaux'],secours:[1,5,'panneaux'],microgrid:[0,5,'secours'],admin:[1,6,'secours'],antistat:[0,6,'microgrid']};
+const TREE={serreled:[0,0,null],forage:[1,0,null],parc:[0,1,'serreled'],inge:[1,1,'forage'],vaccin:[0,2,'parc'],panneaux:[1,2,'inge'],champ:[0,3,'vaccin'],fusion:[1,3,'panneaux'],he3:[0,4,'fusion'],navette:[1,4,'panneaux'],secours:[1,5,'panneaux'],microgrid:[0,5,'secours'],admin:[1,6,'secours'],urba:[1,7,'admin'],antistat:[0,6,'microgrid']};
 let resSel=null;
 function resState(r){if(has(r.id))return'done';const pre=TREE[r.id]&&TREE[r.id][2];if(pre&&!has(pre))return'lock';return'av'}
 function renderResearch(){const rs=rates.sci||0;const W=Math.min(520,innerWidth)-28,cw=(W-14)/2,RH=92;
@@ -2828,8 +2888,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='4.3.1';
+const APP_VER='4.4';
 const CHANGELOG=[
+  {v:'4.4',d:'15 nov.',n:[['🛏️','Dortoir','8 places pour ⛏ 450, mais moral −2 et loyer ×0,6.'],['🏡','Suite résidentielle','3 places de luxe : baie vitrée, jardin sous verre, moral +4, loyer ×2.'],['🏢','Tour d\'habitation','14 places sur une case, jusqu\'à 4 étages (recherche Urbanisme).']]},
   {v:'4.3.1',d:'15 nov.',n:[['🏠','Loyer des habitats','Chaque colon paie un loyer à 07:00 : gratuit (+3 🙂), 5 💰 ou 10 💰 (−5 🙂). Réglage dans Paie.']]},
   {v:'4.3',d:'15 nov.',n:[['👩‍🚀','Salaires par métier','Botaniste 12 → Médecin 25 💰/sol, +1 💰 tous les 10 sols d\'ancienneté. Prime +20 % : moral +6.'],['🏛️','Taxe en %','10, 20 ou 35 % du salaire : jamais plus que ce que gagne le colon.'],['📊','Bilan','Subvention +8 💰 par colon ; bilan du sol dans le panneau Ressources, net/sol sur la puce 💰.']]},
   {v:'4.2',d:'15 nov.',n:[['🌪️','Tempêtes de poussière','Prévues 6 h avant (12 h avec observatoire), force 1 à 5 : panneaux −60 %, usure ×2, véhicules à l\'arrêt, décharges.'],['🔌','Générateurs','Ils prennent le relais, mais leurs filtres s\'encrassent après 6 h (sauf niveau 3) et ils attirent les décharges.'],['🧹','Nettoyage','Panneaux encrassés après la tempête : robot ou ⛏ 40. Nouveaux : Mât de décharge et recherche Revêtement antistatique.']]},

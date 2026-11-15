@@ -1,9 +1,9 @@
 {
- "version": "4.3.1",
+ "version": "4.4",
  "date": "2026-11-15",
  "notes": [
-  "Salaires par métier",
-  "Taxe en % du salaire",
-  "Bilan du sol"
+  "Dortoir",
+  "Suite résidentielle",
+  "Tour d'habitation (Urbanisme)"
  ]
 }
