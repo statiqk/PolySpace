@@ -320,7 +320,7 @@ body.free #hud,body.free #side,body.free #obj,body.free #nav,body.free #menuPop{
   <button class="btn go sp-main" id="start">▶ Commencer</button>
   <div class="sp-row"><button class="btn ghost" id="spNew">＋ Nouvelle partie</button><button class="btn ghost sp-ic" id="spSet">⚙️</button><button class="btn ghost sp-ic" id="spRec">🏆</button></div>
   <div class="sp-panel glass" id="spPanel"></div>
-  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.9.1</div>
+  <div class="sp-ver" id="spVer">Powered by PolyTabs · Avant-Poste v4.9.2</div>
  </div>
 </div>
 <div id="load">CHARGEMENT…</div>
@@ -3010,8 +3010,9 @@ addEventListener('visibilitychange',()=>{if(document.hidden&&!over)save()});
 paused=true;
 function ago(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`}
 /* ================== MISES À JOUR ================== */
-const APP_VER='4.9.1';
+const APP_VER='4.9.2';
 const CHANGELOG=[
+  {v:'4.9.2',d:'15 nov.',n:[['⚙️','Occlusion ambiante','Nouveau réglage Oui / Non (accueil → Réglages), pour tester le rectangle noir.']]},
   {v:'4.9.1',d:'15 nov.',n:[['🖥️','Rectangle noir (PC)','L\'anticrénelage matériel, en cause sur certaines cartes graphiques, est remplacé par un lissage logiciel.']]},
   {v:'4.9',d:'15 nov.',n:[['💎','Qualité Ultra (PC)','Pleine résolution, ombres 4096 à chaque image, occlusion et halo en pleine qualité, 60 i/s en continu, textures nettes de loin.'],['⚙️','Réglages','Ultra / Haute / Économie. Ultra est choisi par défaut sur ordinateur si la carte graphique le permet.']]},
   {v:'4.8.2',d:'15 nov.',n:[['🖥️','Navigateur PC','Plus de rectangle noir qui clignote ; HUD compact en haut à gauche sur grand écran ; caméra plus proche de la base au démarrage.']]},
@@ -3088,14 +3089,14 @@ function renderSplash(){const has=!!saved;$('#start').textContent=has?'▶ Repre
 renderSplash();
 setTimeout(()=>checkUpdate(false),1200);
 let spPanel='';function showPanel(k){spPanel=spPanel===k?'':k;const P=$('#spPanel');P.classList.toggle('on',!!spPanel);
-  if(spPanel==='set'){P.innerHTML=`<h4>⚙️ Réglages</h4><div class="sp-opt"><span>Qualité graphique</span><div class="sp-tg">${MOBILE?'':`<button data-q="ultra" class="${SET.q==='ultra'?'on':''}">Ultra</button>`}<button data-q="high" class="${SET.q==='high'?'on':''}">Haute</button><button data-q="eco" class="${SET.q==='eco'?'on':''}">Économie</button></div></div><div class="sp-opt"><span>Vibrations</span><div class="sp-tg"><button data-v="1" class="${SET.vib?'on':''}">Oui</button><button data-v="0" class="${!SET.vib?'on':''}">Non</button></div></div><div class="sp-opt"><span>Version v${APP_VER}</span><button class="btn ghost" id="chk" style="padding:6px 10px;font-size:11.5px">🔄 Vérifier maintenant</button></div><div style="max-height:150px;overflow-y:auto;margin-top:4px">${CHANGELOG.map(c=>`<div class="sp-opt" style="display:block"><b style="color:#7fd3ff">v${c.v}</b> · ${c.d}<div style="font-size:11.5px;color:#9aa6c8;margin-top:2px">${c.n.map(n=>n[0]+' '+n[1]).join(' · ')}</div></div>`).join('')}</div>`;
-    const ck=$('#chk');if(ck)ck.onclick=()=>checkUpdate(true);P.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{SET.q=b.dataset.q;applyQ();storeSet();showPanel('');showPanel('set')});P.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{SET.vib=b.dataset.v==='1';storeSet();vib(40);showPanel('');showPanel('set')})}
+  if(spPanel==='set'){P.innerHTML=`<h4>⚙️ Réglages</h4><div class="sp-opt"><span>Qualité graphique</span><div class="sp-tg">${MOBILE?'':`<button data-q="ultra" class="${SET.q==='ultra'?'on':''}">Ultra</button>`}<button data-q="high" class="${SET.q==='high'?'on':''}">Haute</button><button data-q="eco" class="${SET.q==='eco'?'on':''}">Économie</button></div></div><div class="sp-opt"><span>Occlusion ambiante</span><div class="sp-tg"><button data-ao="1" class="${SET.ao!==false?'on':''}">Oui</button><button data-ao="0" class="${SET.ao===false?'on':''}">Non</button></div></div><div class="sp-opt"><span>Vibrations</span><div class="sp-tg"><button data-v="1" class="${SET.vib?'on':''}">Oui</button><button data-v="0" class="${!SET.vib?'on':''}">Non</button></div></div><div class="sp-opt"><span>Version v${APP_VER}</span><button class="btn ghost" id="chk" style="padding:6px 10px;font-size:11.5px">🔄 Vérifier maintenant</button></div><div style="max-height:150px;overflow-y:auto;margin-top:4px">${CHANGELOG.map(c=>`<div class="sp-opt" style="display:block"><b style="color:#7fd3ff">v${c.v}</b> · ${c.d}<div style="font-size:11.5px;color:#9aa6c8;margin-top:2px">${c.n.map(n=>n[0]+' '+n[1]).join(' · ')}</div></div>`).join('')}</div>`;
+    const ck=$('#chk');if(ck)ck.onclick=()=>checkUpdate(true);P.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{SET.q=b.dataset.q;applyQ();storeSet();showPanel('');showPanel('set')});P.querySelectorAll('[data-ao]').forEach(b=>b.onclick=()=>{SET.ao=b.dataset.ao==='1';applyQ();storeSet();showPanel('');showPanel('set')});P.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{SET.vib=b.dataset.v==='1';storeSet();vib(40);showPanel('');showPanel('set')})}
   else if(spPanel==='rec'){P.innerHTML=`<h4>🏆 Records</h4><div class="sp-rec"><div><b>${REC.bestSol}</b><small>sols tenus</small></div><div><b>${REC.maxCol}</b><small>colons max</small></div><div><b>${REC.missions}</b><small>expéditions</small></div></div><div class="sp-opt" style="margin-top:8px"><span>Objectifs de la partie</span><b>${S.obj}/${OBJ.length}</b></div><div class="ibar"><span style="width:${S.obj/OBJ.length*100}%;background:linear-gradient(90deg,#ffb347,#ffd36b)"></span></div>`}}
 function storeSet(){try{localStorage.setItem('ap_settings',JSON.stringify(SET))}catch(_){}}
-function applyQ(){const eco=SET.q==='eco',ul=ULTRA();if(ul)qStep=0;gtao.enabled=!eco&&qStep<1;pr=eco?Math.min(1.25,DPR):ul?Math.min(devicePixelRatio,2):DPR;renderer.setPixelRatio(pr);composer.setPixelRatio(pr);bloom.enabled=!eco;renderer.shadowMap.enabled=true;const sm=eco?1024:ul?4096:(MOBILE?1536:2048);sun.shadow.mapSize.set(sm,sm);sun.shadow.radius=ul?3:1;gtao.blendIntensity=ul?1:.85;
+function applyQ(){const eco=SET.q==='eco',ul=ULTRA();if(ul)qStep=0;gtao.enabled=!eco&&qStep<1&&SET.ao!==false;pr=eco?Math.min(1.25,DPR):ul?Math.min(devicePixelRatio,2):DPR;renderer.setPixelRatio(pr);composer.setPixelRatio(pr);bloom.enabled=!eco;renderer.shadowMap.enabled=true;const sm=eco?1024:ul?4096:(MOBILE?1536:2048);sun.shadow.mapSize.set(sm,sm);sun.shadow.radius=ul?3:1;gtao.blendIntensity=ul?1:.85;
   {const an=ul?renderer.capabilities.getMaxAnisotropy():1;const seen=new Set();scene.traverse(o=>{const ms=o.material?(Array.isArray(o.material)?o.material:[o.material]):[];for(const m of ms)for(const k of ['map','normalMap','bumpMap','roughnessMap']){const t=m[k];if(t&&!seen.has(t)){seen.add(t);t.anisotropy=an;t.needsUpdate=true}}})}
   if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}resize()}
-if(SET.q!=='high')applyQ();
+if(SET.q!=='high'||SET.ao===false)applyQ();
 $('#spSet').onclick=()=>showPanel('set');$('#spRec').onclick=()=>showPanel('rec');
 $('#spNew').onclick=()=>{const b=$('#spNew');if(!b.dataset.c){b.dataset.c=1;b.textContent='⚠️ Écraser la partie ?';b.style.background='rgba(255,80,70,.3)';setTimeout(()=>{delete b.dataset.c;b.textContent='＋ Nouvelle partie';b.style.background=''},6000);return}
   hardReset();leaveSplash()};
