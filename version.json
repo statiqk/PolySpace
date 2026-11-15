@@ -1,7 +1,10 @@
 {
- "version": "3.7",
+ "version": "3.8",
  "date": "2026-11-15",
  "notes": [
-  "6 véhicules remodélisés"
+  "Rendu ~4× plus léger sur les grandes bases",
+  "Interface compacte",
+  "Vue libre (double-tap)",
+  "Démarrage plus rapide"
  ]
 }
