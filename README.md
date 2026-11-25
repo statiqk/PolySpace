@@ -12,3 +12,7 @@ Ouvre `index.html` dans un navigateur, ou active GitHub Pages sur ce dépôt (Se
 - La partie est sauvegardée automatiquement dans le navigateur.
 
 Powered by PolyTabs.
+
+## Échoué
+
+Autre jeu du dépôt : survie et gestion sur une planète inconnue (top-down, paysage). Ouvre `echoue/index.html` (ou `/echoue/` sur GitHub Pages).
