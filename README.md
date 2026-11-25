@@ -1,18 +1,14 @@
-# Avant-Poste — PolySpace
+# Échoué — PolySpace
 
-Jeu de gestion d'une base lunaire en 3D, pensé pour smartphone.
+Jeu de survie et de gestion sur une planète inconnue (top-down, paysage, smartphone).
 
-Construis et améliore tes modules, gère l'eau, l'oxygène, l'énergie et les vivres, affecte tes colons, survis aux nuits lunaires, aux pannes et aux épidémies, envoie le rover en expédition, bâtis la station orbitale Hélios et fais tourner l'économie avec la Terre.
+Récolte, construis ta base, gère l'énergie, envoie des drones et tiens bon face aux orages.
 
 ## Jouer
 
 Ouvre `index.html` dans un navigateur, ou active GitHub Pages sur ce dépôt (Settings → Pages → branche `main`, dossier `/`).
 
-- Fichier unique, sans installation : Three.js est chargé depuis jsDelivr.
+- Fichier unique, sans installation.
 - La partie est sauvegardée automatiquement dans le navigateur.
 
-Powered by PolyTabs.
-
-## Échoué
-
-Autre jeu du dépôt : survie et gestion sur une planète inconnue (top-down, paysage). Ouvre `echoue/index.html` (ou `/echoue/` sur GitHub Pages).
+Avant-Poste (ancien contenu du dépôt) reste disponible dans l'historique git, commit 5f572ab.
