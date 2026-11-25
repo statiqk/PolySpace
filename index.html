@@ -264,6 +264,8 @@ body.storm #obj{top:64px}body.storm #toast{top:96px}#toast{top:92px}
 .gn{position:absolute;transform:translate(-50%,-50%);font:800 12px/1 inherit;color:#fff;text-shadow:0 1px 3px #000,0 0 6px #000;white-space:nowrap;animation:gnf 1.3s ease-out forwards}
 @keyframes gnf{0%{opacity:0;margin-top:0}15%{opacity:1}100%{opacity:0;margin-top:-34px}}
 #bsDel.arm{background:#8a2222!important;color:#fff!important}
+@media (max-width:640px){#clock,#banner{right:calc(var(--q) + 108px + 24px)!important}#toast{right:calc(var(--q) + 108px + 24px)!important}}
+@media (max-height:340px){:root{--q:34px}#mapwrap{gap:2px!important}}
 </style>
 <script>
 (function(){try{
@@ -335,6 +337,7 @@ document.addEventListener('pointerdown',function f(){window.__lockLand();},{once
       <div class="mst" id="menuStats"></div>
       <div class="mlbl">Stocks</div><div class="mrs" id="menuRes"></div>
       <div class="mbt"><button id="btnResume">REPRENDRE</button></div>
+      <div class="pft" style="margin-top:6px"><span id="verInfo"></span> · <button id="btnUpd" class="alt" style="padding:3px 10px;font-size:10px">Vérifier les mises à jour</button></div>
       <div class="mbt"><span class="alt" id="saveInfo" style="pointer-events:none"></span><button id="btnFull2" class="alt">Plein écran</button><button id="btnNew" class="alt danger">Nouvelle partie</button></div>
     </div>
     <div class="mb" id="mb1">
@@ -81931,13 +81934,25 @@ function uisave(){try{localStorage.setItem('echoue_ui',JSON.stringify(UI));}catc
 document.querySelectorAll('#bseg button').forEach(b=>b.addEventListener('click',()=>{UI.bs=b.dataset.b;uisave();}));
 document.querySelectorAll('#hseg button').forEach(b=>b.addEventListener('click',()=>{UI.hand=b.dataset.h;uisave();}));
 function qsync(){uisync();document.querySelectorAll('#qseg button').forEach(b=>b.classList.toggle('on',b.dataset.q===qname));}
-function openMenu(){S.paused=true;S.harvest=false;$('btnHarvest').classList.remove('on');$('menuOv').classList.add('show');qsync();
+// ---------- mise à jour automatique ----------
+const VER='1.0.0',VNOTE='Interface refaite : panneaux, objectifs, alertes en icônes.';
+const vnum=v=>String(v).split('.').map(n=>parseInt(n)||0);
+const vnew=(a,b)=>{const x=vnum(a),y=vnum(b);for(let i=0;i<3;i++){if((x[i]||0)!==(y[i]||0))return(x[i]||0)>(y[i]||0);}return false;};
+let updPend=null,updBusy=false;
+let updLast=0;function checkUpd(manual){if(!manual&&Date.now()-updLast<30000)return Promise.resolve(!!updPend);updLast=Date.now();if(updBusy||!/^https?:/.test(location.protocol))return Promise.resolve(false);updBusy=true;
+  return fetch('version.json?'+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(d=>{updBusy=false;if(d&&d.version&&vnew(d.version,VER)){updPend=d;return true;}if(manual)toast('Jeu à jour (v'+VER+')',2000);return false;}).catch(()=>{updBusy=false;if(manual)toast('Vérification impossible',2000);return false;});}
+function applyUpd(){if(!updPend)return false;let n=0;try{n=+(sessionStorage.getItem('echoue_ut')||0);}catch(e){}if(n>=2)return false;try{sessionStorage.setItem('echoue_ut',n+1);}catch(e){}
+  try{save();localStorage.setItem('echoue_note',updPend.notes&&updPend.notes[0]||'');}catch(e){}location.replace(location.pathname+'?v='+encodeURIComponent(updPend.version));return true;}
+try{const pv=localStorage.getItem('echoue_ver');if(pv&&pv!==VER){setTimeout(()=>toast('Mis à jour · v'+VER+' · '+(localStorage.getItem('echoue_note')||VNOTE),4500),1500);}localStorage.setItem('echoue_ver',VER);sessionStorage.removeItem('echoue_ut');}catch(e){}
+checkUpd().then(f=>{if(f&&!S.started)applyUpd();});
+setInterval(()=>checkUpd(),600000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpd();});
+function openMenu(){if(updPend&&applyUpd())return;checkUpd().then(f=>{if(f&&S.paused)applyUpd();});S.paused=true;S.harvest=false;$('btnHarvest').classList.remove('on');$('menuOv').classList.add('show');qsync();
   const pw=power();$('menuStats').innerHTML='<div>Jour<b>'+S.day+'</b></div><div>Bâtiments<b>'+S.bld.length+'</b></div><div>Drones<b>'+S.drones.length+'</b></div><div>Énergie<b>'+pw.prod.toFixed(1)+' / '+pw.cons.toFixed(0)+'</b></div>';
   $('menuRes').innerHTML=RES.map(k=>'<div><i style="background:'+RCOL[k]+'"></i>'+Math.floor(S.stock[k])+(k==='iridium'&&!S.iriSeen?'':'')+(k==='metal'?'<small>/'+cap()+'</small>':'')+'</div>').join('');
-  mtab(0);save();S.lastSave=Date.now();$('saveInfo').textContent='💾 Sauvegardé';}
+  mtab(0);save();S.lastSave=Date.now();$('saveInfo').textContent='💾 Sauvegardé';$('verInfo').textContent='Version '+VER;}
 $('btnPause').addEventListener('click',openMenu);
 function resumeG(){S.paused=false;$('menuOv').classList.remove('show');}
-$('btnResume').addEventListener('click',resumeG);$('btnResumeX').addEventListener('click',resumeG);
+$('btnUpd').addEventListener('click',()=>{checkUpd(true).then(f=>{if(f){toast('Mise à jour trouvée…',1500);applyUpd();}});});$('btnResume').addEventListener('click',resumeG);$('btnResumeX').addEventListener('click',resumeG);
 function mtab(i){document.querySelectorAll('#mTabs button').forEach((b,k)=>b.classList.toggle('on',k===i));for(let k=0;k<3;k++)$('mb'+k).classList.toggle('on',k===i);}
 document.querySelectorAll('#mTabs button').forEach(b=>b.addEventListener('click',()=>{buzz(6);mtab(+b.dataset.mt);}));
 document.querySelectorAll('#mseg button').forEach(b=>b.addEventListener('click',()=>{UI.mapRot=b.dataset.mm==='v';uisave();try{minimap(true);}catch(e){}}));
